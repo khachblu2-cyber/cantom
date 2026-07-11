@@ -12,6 +12,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>Cân Tôm - Tính Tiền Công Nhật</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/JsBarcode/3.11.5/JsBarcode.all.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
@@ -113,7 +114,7 @@
   @media print{
     body *{visibility:hidden;}
     #printArea, #printArea *{visibility:visible;}
-    #printArea{position:absolute;top:0;left:0;width:100%;}
+    #printArea{position:absolute;top:0;left:0;width:100%;display:block !important;}
     .receipt-page{page-break-after:always;padding:24px;}
     .report-print-page{padding:0;}
     @page{ size: A4; margin: 15mm 14mm; }
@@ -131,6 +132,27 @@
   table.report-print-table tr.total-row td{font-weight:700;background:#f3f3f3;}
   .report-print-footer{display:flex;justify-content:space-between;margin-top:40px;font-size:12.5px;text-align:center;}
   .report-print-footer div{width:40%;}
+  .id-card-page{display:flex;align-items:center;justify-content:center;padding:20px;}
+  .id-card{width:85.6mm;height:53.98mm;border-radius:3mm;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.15);font-family:'Inter',sans-serif;background:#fff;border:0.3mm solid #C9DDF5;display:flex;flex-direction:column;}
+  .id-card-top{background:linear-gradient(135deg,#1D5FAE,#123E77);color:#fff;padding:3mm 4mm 2mm;flex-shrink:0;}
+  .id-card-co{font-weight:700;font-size:3.1mm;line-height:1.25;}
+  .id-card-sub{font-size:2mm;letter-spacing:0.4mm;opacity:.85;margin-top:0.6mm;}
+  .id-card-body{display:flex;gap:3mm;padding:2.5mm 4mm;align-items:flex-start;flex:1;min-height:0;}
+  .id-card-photo{width:16mm;height:21mm;border-radius:1.5mm;overflow:hidden;border:0.4mm solid #C9DDF5;flex-shrink:0;background:#EAF1FB;}
+  .id-card-photo img{width:100%;height:100%;object-fit:cover;}
+  .id-card-photo-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:7mm;color:#9CB8DE;}
+  .id-card-info{flex:1;padding-top:0.5mm;min-width:0;overflow:hidden;}
+  .id-card-name{font-weight:700;font-size:3.4mm;color:#123E77;line-height:1.2;}
+  .id-card-code{font-family:'IBM Plex Mono',monospace;font-size:2.5mm;color:#1D5FAE;font-weight:700;margin-top:1.2mm;}
+  .id-card-line{font-size:2.2mm;color:#555;margin-top:0.8mm;line-height:1.3;}
+  #idcard-barcode,#previewBarcode{display:block;width:100%;height:9mm;padding:0 4mm 2mm;flex-shrink:0;}
+  .bill80-page{width:80mm;padding:3mm;font-family:'IBM Plex Mono',monospace;font-size:2.8mm;color:#000;background:#fff;}
+  .bill80-page .b-center{text-align:center;}
+  .bill80-page .b-bold{font-weight:700;}
+  .bill80-page .b-r{text-align:right;}
+  .bill80-page .b-line{border-top:1px dashed #000;margin:1.5mm 0;}
+  .bill80-page table{width:100%;border-collapse:collapse;font-size:2.8mm;}
+  .bill80-page td{padding:0.6mm 0;}
   .receipt-page{background:#fff;padding:20px;border:1px solid #ccc;border-radius:8px;margin-bottom:16px;font-family:'Inter',sans-serif;}
   .receipt-header{text-align:center;margin-bottom:14px;border-bottom:2px solid var(--ink);padding-bottom:10px;}
   .receipt-header h2{margin:0;font-size:18px;}
@@ -259,11 +281,26 @@
       <div class="card">
         <div class="card-title">Thêm nhân viên</div>
         <div class="field"><label>Tên nhân viên</label><input type="text" id="newEmpName" placeholder="Họ tên (mã sẽ tự tạo)"></div>
+        <div class="row">
+          <div class="field"><label>Số CCCD</label><input type="text" id="newEmpCccd" inputmode="numeric" placeholder="Không bắt buộc"></div>
+        </div>
+        <div class="field"><label>Địa chỉ</label><input type="text" id="newEmpAddress" placeholder="Không bắt buộc"></div>
+        <div class="field">
+          <label>Ảnh 3x4</label>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <img id="newEmpPhotoPreview" style="width:54px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:#eee;display:none;">
+            <input type="file" id="newEmpPhoto" accept="image/*" onchange="previewEmpPhoto(this,'newEmpPhotoPreview')">
+          </div>
+        </div>
         <button class="btn btn-primary btn-block" onclick="addEmployee()">＋ Thêm nhân viên</button>
       </div>
       <div class="card">
         <div class="card-title">Danh sách nhân viên</div>
         <input type="text" id="empListSearch" placeholder="🔍 Tìm mã / tên nhân viên…" oninput="renderCatalog()" style="margin-bottom:10px;">
+        <div class="section-tab" style="margin-bottom:8px;">
+          <button class="active" id="empViewListBtn" onclick="setEmpViewMode('list')">☰ Danh sách</button>
+          <button id="empViewGridBtn" onclick="setEmpViewMode('grid')">🔲 Lưới thẻ</button>
+        </div>
         <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:8px;cursor:pointer;">
           <input type="checkbox" id="empSelectAll" onchange="toggleSelectAllEmp(this.checked)" style="width:16px;height:16px;">
           Chọn tất cả
@@ -273,6 +310,7 @@
           <button class="icon-del" id="empBulkDeleteBtn" onclick="bulkDeleteEmployees()" style="color:var(--rust);font-weight:700;font-size:12.5px;">🗑 Xoá đã chọn</button>
         </div>
         <div id="empListWrap"></div>
+        <div id="empGridWrap" class="hidden" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"></div>
         <div class="row" style="margin-top:10px;">
           <button class="btn btn-outline" onclick="exportEmployeesExcel()">📊 Xuất Excel</button>
           <button class="btn btn-outline" onclick="document.getElementById('empImportFile').click()">📥 Nhập Excel</button>
@@ -356,23 +394,31 @@
 
     <!-- PHIẾU CHI -->
     <div id="paySection" class="hidden">
+      <div class="card" style="border-color:#C9DDF5;">
+        <div class="card-title">📷 Quét mã vạch nhân viên</div>
+        <input type="text" id="payBarcodeInput" placeholder="Đưa con trỏ vào đây rồi quét thẻ…" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();handlePayBarcodeScan();}">
+        <div id="payBarcodeStatus" class="muted" style="font-size:12px;margin-top:6px;"></div>
+      </div>
       <div class="card">
         <div class="card-title">Lập phiếu chi</div>
         <div class="field">
           <label>Nhân viên</label>
-          <select id="payEmployee"></select>
+          <select id="payEmployee" onchange="renderPayableDays()"></select>
         </div>
-        <div class="row">
-          <div class="field"><label>Ngày chi</label><input type="date" id="payDate"></div>
-          <div class="field"><label>Loại</label>
-            <select id="payType">
-              <option value="wage">Trả lương</option>
-              <option value="advance">Tạm ứng</option>
-            </select>
-          </div>
+        <div class="field">
+          <label>Loại</label>
+          <select id="payType">
+            <option value="wage">Trả lương</option>
+            <option value="advance">Tạm ứng</option>
+          </select>
         </div>
+        <div class="field">
+          <label>Chọn (các) ngày muốn chi <span class="muted" style="font-weight:400;">— không gồm hôm nay</span></label>
+          <div id="payableDaysWrap" style="border:1px solid var(--line);border-radius:10px;padding:8px;max-height:220px;overflow-y:auto;"></div>
+        </div>
+        <div class="field"><label>Ngày lập phiếu</label><input type="date" id="payDate"></div>
         <div class="field"><label>Số tiền (đ)</label><input type="number" id="payAmount" placeholder="0" inputmode="numeric"></div>
-        <div class="field"><label>Ghi chú</label><input type="text" id="payNote" placeholder="Không bắt buộc"></div>
+        <div class="field"><label>Ghi chú</label><input type="text" id="payNote" placeholder="Tự động ghi các ngày đã chọn"></div>
         <button class="btn btn-primary btn-block" onclick="addPayment()">＋ Lập phiếu chi</button>
       </div>
       <div class="card">
@@ -1198,13 +1244,44 @@ function nextEmployeeCode(){
   const next = nums.length ? Math.max(...nums)+1 : 1;
   return String(next).padStart(5,'0');
 }
+let pendingNewEmpPhotoData = null;
+function previewEmpPhoto(input, previewId, callback){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const targetW = 240, targetH = 320; // tỉ lệ 3x4
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW; canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      const scale = Math.max(targetW/img.width, targetH/img.height);
+      const w = img.width*scale, h = img.height*scale;
+      ctx.drawImage(img, (targetW-w)/2, (targetH-h)/2, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      const previewEl = document.getElementById(previewId);
+      if(previewEl){ previewEl.src = dataUrl; previewEl.style.display = 'block'; }
+      if(callback) callback(dataUrl); else pendingNewEmpPhotoData = dataUrl;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 function addEmployee(){
   const name = document.getElementById('newEmpName').value.trim();
   if(!name){ alert("Nhập tên nhân viên"); return; }
+  const cccd = document.getElementById('newEmpCccd').value.trim();
+  const address = document.getElementById('newEmpAddress').value.trim();
   const code = nextEmployeeCode();
-  employees.push({ id: uid(), code, name, active: true });
+  employees.push({ id: uid(), code, name, active: true, cccd, address, photo: pendingNewEmpPhotoData || '' });
   saveAll();
   document.getElementById('newEmpName').value='';
+  document.getElementById('newEmpCccd').value='';
+  document.getElementById('newEmpAddress').value='';
+  document.getElementById('newEmpPhoto').value='';
+  document.getElementById('newEmpPhotoPreview').style.display='none';
+  pendingNewEmpPhotoData = null;
   renderCatalog(); populateSelects(); populateDebtSelects();
 }
 function deleteEmployee(id){
@@ -1217,12 +1294,15 @@ function deleteEmployee(id){
     renderCatalog(); populateSelects(); populateDebtSelects();
   });
 }
+let pendingEditEmpPhotoData = null;
 function editEmployee(id){
   editingEmployeeId = id;
+  pendingEditEmpPhotoData = null;
   renderCatalog();
 }
 function cancelEditEmployee(){
   editingEmployeeId = null;
+  pendingEditEmpPhotoData = null;
   renderCatalog();
 }
 function saveEditEmployee(id){
@@ -1232,7 +1312,11 @@ function saveEditEmployee(id){
   const emp = employees.find(e=>e.id===id);
   if(!emp) return;
   emp.name = newName;
+  emp.cccd = (document.getElementById('editEmpCccd-'+id)?.value||'').trim();
+  emp.address = (document.getElementById('editEmpAddress-'+id)?.value||'').trim();
+  if(pendingEditEmpPhotoData) emp.photo = pendingEditEmpPhotoData;
   editingEmployeeId = null;
+  pendingEditEmpPhotoData = null;
   saveAll();
   renderCatalog(); populateSelects(); populateDebtSelects();
 }
@@ -1313,6 +1397,71 @@ function changeProductColor(id){
   input.click();
 }
 
+function setEmpViewMode(mode){
+  document.getElementById('empListWrap').classList.toggle('hidden', mode!=='list');
+  document.getElementById('empGridWrap').classList.toggle('hidden', mode!=='grid');
+  document.getElementById('empViewListBtn').classList.toggle('active', mode==='list');
+  document.getElementById('empViewGridBtn').classList.toggle('active', mode==='grid');
+}
+function buildIdCardHtml(e, barcodeId){
+  return `
+    <div class="id-card-page">
+      <div class="id-card">
+        <div class="id-card-top">
+          <div class="id-card-co">${companyInfo.name ? escapeHtml(companyInfo.name) : 'THẺ NHÂN VIÊN'}</div>
+          <div class="id-card-sub">THẺ NHÂN VIÊN</div>
+        </div>
+        <div class="id-card-body">
+          <div class="id-card-photo">
+            ${e.photo ? `<img src="${e.photo}">` : `<div class="id-card-photo-empty">👤</div>`}
+          </div>
+          <div class="id-card-info">
+            <div class="id-card-name">${escapeHtml(e.name)}</div>
+            <div class="id-card-code">Mã NV: ${escapeHtml(e.code)}</div>
+            ${e.cccd?`<div class="id-card-line">CCCD: ${escapeHtml(e.cccd)}</div>`:''}
+            ${e.address?`<div class="id-card-line">${escapeHtml(e.address)}</div>`:''}
+          </div>
+        </div>
+        <svg id="${barcodeId}"></svg>
+      </div>
+    </div>
+  `;
+}
+function renderIdCardBarcode(e, barcodeId){
+  try{
+    JsBarcode("#"+barcodeId, e.code, { format:"CODE128", width:2, height:36, displayValue:true, fontSize:12, margin:4, background:"#ffffff" });
+  }catch(err){ console.error("Lỗi tạo mã vạch", err); }
+}
+function printEmployeeCard(id){
+  const e = employees.find(x=>x.id===id);
+  if(!e) return;
+  const old = document.getElementById('cardPreviewOverlay');
+  if(old) old.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'cardPreviewOverlay';
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(21,34,56,.85);z-index:996;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;";
+  overlay.innerHTML = `
+    <div style="font-weight:700;color:#fff;font-size:14px;">Xem trước thẻ nhân viên</div>
+    <div style="background:#fff;border-radius:18px;padding:14px;transform:scale(1.7);margin:30px 0;">
+      ${buildIdCardHtml(e, 'previewBarcode')}
+    </div>
+    <div class="row" style="width:280px;">
+      <button class="btn btn-outline" style="background:#fff;" onclick="document.getElementById('cardPreviewOverlay').remove()">✕ Đóng</button>
+      <button class="btn btn-primary" onclick="confirmPrintEmployeeCard('${id}')">🖨 In thẻ</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  renderIdCardBarcode(e, 'previewBarcode');
+}
+function confirmPrintEmployeeCard(id){
+  const e = employees.find(x=>x.id===id);
+  if(!e) return;
+  document.getElementById('printArea').innerHTML = buildIdCardHtml(e, 'idcard-barcode');
+  renderIdCardBarcode(e, 'idcard-barcode');
+  const overlay = document.getElementById('cardPreviewOverlay');
+  if(overlay) overlay.remove();
+  window.print();
+}
 function setCatalogSection(s){
   catalogSection = s;
   document.getElementById('empSection').classList.toggle('hidden', s!=='emp');
@@ -1324,7 +1473,7 @@ function setCatalogSection(s){
 // ===== XUẤT/NHẬP EXCEL: NHÂN VIÊN =====
 function exportEmployeesExcel(){
   if(employees.length===0){ alert("Chưa có nhân viên nào để xuất"); return; }
-  const aoa = [["Mã", "Tên nhân viên"], ...employees.map(e=>[e.code, e.name])];
+  const aoa = [["Mã", "Tên nhân viên", "CCCD", "Địa chỉ"], ...employees.map(e=>[e.code, e.name, e.cccd||'', e.address||''])];
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Nhan vien");
@@ -1410,11 +1559,17 @@ function renderCatalog(){
   empWrap.innerHTML = empList.length ? empList.map(e=>{
     if(editingEmployeeId===e.id){
       return `
-        <div class="list-item">
-          <input type="text" id="editEmpName-${e.id}" value="${escapeHtml(e.name)}" style="flex:1;margin-right:8px;">
-          <div style="display:flex;gap:10px;">
-            <button class="icon-del" onclick="saveEditEmployee('${e.id}')">✅</button>
-            <button class="icon-del" onclick="cancelEditEmployee()">✕</button>
+        <div class="list-item" style="flex-direction:column;align-items:stretch;gap:8px;">
+          <div style="display:flex;gap:10px;align-items:center;">
+            <img id="editEmpPhotoPreview-${e.id}" src="${e.photo||''}" style="width:44px;height:58px;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:#eee;${e.photo?'':'display:none;'}">
+            <input type="file" accept="image/*" onchange="previewEmpPhoto(this,'editEmpPhotoPreview-${e.id}', function(d){ pendingEditEmpPhotoData = d; })" style="flex:1;">
+          </div>
+          <input type="text" id="editEmpName-${e.id}" value="${escapeHtml(e.name)}" placeholder="Tên">
+          <input type="text" id="editEmpCccd-${e.id}" value="${escapeHtml(e.cccd||'')}" placeholder="Số CCCD" inputmode="numeric">
+          <input type="text" id="editEmpAddress-${e.id}" value="${escapeHtml(e.address||'')}" placeholder="Địa chỉ">
+          <div class="row">
+            <button class="btn btn-primary btn-sm" onclick="saveEditEmployee('${e.id}')">✅ Lưu</button>
+            <button class="btn btn-outline btn-sm" onclick="cancelEditEmployee()">✕ Huỷ</button>
           </div>
         </div>
       `;
@@ -1425,9 +1580,11 @@ function renderCatalog(){
     <div class="list-item">
       <div style="display:flex;align-items:center;gap:10px;">
         <input type="checkbox" ${isChecked?'checked':''} onchange="toggleBulkEmp('${e.id}')" style="width:16px;height:16px;flex-shrink:0;">
-        <div><span class="badge">${escapeHtml(e.code)}</span> <strong>${escapeHtml(e.name)}</strong></div>
+        ${e.photo?`<img src="${e.photo}" style="width:30px;height:40px;object-fit:cover;border-radius:4px;flex-shrink:0;">`:''}
+        <div><span class="badge">${escapeHtml(e.code)}</span> <strong>${escapeHtml(e.name)}</strong>${e.cccd?`<div class="muted" style="font-size:11px;">CCCD: ${escapeHtml(e.cccd)}</div>`:''}</div>
       </div>
-      <div style="display:flex;gap:12px;">
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="icon-del" onclick="printEmployeeCard('${e.id}')" title="In thẻ">🪪</button>
         <button class="icon-del" onclick="editEmployee('${e.id}')">✏️</button>
         ${isPendingDel
           ? `<button class="icon-del" style="color:var(--rust);font-weight:700;" onclick="deleteEmployee('${e.id}')">Xoá?✓</button>`
@@ -1436,6 +1593,23 @@ function renderCatalog(){
     </div>
   `;
   }).join('') : `<div class="empty-state">${empQ?'Không tìm thấy nhân viên phù hợp':'Chưa có nhân viên nào'}</div>`;
+
+  const empGridWrap = document.getElementById('empGridWrap');
+  if(empGridWrap){
+    empGridWrap.innerHTML = empList.length ? empList.map(e=>`
+      <div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;">
+        ${e.photo?`<img src="${e.photo}" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;margin-bottom:6px;">`:`<div style="width:100%;aspect-ratio:3/4;background:#EEF1F5;border-radius:8px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#B7C0CC;">👤</div>`}
+        <div style="font-weight:700;font-size:13px;">${escapeHtml(e.name)}</div>
+        <div class="badge" style="margin-top:2px;">${escapeHtml(e.code)}</div>
+        <div style="display:flex;gap:6px;justify-content:center;margin-top:8px;">
+          <button class="icon-del" onclick="printEmployeeCard('${e.id}')" title="In thẻ">🪪</button>
+          <button class="icon-del" onclick="editEmployee('${e.id}')">✏️</button>
+          <button class="icon-del" onclick="deleteEmployee('${e.id}')">🗑</button>
+        </div>
+      </div>
+    `).join('') : `<div class="empty-state">Chưa có nhân viên nào</div>`;
+  }
+
   updateEmpBulkBar();
   const empSelectAllEl = document.getElementById('empSelectAll');
   if(empSelectAllEl) empSelectAllEl.checked = empList.length>0 && empList.every(e=>selectedEmpIdsForBulk.has(e.id));
@@ -1895,11 +2069,128 @@ function deleteWeighGroup(idsStr){
 }
 
 // ===== CÔNG NỢ: SỐ DƯ ĐẦU KỲ =====
+// ===== QUÉT MÃ VẠCH & CHỌN NGÀY CHI =====
+function handlePayBarcodeScan(){
+  const input = document.getElementById('payBarcodeInput');
+  const code = input.value.trim();
+  const statusEl = document.getElementById('payBarcodeStatus');
+  if(!code){
+    // Bấm Enter khi ô đang trống = xác nhận chi tiền + in Bill 80 luôn
+    confirmPaymentAndPrintBill();
+    return;
+  }
+  input.value = '';
+  const emp = employees.find(e=> e.code === code || e.code === code.replace(/^0+/,'').padStart(5,'0'));
+  if(!emp){
+    statusEl.textContent = `⚠️ Không tìm thấy nhân viên với mã "${code}"`;
+    statusEl.style.color = 'var(--rust)';
+    return;
+  }
+  document.getElementById('payEmployee').value = emp.id;
+  renderPayableDays();
+  // Tự động tick hết các ngày đang có tiền, tính luôn tổng
+  document.querySelectorAll('.payable-day-check').forEach(cb=>{ cb.checked = true; });
+  recalcPayableAmount();
+  statusEl.textContent = `✅ ${emp.name} (${emp.code}) — đã tự chọn hết ngày có tiền. Bấm Enter lần nữa để CHI + IN BILL.`;
+  statusEl.style.color = 'var(--moss)';
+  input.focus();
+}
+function employeeDailyEarnings(employeeId){
+  const today = todayKey();
+  const dateKeys = [...new Set(weighings.filter(w=>w.employeeId===employeeId).map(w=>w.dateKey))].filter(dk=>dk<today);
+  return dateKeys.map(dk=>{
+    const base = weighings.filter(w=>w.employeeId===employeeId && w.dateKey===dk).reduce((s,w)=>s+w.amount,0);
+    const bonus = mealBonusForDay(employeeId, dk);
+    return { dateKey: dk, amount: base + bonus };
+  }).sort((a,b)=> b.dateKey.localeCompare(a.dateKey));
+}
+function renderPayableDays(){
+  const wrap = document.getElementById('payableDaysWrap');
+  const employeeId = document.getElementById('payEmployee').value;
+  if(!employeeId){ wrap.innerHTML = `<div class="empty-state" style="padding:8px;">Chọn hoặc quét mã nhân viên trước</div>`; return; }
+  const days = employeeDailyEarnings(employeeId);
+  if(days.length===0){ wrap.innerHTML = `<div class="empty-state" style="padding:8px;">Chưa có ngày nào (trừ hôm nay) có tiền công để chi</div>`; return; }
+  wrap.innerHTML = days.map(d=>{
+    const dateDisplay = new Date(d.dateKey+"T00:00:00").toLocaleDateString("vi-VN",{weekday:"short", day:"2-digit", month:"2-digit"});
+    return `
+      <label style="display:flex;justify-content:space-between;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line);cursor:pointer;">
+        <span style="display:flex;align-items:center;gap:8px;font-size:13px;">
+          <input type="checkbox" class="payable-day-check" data-date="${d.dateKey}" data-amount="${d.amount}" onchange="recalcPayableAmount()" style="width:16px;height:16px;">
+          ${dateDisplay}
+        </span>
+        <span class="amount">${formatMoney(d.amount)}</span>
+      </label>
+    `;
+  }).join('');
+}
+function recalcPayableAmount(){
+  const checked = Array.from(document.querySelectorAll('.payable-day-check:checked'));
+  const total = checked.reduce((s,cb)=> s + Number(cb.dataset.amount||0), 0);
+  if(checked.length>0) document.getElementById('payAmount').value = total;
+}
+
+// ===== CHI TIỀN NHANH + IN BILL 80mm =====
+function confirmPaymentAndPrintBill(){
+  const employeeId = document.getElementById('payEmployee').value;
+  const emp = employees.find(x=>x.id===employeeId);
+  const statusEl = document.getElementById('payBarcodeStatus');
+  if(!emp){ statusEl.textContent = '⚠️ Chưa chọn nhân viên — quét mã trước'; statusEl.style.color='var(--rust)'; return; }
+  const amount = Number(document.getElementById('payAmount').value);
+  if(!amount || amount<=0){ statusEl.textContent = '⚠️ Không có số tiền để chi — chưa có ngày nào được chọn'; statusEl.style.color='var(--rust)'; return; }
+  const type = document.getElementById('payType').value;
+  const checkedDays = Array.from(document.querySelectorAll('.payable-day-check:checked'))
+    .map(cb=>({ dateKey: cb.dataset.date, amount: Number(cb.dataset.amount) }))
+    .sort((a,b)=> a.dateKey.localeCompare(b.dateKey));
+  addPayment();
+  printBill80(emp, type, amount, checkedDays);
+  statusEl.textContent = `✅ Đã chi ${formatMoney(amount)} cho ${emp.name} và in bill.`;
+  statusEl.style.color = 'var(--moss)';
+  document.getElementById('payBarcodeInput').focus();
+}
+function printBill80(emp, type, amount, checkedDays){
+  const now = new Date();
+  const rows = checkedDays.map(d=>`<tr><td>${new Date(d.dateKey+"T00:00:00").toLocaleDateString("vi-VN")}</td><td class="b-r">${formatNumber(d.amount)}</td></tr>`).join('');
+  document.getElementById('printArea').innerHTML = `
+    <div class="bill80-page">
+      <div class="b-center b-bold" style="font-size:3.4mm;">${companyInfo.name ? escapeHtml(companyInfo.name) : 'PHIẾU CHI'}</div>
+      ${companyInfo.address?`<div class="b-center" style="font-size:2.4mm;">${escapeHtml(companyInfo.address)}</div>`:''}
+      <div class="b-center b-bold" style="margin-top:2mm;">PHIẾU CHI TIỀN</div>
+      <div class="b-center" style="font-size:2.4mm;">${now.toLocaleString("vi-VN")}</div>
+      <div class="b-line"></div>
+      <div>Nhân viên: <b>${escapeHtml(emp.name)}</b></div>
+      <div>Mã NV: ${escapeHtml(emp.code)}</div>
+      <div>Loại: ${type==='advance'?'Tạm ứng':'Trả lương'}</div>
+      <div class="b-line"></div>
+      <table>
+        <tr><td><b>Ngày</b></td><td class="b-r"><b>Số tiền</b></td></tr>
+        ${rows}
+      </table>
+      <div class="b-line"></div>
+      <div style="display:flex;justify-content:space-between;font-size:3.6mm;font-weight:700;">
+        <span>TỔNG CỘNG</span><span>${formatMoney(amount)}</span>
+      </div>
+      <div class="b-line"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:5mm;font-size:2.6mm;text-align:center;">
+        <div style="width:45%;">Người nhận<br><br><br>_____________</div>
+        <div style="width:45%;">Người chi<br><br><br>_____________</div>
+      </div>
+    </div>
+  `;
+  const pageStyle = document.createElement('style');
+  pageStyle.id = 'bill80PageStyle';
+  pageStyle.textContent = '@media print { @page { size: 80mm auto; margin: 2mm; } }';
+  document.head.appendChild(pageStyle);
+  const cleanup = () => { pageStyle.remove(); window.removeEventListener('afterprint', cleanup); };
+  window.addEventListener('afterprint', cleanup);
+  window.print();
+}
+
 function populateDebtSelects(){
   const opts = employees.length ? employees.map(e=>`<option value="${e.id}">${escapeHtml(e.code)} - ${escapeHtml(e.name)}</option>`).join('') : `<option value="">-- Chưa có nhân viên --</option>`;
   document.getElementById('openEmployee').innerHTML = opts;
   document.getElementById('payEmployee').innerHTML = opts;
   if(document.getElementById('detailEmployee')) populateDetailEmployeeSelect();
+  if(document.getElementById('payableDaysWrap')) renderPayableDays();
 }
 function addOpening(){
   const employeeId = document.getElementById('openEmployee').value;
@@ -1946,14 +2237,19 @@ function addPayment(){
   const dateKey = document.getElementById('payDate').value || todayKey();
   const type = document.getElementById('payType').value;
   const amount = Number(document.getElementById('payAmount').value);
-  const note = document.getElementById('payNote').value.trim();
+  let note = document.getElementById('payNote').value.trim();
   if(!employeeId){ alert("Chọn nhân viên"); return; }
   if(!amount || amount<=0){ alert("Nhập số tiền hợp lệ"); return; }
+  const checkedDays = Array.from(document.querySelectorAll('.payable-day-check:checked')).map(cb=>cb.dataset.date);
+  if(checkedDays.length>0 && !note){
+    note = "Chi cho các ngày: " + checkedDays.slice().sort().map(dk=>new Date(dk+"T00:00:00").toLocaleDateString("vi-VN")).join(", ");
+  }
   payments.push({ id: uid(), employeeId, dateKey, type, amount, note, createdAt: Date.now() });
   saveAll();
   document.getElementById('payAmount').value='';
   document.getElementById('payNote').value='';
   renderDebtTab();
+  renderPayableDays();
 }
 function deletePayment(id){
   if(!confirm("Xoá phiếu chi này?")) return;
