@@ -1249,7 +1249,7 @@ function addProduct(){
   const color = document.getElementById('newProdColor').value || "#8FD3A6";
   if(!name || !price){ alert("Nhập đủ nhãn hiển thị và đơn giá"); return; }
   const code = nextProductCode();
-  products.push({ id: uid(), code, name, unitPrice: price, color });
+  products.push({ id: uid(), code, name, unitPrice: price, color, active: true });
   saveAll();
   document.getElementById('newProdName').value='';
   document.getElementById('newProdPrice').value='';
@@ -1287,6 +1287,13 @@ function saveEditProduct(id){
   editingProductId = null;
   saveAll();
   renderCatalog(); populateSelects(); renderProductGrid(); populateDebtSelects();
+}
+function toggleProductActive(id){
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+  p.active = !(p.active !== false);
+  saveAll();
+  renderCatalog(); renderProductGrid();
 }
 function changeProductColor(id){
   const p = products.find(x=>x.id===id);
@@ -1380,7 +1387,7 @@ function importProductsExcel(e){
         if(!name || !price) return;
         const code = nextProductCode();
         const color = palette[added % palette.length];
-        products.push({ id: uid(), code, name, unitPrice: price, color });
+        products.push({ id: uid(), code, name, unitPrice: price, color, active: true });
         added++;
       });
       if(added===0){ alert("Không tìm thấy dữ liệu hợp lệ trong file (cần cột Nhãn + Đơn giá)"); return; }
@@ -1454,14 +1461,19 @@ function renderCatalog(){
     }
     const isPendingDel = pendingDeleteKey === ('prod:'+p.id);
     const isChecked = selectedProdIdsForBulk.has(p.id);
+    const isActive = p.active !== false;
     return `
-    <div class="list-item">
+    <div class="list-item" style="flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:8px;">
-        <input type="checkbox" ${isChecked?'checked':''} onchange="toggleBulkProd('${p.id}')" style="width:16px;height:16px;flex-shrink:0;">
+        <input type="checkbox" ${isChecked?'checked':''} onchange="toggleBulkProd('${p.id}')" style="width:16px;height:16px;flex-shrink:0;" title="Chọn để xoá hàng loạt">
         <button onclick="changeProductColor('${p.id}')" title="Đổi màu" style="width:22px;height:22px;border-radius:6px;border:1px solid var(--line);background:${p.color||'#8FD3A6'};cursor:pointer;flex-shrink:0;"></button>
         <div><span class="badge">${escapeHtml(p.code)}</span> <strong>${escapeHtml(p.name)}</strong><div class="muted" style="font-size:12px;">${formatMoney(p.unitPrice)}/kg</div></div>
       </div>
-      <div style="display:flex;gap:12px;">
+      <div style="display:flex;gap:12px;align-items:center;">
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:${isActive?'var(--moss)':'var(--muted)'};cursor:pointer;white-space:nowrap;">
+          <input type="checkbox" ${isActive?'checked':''} onchange="toggleProductActive('${p.id}')" style="width:15px;height:15px;">
+          ${isActive?'👁 Hiện ở Cân tôm':'🚫 Đang ẩn'}
+        </label>
         <button class="icon-del" onclick="editProduct('${p.id}')">✏️</button>
         ${isPendingDel
           ? `<button class="icon-del" style="color:var(--rust);font-weight:700;" onclick="deleteProduct('${p.id}')">Xoá?✓</button>`
@@ -1663,9 +1675,10 @@ function toggleProductGridCollapse(){
 }
 function renderProductGrid(){
   const wrap = document.getElementById('productGrid');
-  if(products.length===0){ wrap.innerHTML = `<div class="empty-state">Chưa có mã hàng nào — vào tab Danh mục để thêm</div>`; return; }
+  const activeProducts = products.filter(p=> p.active !== false);
+  if(activeProducts.length===0){ wrap.innerHTML = `<div class="empty-state">Chưa có mã hàng nào đang bật hiện thị — vào tab Danh mục để bật "👁 Hiện ở Cân tôm"</div>`; return; }
   const q = (document.getElementById('prodGridSearch')?.value||'').trim().toLowerCase();
-  const list = products.filter(p=> !q || p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q));
+  const list = activeProducts.filter(p=> !q || p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q));
   if(list.length===0){ wrap.innerHTML = `<div class="empty-state">Không tìm thấy mã hàng phù hợp</div>`; return; }
   wrap.innerHTML = list.map(p=>`
     <div class="prod-btn ${p.id===selectedProductId?'selected':''}" style="background:${p.color||'#8FD3A6'};" onclick="selectProduct('${p.id}')">
