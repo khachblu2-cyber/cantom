@@ -169,6 +169,10 @@
     <button class="tab-btn" id="tabBtnReport" onclick="switchTab('report')">📊 Báo cáo</button>
     <button class="tab-btn" id="tabBtnConfig" onclick="switchTab('config')">⚙️ Cài đặt</button>
   </div>
+  <div id="currentUserBar" class="hidden" style="display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:4px 10px;background:#0F1B2E;">
+    <span style="color:#93A5C4;font-size:11px;">👤 <span id="currentUserNameLabel"></span></span>
+    <button onclick="switchUser()" style="background:none;border:1px solid #2A3B54;color:#93A5C4;font-size:10.5px;padding:2px 8px;border-radius:6px;cursor:pointer;">Đổi người dùng</button>
+  </div>
 </div>
 
 <!-- ============ TAB: CÂN TÔM ============ -->
@@ -205,7 +209,10 @@
         </div>
       </div>
 
-      <input type="text" id="prodGridSearch" placeholder="🔍 Tìm mã hàng / size…" inputmode="text" autocomplete="off" autocorrect="off" oninput="renderProductGrid()" style="margin-bottom:8px;position:sticky;top:52px;z-index:6;background:var(--paper);">
+      <div style="display:flex;gap:6px;position:sticky;top:52px;z-index:6;background:var(--paper);margin-bottom:8px;">
+        <input type="text" id="prodGridSearch" placeholder="🔍 Tìm mã hàng / size…" inputmode="text" autocomplete="off" autocorrect="off" oninput="renderProductGrid()" style="flex:1;">
+        <button class="icon-btn" id="prodGridToggleBtn" onclick="toggleProductGridCollapse()" title="Ẩn/hiện lưới mã hàng" style="width:44px;flex-shrink:0;">▲</button>
+      </div>
       <div id="productGrid" class="product-grid"></div>
 
       <div class="card" style="position:sticky;bottom:10px;box-shadow:0 4px 16px rgba(21,34,56,.12);">
@@ -477,6 +484,7 @@
       <button id="cfgBtnOptions" onclick="setConfigSection('options')">Tuỳ chọn</button>
       <button id="cfgBtnSecurity" onclick="setConfigSection('security')">Bảo mật</button>
       <button id="cfgBtnData" onclick="setConfigSection('data')">Dữ liệu</button>
+      <button id="cfgBtnUsers" onclick="setConfigSection('users')">Người dùng</button>
     </div>
 
     <!-- THÔNG TIN CÔNG TY -->
@@ -562,6 +570,35 @@
       </div>
     </div>
 
+    <!-- NGƯỜI DÙNG -->
+    <div id="cfgUsersSection" class="hidden">
+      <div class="card">
+        <div class="card-title">👥 Thêm người dùng</div>
+        <div class="muted" style="font-size:12px;margin-bottom:10px;">Mỗi người dùng có tên riêng + mã PIN riêng, chỉ thấy đúng các tab được tick bên dưới. Khi có ít nhất 1 người dùng, mỗi lần mở app sẽ yêu cầu chọn tên + nhập PIN. <b>Nên tạo 1 tài khoản của chính bạn với đầy đủ quyền trước tiên.</b></div>
+        <div class="field"><label>Tên người dùng</label><input type="text" id="newUserName" placeholder="VD: Chủ, Kế toán, Công nhân A"></div>
+        <div class="field"><label>Mã PIN (4 số)</label><input type="text" id="newUserPin" maxlength="4" inputmode="numeric" placeholder="VD: 1111"></div>
+        <div class="field">
+          <label>Được xem các tab</label>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
+            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="new-user-perm" value="weigh" checked> ⚖️ Cân tôm</label>
+            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="new-user-perm" value="catalog"> 📋 Danh mục</label>
+            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="new-user-perm" value="debt"> 💰 Công nợ</label>
+            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="new-user-perm" value="settle"> 🧾 Chốt & In</label>
+            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="new-user-perm" value="report"> 📊 Báo cáo</label>
+            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="new-user-perm" value="config"> ⚙️ Cài đặt</label>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="addStaffUser()">＋ Thêm người dùng</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Danh sách người dùng</div>
+        <div id="userListWrap"></div>
+      </div>
+      <div class="card" style="background:#F5F7FA;">
+        <div class="muted" style="font-size:11.5px;">Lưu ý: mã PIN này chỉ giới hạn <b>hiển thị tab</b> trên giao diện, dùng để phân việc rõ ràng giữa mọi người — không phải lớp bảo mật chống hack chuyên sâu. Với dữ liệu thật sự nhạy cảm, kết hợp thêm mã PIN khoá màn hình và mã bảo vệ xoá ở mục Bảo mật.</div>
+      </div>
+    </div>
+
     <div class="card" style="margin-top:20px;background:#F5F7FA;">
       <div class="card-title">ℹ️ Chưa hỗ trợ trong bản này</div>
       <div class="muted" style="font-size:12.5px;line-height:1.6;">
@@ -582,6 +619,7 @@ const WEIGH_KEY = "can-tom-weighings-v1";
 const OPEN_KEY = "can-tom-opening-v1";
 const PAY_KEY = "can-tom-payments-v1";
 const OVERTIME_KEY = "can-tom-overtime-v1";
+const STAFF_KEY = "can-tom-staff-users-v1";
 const COMPANY_KEY = "can-tom-company-v1";
 const OPTIONS_KEY = "can-tom-options-v1";
 const PIN_KEY = "can-tom-pin-v1";
@@ -611,6 +649,7 @@ function saveAll(){
     localStorage.setItem(OPEN_KEY, JSON.stringify(openingBalances));
     localStorage.setItem(PAY_KEY, JSON.stringify(payments));
     localStorage.setItem(OVERTIME_KEY, JSON.stringify(overtimeDays));
+    localStorage.setItem(STAFF_KEY, JSON.stringify(staffUsers));
     localStorage.setItem(COMPANY_KEY, JSON.stringify(companyInfo));
     localStorage.setItem(OPTIONS_KEY, JSON.stringify(appOptions));
   }catch(e){ alert("Không lưu được dữ liệu trên máy: " + e.message); }
@@ -626,6 +665,8 @@ let weighings = loadJSON(WEIGH_KEY, []);
 let openingBalances = loadJSON(OPEN_KEY, []);
 let payments = loadJSON(PAY_KEY, []);
 let overtimeDays = loadJSON(OVERTIME_KEY, []);
+let staffUsers = loadJSON(STAFF_KEY, []);
+let currentUser = null;
 let companyInfo = loadJSON(COMPANY_KEY, { name:"", address:"", phone:"" });
 let appOptions = loadJSON(OPTIONS_KEY, { backupDays:3, kgDecimals:1 });
 let catalogSection = "emp";
@@ -671,10 +712,13 @@ function setConfigSection(s){
   document.getElementById('cfgOptionsSection').classList.toggle('hidden', s!=='options');
   document.getElementById('cfgSecuritySection').classList.toggle('hidden', s!=='security');
   document.getElementById('cfgDataSection').classList.toggle('hidden', s!=='data');
+  document.getElementById('cfgUsersSection').classList.toggle('hidden', s!=='users');
   document.getElementById('cfgBtnCompany').classList.toggle('active', s==='company');
   document.getElementById('cfgBtnOptions').classList.toggle('active', s==='options');
   document.getElementById('cfgBtnSecurity').classList.toggle('active', s==='security');
   document.getElementById('cfgBtnData').classList.toggle('active', s==='data');
+  document.getElementById('cfgBtnUsers').classList.toggle('active', s==='users');
+  if(s==='users') renderUserList();
 }
 function loadConfigForm(){
   document.getElementById('cfgCompanyName').value = companyInfo.name || '';
@@ -923,6 +967,182 @@ function performPeriodClose(){
     renderCatalog(); populateSelects(); populateDebtSelects(); renderWeighTab();
     alert(`Đã đóng kỳ đến ${cutoffKey}. File lưu trữ đầy đủ đã tải về máy — giữ file này cẩn thận.`);
   });
+}
+
+// ===== NGƯỜI DÙNG & PHÂN QUYỀN THEO TAB =====
+const ALL_TABS = ['weigh','catalog','debt','settle','report','config'];
+const TAB_BTN_ID = { weigh:'tabBtnWeigh', catalog:'tabBtnCatalog', debt:'tabBtnDebt', settle:'tabBtnSettle', report:'tabBtnReport', config:'tabBtnConfig' };
+
+function nextUserCode(){
+  const nums = staffUsers.map(u=>parseInt(u.code,10)).filter(n=>!isNaN(n));
+  return String((nums.length?Math.max(...nums):0)+1).padStart(3,'0');
+}
+function addStaffUser(){
+  const name = document.getElementById('newUserName').value.trim();
+  const pin = document.getElementById('newUserPin').value.trim();
+  if(!name){ alert("Nhập tên người dùng"); return; }
+  if(!/^\d{4}$/.test(pin)){ alert("Mã PIN phải gồm đúng 4 chữ số"); return; }
+  const perms = {};
+  document.querySelectorAll('.new-user-perm').forEach(cb=>{ perms[cb.value] = cb.checked; });
+  staffUsers.push({ id: uid(), code: nextUserCode(), name, pin, permissions: perms });
+  saveAll();
+  document.getElementById('newUserName').value='';
+  document.getElementById('newUserPin').value='';
+  renderUserList();
+  alert(`Đã thêm người dùng "${name}".`);
+}
+function tabLabel(key){
+  return { weigh:'⚖️ Cân tôm', catalog:'📋 Danh mục', debt:'💰 Công nợ', settle:'🧾 Chốt & In', report:'📊 Báo cáo', config:'⚙️ Cài đặt' }[key];
+}
+let editingUserId = null;
+function editStaffUser(id){ editingUserId = id; renderUserList(); }
+function cancelEditUser(){ editingUserId = null; renderUserList(); }
+function saveEditUser(id){
+  const u = staffUsers.find(x=>x.id===id);
+  if(!u) return;
+  const nameInput = document.getElementById('editUserName-'+id);
+  const pinInput = document.getElementById('editUserPin-'+id);
+  const newName = nameInput.value.trim();
+  const newPin = pinInput.value.trim();
+  if(!newName){ nameInput.style.borderColor='var(--rust)'; return; }
+  if(!/^\d{4}$/.test(newPin)){ pinInput.style.borderColor='var(--rust)'; return; }
+  const perms = {};
+  document.querySelectorAll('.edit-user-perm-'+id).forEach(cb=>{ perms[cb.value] = cb.checked; });
+  u.name = newName; u.pin = newPin; u.permissions = perms;
+  editingUserId = null;
+  saveAll();
+  renderUserList();
+}
+function deleteStaffUser(id){
+  const key = 'user:'+id;
+  if(pendingDeleteKey !== key){ armPendingDelete(key); renderUserList(); return; }
+  pendingDeleteKey = null;
+  staffUsers = staffUsers.filter(u=>u.id!==id);
+  saveAll();
+  renderUserList();
+}
+function renderUserList(){
+  const wrap = document.getElementById('userListWrap');
+  if(!wrap) return;
+  if(staffUsers.length===0){ wrap.innerHTML = `<div class="empty-state">Chưa có người dùng nào — app đang mở tự do cho mọi người.</div>`; return; }
+  wrap.innerHTML = staffUsers.map(u=>{
+    if(editingUserId===u.id){
+      const checks = ALL_TABS.map(t=>`<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;"><input type="checkbox" class="edit-user-perm-${u.id}" value="${t}" ${u.permissions[t]?'checked':''}> ${tabLabel(t)}</label>`).join('');
+      return `
+        <div class="list-item" style="flex-direction:column;align-items:stretch;gap:8px;">
+          <input type="text" id="editUserName-${u.id}" value="${escapeHtml(u.name)}" placeholder="Tên">
+          <input type="text" id="editUserPin-${u.id}" value="${escapeHtml(u.pin)}" maxlength="4" inputmode="numeric" placeholder="PIN 4 số">
+          <div style="display:flex;flex-direction:column;gap:4px;">${checks}</div>
+          <div class="row">
+            <button class="btn btn-primary btn-sm" onclick="saveEditUser('${u.id}')">✅ Lưu</button>
+            <button class="btn btn-outline btn-sm" onclick="cancelEditUser()">✕ Huỷ</button>
+          </div>
+        </div>
+      `;
+    }
+    const isPendingDel = pendingDeleteKey === ('user:'+u.id);
+    const activeTabs = ALL_TABS.filter(t=>u.permissions[t]).map(tabLabel).join(', ') || '(không tab nào)';
+    return `
+      <div class="list-item">
+        <div>
+          <strong>${escapeHtml(u.name)}</strong> <span class="badge">${escapeHtml(u.code)}</span>
+          <div class="muted" style="font-size:11.5px;margin-top:2px;">${activeTabs}</div>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <button class="icon-del" onclick="editStaffUser('${u.id}')">✏️</button>
+          ${isPendingDel
+            ? `<button class="icon-del" style="color:var(--rust);font-weight:700;" onclick="deleteStaffUser('${u.id}')">Xoá?✓</button>`
+            : `<button class="icon-del" onclick="deleteStaffUser('${u.id}')">🗑</button>`}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== MÀN HÌNH CHỌN NGƯỜI DÙNG =====
+function checkUserGate(){
+  if(staffUsers.length===0) return; // chưa thiết lập ai -> mở tự do
+  const savedId = sessionStorage.getItem('cantom_current_user_id');
+  const saved = staffUsers.find(u=>u.id===savedId);
+  if(saved){ currentUser = saved; applyCurrentUserPermissions(); return; }
+  showUserPickerOverlay();
+}
+function showUserPickerOverlay(){
+  const old = document.getElementById('userPickerOverlay');
+  if(old) old.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'userPickerOverlay';
+  overlay.style.cssText = "position:fixed;inset:0;background:var(--ink);z-index:997;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;";
+  const nameButtons = staffUsers.map(u=>`<button class="btn btn-outline btn-block" style="background:#fff;" onclick="selectUserForLogin('${u.id}')">${escapeHtml(u.name)}</button>`).join('');
+  overlay.innerHTML = `
+    <div style="font-size:34px;">👤</div>
+    <div style="color:#fff;font-weight:700;font-size:16px;">Chọn người dùng</div>
+    <div style="width:260px;display:flex;flex-direction:column;gap:8px;">${nameButtons}</div>
+  `;
+  document.body.appendChild(overlay);
+}
+function selectUserForLogin(id){
+  const u = staffUsers.find(x=>x.id===id);
+  if(!u) return;
+  const overlay = document.getElementById('userPickerOverlay');
+  overlay.innerHTML = `
+    <div style="font-size:34px;">🔒</div>
+    <div style="color:#fff;font-weight:700;font-size:16px;">Nhập PIN của ${escapeHtml(u.name)}</div>
+    <input type="password" id="userLoginPinInput" maxlength="4" inputmode="numeric" style="font-size:22px;text-align:center;width:140px;padding:12px;border-radius:10px;border:none;letter-spacing:8px;">
+    <div id="userLoginPinError" style="color:#F3C9C4;font-size:13px;height:16px;"></div>
+    <div class="row" style="width:220px;">
+      <button class="btn btn-outline" style="background:#fff;" onclick="showUserPickerOverlay()">← Quay lại</button>
+      <button class="btn btn-primary" onclick="confirmUserLogin('${u.id}')">Vào</button>
+    </div>
+  `;
+  const input = document.getElementById('userLoginPinInput');
+  input.focus();
+  input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') confirmUserLogin(u.id); });
+}
+function confirmUserLogin(id){
+  const u = staffUsers.find(x=>x.id===id);
+  const input = document.getElementById('userLoginPinInput').value.trim();
+  if(input === u.pin){
+    currentUser = u;
+    sessionStorage.setItem('cantom_current_user_id', u.id);
+    document.getElementById('userPickerOverlay').remove();
+    applyCurrentUserPermissions();
+  }else{
+    document.getElementById('userLoginPinError').textContent = "Sai mã PIN, thử lại";
+    document.getElementById('userLoginPinInput').value = '';
+  }
+}
+function switchUser(){
+  currentUser = null;
+  sessionStorage.removeItem('cantom_current_user_id');
+  showUserPickerOverlay();
+}
+function applyCurrentUserPermissions(){
+  const bar = document.getElementById('currentUserBar');
+  if(!currentUser){
+    // Không có ai đăng nhập (chưa thiết lập user nào) -> hiện hết
+    ALL_TABS.forEach(t=>{ const el = document.getElementById(TAB_BTN_ID[t]); if(el) el.classList.remove('hidden'); });
+    if(bar) bar.classList.add('hidden');
+    return;
+  }
+  if(bar){
+    bar.classList.remove('hidden');
+    document.getElementById('currentUserNameLabel').textContent = currentUser.name;
+  }
+  let firstVisible = null;
+  ALL_TABS.forEach(t=>{
+    const el = document.getElementById(TAB_BTN_ID[t]);
+    if(!el) return;
+    const allowed = !!currentUser.permissions[t];
+    el.classList.toggle('hidden', !allowed);
+    if(allowed && !firstVisible) firstVisible = t;
+  });
+  // Nếu tab đang mở không được phép xem, chuyển sang tab đầu tiên được phép
+  const activeBtn = document.querySelector('.tab-btn.active');
+  const activeKey = activeBtn ? Object.keys(TAB_BTN_ID).find(k=>TAB_BTN_ID[k]===activeBtn.id) : null;
+  if((!activeKey || !currentUser.permissions[activeKey]) && firstVisible){
+    switchTab(firstVisible);
+  }
 }
 
 function wipeAllData(){
@@ -1435,6 +1655,12 @@ function totalMealBonusAllTime(employeeId){
   return days.reduce((s,dk)=> s + mealBonusForDay(employeeId,dk), 0);
 }
 
+let productGridCollapsed = false;
+function toggleProductGridCollapse(){
+  productGridCollapsed = !productGridCollapsed;
+  document.getElementById('productGrid').style.display = productGridCollapsed ? 'none' : '';
+  document.getElementById('prodGridToggleBtn').textContent = productGridCollapsed ? '▼' : '▲';
+}
 function renderProductGrid(){
   const wrap = document.getElementById('productGrid');
   if(products.length===0){ wrap.innerHTML = `<div class="empty-state">Chưa có mã hàng nào — vào tab Danh mục để thêm</div>`; return; }
@@ -2283,11 +2509,69 @@ const COLLECTIONS = {
   openingBalances: () => openingBalances,
   payments: () => payments,
   overtimeDays: () => overtimeDays,
+  staffUsers: () => staffUsers,
 };
-let lastSynced = { employees:[], products:[], weighings:[], openingBalances:[], payments:[], overtimeDays:[], companyInfo:null, appOptions:null };
+const COLLECTION_SETTERS = {
+  employees: (v)=>{ employees = v; },
+  products: (v)=>{ products = v; },
+  weighings: (v)=>{ weighings = v; },
+  openingBalances: (v)=>{ openingBalances = v; },
+  payments: (v)=>{ payments = v; },
+  overtimeDays: (v)=>{ overtimeDays = v; },
+  staffUsers: (v)=>{ staffUsers = v; },
+};
+const COLLECTION_LOCALKEYS = {
+  employees: EMP_KEY, products: PROD_KEY, weighings: WEIGH_KEY, openingBalances: OPEN_KEY,
+  payments: PAY_KEY, overtimeDays: OVERTIME_KEY, staffUsers: STAFF_KEY,
+};
+let lastSynced = { employees:[], products:[], weighings:[], openingBalances:[], payments:[], overtimeDays:[], staffUsers:[], companyInfo:null, appOptions:null };
 let fsDb = null;
 let fsReady = false;
 let cloudSyncTimer = null;
+let firestoreListeners = [];
+
+function renderEverything(){
+  renderWeighTab(); renderCatalog(); populateSelects(); populateDebtSelects();
+  if(document.getElementById('debtDetailWrap') && !document.getElementById('detailSection').classList.contains('hidden')) renderDebtDetail();
+  if(document.getElementById('debtBalanceWrap') && !document.getElementById('balanceSection').classList.contains('hidden')) renderDebtBalance();
+  if(document.getElementById('reportTab') && !document.getElementById('reportTab').classList.contains('hidden')){
+    renderPivotTable(document.getElementById('pivotDate').value);
+    renderProductReport();
+  }
+  if(document.getElementById('settleTab') && !document.getElementById('settleTab').classList.contains('hidden')) renderSettlement();
+  if(document.getElementById('userListWrap')) renderUserList();
+}
+
+function attachRealtimeListeners(){
+  // Dọn listener cũ (nếu gọi lại)
+  firestoreListeners.forEach(unsub=>unsub());
+  firestoreListeners = [];
+
+  Object.keys(COLLECTIONS).forEach(name=>{
+    const unsub = fsDb.collection(name).onSnapshot(qs=>{
+      const docs = qs.docs.map(d=>d.data());
+      COLLECTION_SETTERS[name](docs);
+      localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(docs));
+      lastSynced[name] = deepCopy(docs);
+      renderEverything();
+      if(name==='staffUsers') applyCurrentUserPermissions();
+    }, err=>{ console.error("Lỗi lắng nghe realtime", name, err); });
+    firestoreListeners.push(unsub);
+  });
+
+  const settingsUnsub = fsDb.collection("settings").doc("app").onSnapshot(doc=>{
+    if(doc.exists){
+      const sd = doc.data();
+      if(sd.companyInfo) companyInfo = sd.companyInfo;
+      if(sd.appOptions) appOptions = sd.appOptions;
+      lastSynced.companyInfo = deepCopy(companyInfo);
+      lastSynced.appOptions = deepCopy(appOptions);
+      localStorage.setItem(COMPANY_KEY, JSON.stringify(companyInfo));
+      localStorage.setItem(OPTIONS_KEY, JSON.stringify(appOptions));
+    }
+  });
+  firestoreListeners.push(settingsUnsub);
+}
 
 async function cloudInit(){
   if(!window.firebaseConfig){ updateCloudStatus("off"); return; }
@@ -2297,7 +2581,7 @@ async function cloudInit(){
     await firebase.auth().signInAnonymously();
     fsDb = firebase.firestore();
 
-    // Tải dữ liệu từ Firestore về (nếu có), ưu tiên cloud nếu cloud có dữ liệu hoặc máy đang trống
+    // Tải dữ liệu ban đầu 1 lần (để quyết định máy nào có dữ liệu ưu tiên)
     const snaps = {};
     for(const name of Object.keys(COLLECTIONS)){
       const qs = await fsDb.collection(name).get();
@@ -2308,35 +2592,29 @@ async function cloudInit(){
     const localHasData = employees.length>0 || products.length>0 || weighings.length>0;
 
     if(cloudHasData || !localHasData){
-      employees = snaps.employees;
-      products = snaps.products;
-      weighings = snaps.weighings;
-      openingBalances = snaps.openingBalances;
-      payments = snaps.payments;
-      overtimeDays = snaps.overtimeDays;
+      Object.keys(COLLECTIONS).forEach(name=>{
+        COLLECTION_SETTERS[name](snaps[name]);
+        localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(snaps[name]));
+      });
       if(settingsDoc.exists){
         const sd = settingsDoc.data();
         if(sd.companyInfo) companyInfo = sd.companyInfo;
         if(sd.appOptions) appOptions = sd.appOptions;
       }
-      localStorage.setItem(EMP_KEY, JSON.stringify(employees));
-      localStorage.setItem(PROD_KEY, JSON.stringify(products));
-      localStorage.setItem(WEIGH_KEY, JSON.stringify(weighings));
-      localStorage.setItem(OPEN_KEY, JSON.stringify(openingBalances));
-      localStorage.setItem(PAY_KEY, JSON.stringify(payments));
-      localStorage.setItem(OVERTIME_KEY, JSON.stringify(overtimeDays));
       localStorage.setItem(COMPANY_KEY, JSON.stringify(companyInfo));
       localStorage.setItem(OPTIONS_KEY, JSON.stringify(appOptions));
-      renderWeighTab(); renderCatalog(); populateSelects(); populateDebtSelects();
+      renderEverything();
     }
-    // Snapshot "đã đồng bộ" = đúng những gì vừa tải/đang có, để lần lưu đầu tiên chỉ đẩy phần thật sự thay đổi
     lastSynced = {
       employees: deepCopy(employees), products: deepCopy(products), weighings: deepCopy(weighings),
       openingBalances: deepCopy(openingBalances), payments: deepCopy(payments), overtimeDays: deepCopy(overtimeDays),
+      staffUsers: deepCopy(staffUsers),
       companyInfo: deepCopy(companyInfo), appOptions: deepCopy(appOptions),
     };
     fsReady = true;
     updateCloudStatus("synced");
+    attachRealtimeListeners();
+    checkUserGate();
   }catch(e){ console.error("Lỗi kết nối Firebase", e); updateCloudStatus("error"); }
 }
 
@@ -2385,6 +2663,7 @@ async function syncNow(){
     lastSynced = {
       employees: deepCopy(employees), products: deepCopy(products), weighings: deepCopy(weighings),
       openingBalances: deepCopy(openingBalances), payments: deepCopy(payments), overtimeDays: deepCopy(overtimeDays),
+      staffUsers: deepCopy(staffUsers),
       companyInfo: deepCopy(companyInfo), appOptions: deepCopy(appOptions),
     };
     updateCloudStatus("synced");
