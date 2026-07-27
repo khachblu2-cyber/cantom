@@ -32,11 +32,11 @@
   .tap:active{transform:scale(.96);}
   .wrap{max-width:560px;margin:0 auto;padding:0 18px;}
   .hidden{display:none !important;}
-  .tabs{position:sticky;top:0;z-index:20;background:var(--ink);border-bottom:1px solid var(--blue-dk);}
+  .tabs{position:sticky;top:0;z-index:20;background:var(--blue);border-bottom:1px solid var(--blue-dk);}
   .tabs-row{display:flex;max-width:700px;margin:0 auto;overflow-x:auto;}
   .tab-btn{white-space:nowrap;}
-  .tab-btn{flex:1 0 auto;min-width:76px;display:flex;align-items:center;justify-content:center;gap:5px;padding:13px 6px;border:none;border-bottom:2px solid transparent;background:transparent;color:#93A5C4;font-weight:600;font-size:12.5px;cursor:pointer;}
-  .tab-btn.active{color:#fff;border-bottom-color:#4C93E8;}
+  .tab-btn{flex:1 0 auto;min-width:96px;display:flex;align-items:center;justify-content:center;gap:6px;padding:15px 10px;border:none;border-bottom:2px solid transparent;background:transparent;color:#D3E4F8;font-weight:600;font-size:15px;cursor:pointer;}
+  .tab-btn.active{color:#fff;border-bottom-color:#FFFFFF;}
   .app-header{padding:20px 18px 10px;}
   .app-title{font-size:22px;font-weight:700;color:var(--ink);}
   .app-sub{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:.3px;}
@@ -76,37 +76,37 @@
   .totalbar .val{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:17px;color:var(--blue-dk);}
   .section-tab{display:flex;gap:6px;margin-bottom:12px;}
   .section-tab button{flex:1;padding:8px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--muted);font-weight:600;font-size:12.5px;cursor:pointer;}
-  .section-tab button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .section-tab button.active{background:var(--blue);color:#fff;border-color:var(--blue);}
   .emp-summary-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;}
   .emp-summary-head{display:flex;justify-content:space-between;align-items:center;}
   .emp-summary-name{font-weight:700;font-size:15.5px;}
   .emp-summary-code{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
   .summary-line{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
   .summary-line.total{border-top:1px dashed var(--line);margin-top:6px;padding-top:8px;font-weight:700;}
-  .emp-chip{padding:8px 10px;border-radius:9px;border:2px solid var(--line);background:#fff;cursor:pointer;margin-bottom:6px;}
+  .emp-chip{padding:11px 12px;border-radius:10px;border:2px solid var(--line);background:#fff;cursor:pointer;margin-bottom:6px;}
   .emp-chip.selected{border-color:var(--blue);background:#EAF1FB;}
   .emp-chip.highlighted{background:#FFF6E0;border-color:var(--amber);}
-  .emp-chip .c-code{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);}
-  .emp-chip .c-name{font-size:13px;font-weight:700;}
-  .prod-btn{border-radius:10px;border:3px solid transparent;padding:10px 6px;text-align:center;cursor:pointer;color:#fff;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.15);}
+  .emp-chip .c-code{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);}
+  .emp-chip .c-name{font-size:16px;font-weight:700;}
+  .prod-btn{border-radius:10px;border:3px solid transparent;padding:20px 6px;text-align:center;cursor:pointer;color:#fff;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.15);}
   .prod-btn.selected{border-color:var(--ink);transform:scale(0.96);}
-  .prod-btn .p-code{font-size:12.5px;line-height:1.2;}
-  .prod-btn .p-price{font-size:11px;font-weight:600;opacity:.92;margin-top:2px;}
+  .prod-btn .p-code{font-size:15px;line-height:1.2;}
+  .prod-btn .p-price{font-size:13px;font-weight:600;opacity:.92;margin-top:2px;}
   .weigh-layout{display:flex;gap:8px;max-width:900px;margin:0 auto;padding:0 8px;align-items:flex-start;}
-  .emp-col{flex:0 0 150px;position:sticky;top:52px;max-height:calc(100vh - 60px);overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;}
-  .emp-col-list{max-height:calc(100vh - 220px);overflow-y:auto;}
+  .emp-col{flex:0 0 190px;position:sticky;top:68px;max-height:calc(100vh - 76px);overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;}
+  .emp-col-list{max-height:calc(100vh - 236px);overflow-y:auto;}
   .prod-col{flex:1;min-width:0;}
-  .product-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;}
+  .product-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;}
   @media (max-width:520px){
     .weigh-layout{gap:6px;padding:0 6px;}
-    .emp-col{flex:0 0 88px;padding:6px;}
-    .emp-chip{padding:6px 5px;}
-    .emp-chip .c-code{font-size:9px;}
-    .emp-chip .c-name{font-size:11px;line-height:1.2;}
-    .product-grid{grid-template-columns:repeat(2,1fr);}
-    .prod-btn{padding:8px 4px;}
-    .prod-btn .p-code{font-size:11px;}
-    .prod-btn .p-price{font-size:10px;}
+    .emp-col{flex:0 0 112px;padding:7px;}
+    .emp-chip{padding:8px 6px;}
+    .emp-chip .c-code{font-size:10.5px;}
+    .emp-chip .c-name{font-size:13.5px;line-height:1.2;}
+    .product-grid{grid-template-columns:repeat(3,1fr);}
+    .prod-btn{padding:17px 4px;}
+    .prod-btn .p-code{font-size:13px;}
+    .prod-btn .p-price{font-size:11.5px;}
   }
   @media (max-width:380px){
     input[type=date]{font-size:12px;padding:8px 6px;}
@@ -146,13 +146,23 @@
   .id-card-code{font-family:'IBM Plex Mono',monospace;font-size:2.5mm;color:#1D5FAE;font-weight:700;margin-top:1.2mm;}
   .id-card-line{font-size:2.2mm;color:#555;margin-top:0.8mm;line-height:1.3;}
   #idcard-barcode,#previewBarcode{display:block;width:100%;height:9mm;padding:0 4mm 2mm;flex-shrink:0;}
-  .bill80-page{width:80mm;padding:3mm;font-family:'IBM Plex Mono',monospace;font-size:2.8mm;color:#000;background:#fff;}
+  /* ===== PHIEU CHI - kieu bill 80mm dat trong trang A4 (giong phan mem cu) ===== */
+  .bill80-page{width:72mm;box-sizing:border-box;padding:2mm 1.5mm 4mm;margin:0;font-family:'Times New Roman',Times,serif;font-size:3.1mm;line-height:1.35;color:#000;background:#fff;}
   .bill80-page .b-center{text-align:center;}
   .bill80-page .b-bold{font-weight:700;}
   .bill80-page .b-r{text-align:right;}
-  .bill80-page .b-line{border-top:1px dashed #000;margin:1.5mm 0;}
-  .bill80-page table{width:100%;border-collapse:collapse;font-size:2.8mm;}
-  .bill80-page td{padding:0.6mm 0;}
+  .bill80-page .b-co{font-size:4.4mm;font-weight:700;text-align:center;line-height:1.2;}
+  .bill80-page .b-sub{font-size:3.0mm;text-align:center;margin-top:1.6mm;}
+  .bill80-page .b-title{font-size:5.0mm;font-weight:700;text-align:center;margin:2.4mm 0 1.6mm;}
+  .bill80-page .b-info{font-size:3.1mm;margin-bottom:0.6mm;}
+  .bill80-page table.b-tbl{width:100%;border-collapse:collapse;font-size:3.1mm;margin-top:1.2mm;}
+  .bill80-page table.b-tbl th,.bill80-page table.b-tbl td{border:0.3mm solid #000;padding:0.7mm 1mm;}
+  .bill80-page table.b-tbl th{font-weight:700;text-align:center;}
+  .bill80-page table.b-tbl td.b-stt{text-align:center;width:9mm;}
+  .bill80-page table.b-tbl td.b-date{text-align:center;}
+  .bill80-page table.b-tbl td.b-amt{text-align:right;}
+  .bill80-page .b-words{font-size:3.1mm;margin-top:1mm;}
+  .bill80-page .b-sign{text-align:center;font-size:3.1mm;margin-top:9mm;}
   .receipt-page{background:#fff;padding:20px;border:1px solid #ccc;border-radius:8px;margin-bottom:16px;font-family:'Inter',sans-serif;}
   .receipt-header{text-align:center;margin-bottom:14px;border-bottom:2px solid var(--ink);padding-bottom:10px;}
   .receipt-header h2{margin:0;font-size:18px;}
@@ -169,13 +179,13 @@
   .receipt-sign div{width:45%;}
   table.pivot-table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap;}
   table.pivot-table th, table.pivot-table td{border:1px solid var(--line);padding:6px 8px;text-align:right;}
-  table.pivot-table th{background:var(--ink);color:#fff;position:sticky;top:0;}
+  table.pivot-table th{background:var(--blue);color:#fff;position:sticky;top:0;}
   table.pivot-table td:first-child, table.pivot-table th:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:2;}
-  table.pivot-table th:first-child{background:var(--ink);z-index:3;}
+  table.pivot-table th:first-child{background:var(--blue);z-index:3;}
   table.pivot-table tr.total-row td{font-weight:700;background:#EAF1FB;}
   table.debt-report-table{border-collapse:collapse;width:100%;font-size:13px;}
   table.debt-report-table th, table.debt-report-table td{border:1px solid var(--line);padding:6px 8px;text-align:right;}
-  table.debt-report-table th{background:var(--ink);color:#fff;}
+  table.debt-report-table th{background:var(--blue);color:#fff;}
   table.debt-report-table td:nth-child(2){text-align:left;}
   table.debt-report-table tr.total-row td{font-weight:700;background:#EAF1FB;}
 </style>
@@ -191,10 +201,11 @@
     <button class="tab-btn" id="tabBtnReport" onclick="switchTab('report')">📊 Báo cáo</button>
     <button class="tab-btn" id="tabBtnConfig" onclick="switchTab('config')">⚙️ Cài đặt</button>
   </div>
-  <div id="currentUserBar" class="hidden" style="display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:4px 10px;background:#0F1B2E;">
+  <div id="currentUserBar" class="hidden" style="display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:4px 10px;background:#1D5FAE;">
     <span style="color:#93A5C4;font-size:11px;">👤 <span id="currentUserNameLabel"></span></span>
     <button onclick="switchUser()" style="background:none;border:1px solid #2A3B54;color:#93A5C4;font-size:10.5px;padding:2px 8px;border-radius:6px;cursor:pointer;">Đổi người dùng</button>
   </div>
+  <div style="text-align:center;background:#1D5FAE;color:#D3E4F8;font-size:9.5px;padding:2px 0;">Phiên bản: V1.0.6</div>
 </div>
 
 <!-- ============ TAB: CÂN TÔM ============ -->
@@ -361,9 +372,8 @@
   </div>
   <div class="wrap">
     <div class="section-tab">
-      <button class="active" id="debtBtnOpen" onclick="setDebtSection('open')">Số dư đầu kỳ</button>
       <button id="debtBtnPay" onclick="setDebtSection('pay')">Phiếu chi</button>
-      <button id="debtBtnReport" onclick="setDebtSection('report')">Tổng hợp</button>
+      <button class="active" id="debtBtnReport" onclick="setDebtSection('report')">Tổng hợp</button>
       <button id="debtBtnDetail" onclick="setDebtSection('detail')">Chi tiết theo kỳ</button>
       <button id="debtBtnBalance" onclick="setDebtSection('balance')">Số dư công nợ</button>
     </div>
@@ -398,28 +408,7 @@
         <div class="card-title">📷 Quét mã vạch nhân viên</div>
         <input type="text" id="payBarcodeInput" placeholder="Đưa con trỏ vào đây rồi quét thẻ…" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();handlePayBarcodeScan();}">
         <div id="payBarcodeStatus" class="muted" style="font-size:12px;margin-top:6px;"></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Lập phiếu chi</div>
-        <div class="field">
-          <label>Nhân viên</label>
-          <select id="payEmployee" onchange="renderPayableDays()"></select>
-        </div>
-        <div class="field">
-          <label>Loại</label>
-          <select id="payType">
-            <option value="wage">Trả lương</option>
-            <option value="advance">Tạm ứng</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Chọn (các) ngày muốn chi <span class="muted" style="font-weight:400;">— không gồm hôm nay</span></label>
-          <div id="payableDaysWrap" style="border:1px solid var(--line);border-radius:10px;padding:8px;max-height:220px;overflow-y:auto;"></div>
-        </div>
-        <div class="field"><label>Ngày lập phiếu</label><input type="date" id="payDate"></div>
-        <div class="field"><label>Số tiền (đ)</label><input type="number" id="payAmount" placeholder="0" inputmode="numeric"></div>
-        <div class="field"><label>Ghi chú</label><input type="text" id="payNote" placeholder="Tự động ghi các ngày đã chọn"></div>
-        <button class="btn btn-primary btn-block" onclick="addPayment()">＋ Lập phiếu chi</button>
+        <div class="muted" style="font-size:11.5px;margin-top:8px;">Quét thẻ → cửa sổ chọn ngày chi tự hiện lên → quét trống (hoặc Enter) lần nữa để CHI + IN BILL 80.</div>
       </div>
       <div class="card">
         <div class="card-title">Bảng kê phiếu chi</div>
@@ -430,7 +419,17 @@
     <!-- TỔNG HỢP CÔNG NỢ -->
     <div id="reportSection" class="hidden">
       <div class="card-title">Tổng hợp công nợ phải trả theo nhân viên</div>
-      <div id="debtReportWrap"></div>
+      <div class="card">
+        <div class="row">
+          <div class="field"><label>Từ ngày</label><input type="date" id="reportFrom" onchange="renderDebtReport()"></div>
+          <div class="field"><label>Đến ngày</label><input type="date" id="reportTo" onchange="renderDebtReport()"></div>
+        </div>
+        <button class="btn btn-outline btn-block" onclick="clearDebtReportFilter()">Xem toàn bộ (bỏ lọc ngày)</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <div id="debtReportWrap"></div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:8px;" onclick="exportDebtReportExcel()">📊 Xuất Excel</button>
     </div>
 
     <!-- CHI TIẾT CÔNG NỢ THEO KỲ -->
@@ -734,9 +733,9 @@ function switchTab(tab){
   if(tab==='weigh'){ renderEmployeePicker(); renderProductGrid(); renderWeighTab(); }
   if(tab==='catalog'){ renderCatalog(); }
   if(tab==='debt'){
-    if(!document.getElementById('payDate').value) document.getElementById('payDate').value = todayKey();
     populateDebtSelects();
     renderDebtTab();
+    setDebtSection('report');
   }
   if(tab==='settle'){
     if(!document.getElementById('settleDate').value) document.getElementById('settleDate').value = todayKey();
@@ -1208,12 +1207,11 @@ function wipeAllData(){
   alert("Đã xoá toàn bộ dữ liệu.");
 }
 function setDebtSection(s){
-  document.getElementById('openSection').classList.toggle('hidden', s!=='open');
+  document.getElementById('openSection').classList.toggle('hidden', s!=='report');
   document.getElementById('paySection').classList.toggle('hidden', s!=='pay');
   document.getElementById('reportSection').classList.toggle('hidden', s!=='report');
   document.getElementById('detailSection').classList.toggle('hidden', s!=='detail');
   document.getElementById('balanceSection').classList.toggle('hidden', s!=='balance');
-  document.getElementById('debtBtnOpen').classList.toggle('active', s==='open');
   document.getElementById('debtBtnPay').classList.toggle('active', s==='pay');
   document.getElementById('debtBtnReport').classList.toggle('active', s==='report');
   document.getElementById('debtBtnDetail').classList.toggle('active', s==='detail');
@@ -1801,10 +1799,11 @@ function renderEmployeePicker(){
     <div class="emp-chip ${e.id===selectedEmployeeId?'selected':''} ${i===empHighlightIndex?'highlighted':''}" onclick="selectEmployee('${e.id}')">
       <div class="c-code">${escapeHtml(e.code)}</div>
       <div class="c-name">${escapeHtml(e.name)}</div>
-      <label style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:10px;color:${isOT?'var(--amber)':'var(--muted)'};font-weight:${isOT?'700':'400'};" onclick="event.stopPropagation();">
-        <input type="checkbox" ${isOT?'checked':''} onchange="toggleOvertimeDay('${e.id}','${dateKey}')" style="width:13px;height:13px;">
-        🍚 Tiền cơm
-      </label>
+      <div style="border-top:1px dashed var(--line);margin-top:6px;padding-top:6px;">
+        <button type="button" onclick="event.stopPropagation();toggleOvertimeDay('${e.id}','${dateKey}')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:4px;padding:5px 4px;border-radius:7px;font-size:10.5px;font-weight:700;cursor:pointer;border:1.5px solid ${isOT?'var(--amber)':'var(--line)'};background:${isOT?'#FFF6E0':'#fff'};color:${isOT?'var(--amber)':'var(--muted)'};">
+          🍚 ${isOT?'Đang tính tiền cơm':'Tiền cơm'}
+        </button>
+      </div>
     </div>
   `;
   }).join('');
@@ -2086,14 +2085,71 @@ function handlePayBarcodeScan(){
     statusEl.style.color = 'var(--rust)';
     return;
   }
-  document.getElementById('payEmployee').value = emp.id;
+  statusEl.textContent = '';
+  showPayableDaysModal(emp.id);
+}
+let payModalEmployeeId = null;
+function showPayableDaysModal(employeeId){
+  payModalEmployeeId = employeeId;
+  const emp = employees.find(e=>e.id===employeeId);
+  if(!emp) return;
+  const old = document.getElementById('payModalOverlay');
+  if(old) old.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'payModalOverlay';
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(21,34,56,.85);z-index:996;display:flex;align-items:center;justify-content:center;padding:16px;";
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:18px;width:100%;max-width:380px;max-height:88vh;overflow-y:auto;">
+      <div style="text-align:center;font-weight:700;font-size:16px;">${escapeHtml(emp.name)}</div>
+      <div style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:12px;">Mã: ${escapeHtml(emp.code)}</div>
+      <div class="field">
+        <label>Loại</label>
+        <select id="payModalType">
+          <option value="wage">Trả lương</option>
+          <option value="advance">Tạm ứng</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Chọn (các) ngày muốn chi <span class="muted" style="font-weight:400;">— không gồm hôm nay</span></label>
+        <div id="payableDaysWrap" style="border:1px solid var(--line);border-radius:10px;padding:8px;max-height:260px;overflow-y:auto;"></div>
+      </div>
+      <div style="text-align:right;font-weight:700;font-size:18px;margin:10px 0;">Tổng: <span id="payModalTotal" style="color:var(--blue-dk);">0 đ</span></div>
+      <div class="muted" style="font-size:11.5px;text-align:center;margin-bottom:10px;">Quét thẻ trống (hoặc bấm Enter) để CHI + IN BILL 80</div>
+      <div class="row">
+        <button class="btn btn-outline" onclick="closePayableDaysModal()">Huỷ</button>
+        <button class="btn btn-primary" onclick="confirmPaymentAndPrintBill()">✅ Chi + In Bill</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
   renderPayableDays();
-  // Tự động tick hết các ngày đang có tiền, tính luôn tổng
   document.querySelectorAll('.payable-day-check').forEach(cb=>{ cb.checked = true; });
   recalcPayableAmount();
-  statusEl.textContent = `✅ ${emp.name} (${emp.code}) — đã tự chọn hết ngày có tiền. Bấm Enter lần nữa để CHI + IN BILL.`;
-  statusEl.style.color = 'var(--moss)';
-  input.focus();
+  document.getElementById('payBarcodeInput').focus();
+}
+function closePayableDaysModal(){
+  payModalEmployeeId = null;
+  const overlay = document.getElementById('payModalOverlay');
+  if(overlay) overlay.remove();
+  document.getElementById('payBarcodeInput').focus();
+}
+// Tap hop cac ngay DA CHI cua 1 nhan vien.
+// Phieu moi luu san paidDates; phieu cu chi co ghi chu bang chu -> doc nguoc tu ghi chu.
+function paidDateKeysOf(employeeId){
+  const set = new Set();
+  payments.filter(p=>p.employeeId===employeeId).forEach(p=>{
+    if(Array.isArray(p.paidDates) && p.paidDates.length){
+      p.paidDates.forEach(dk=>set.add(dk));
+      return;
+    }
+    if(typeof p.note === 'string' && p.note.indexOf('Chi cho các ngày') === 0){
+      (p.note.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/g) || []).forEach(str=>{
+        const parts = str.split('/');
+        set.add(parts[2] + '-' + String(parts[1]).padStart(2,'0') + '-' + String(parts[0]).padStart(2,'0'));
+      });
+    }
+  });
+  return set;
 }
 function employeeDailyEarnings(employeeId){
   const today = todayKey();
@@ -2106,10 +2162,19 @@ function employeeDailyEarnings(employeeId){
 }
 function renderPayableDays(){
   const wrap = document.getElementById('payableDaysWrap');
-  const employeeId = document.getElementById('payEmployee').value;
+  if(!wrap) return;
+  const employeeId = payModalEmployeeId;
   if(!employeeId){ wrap.innerHTML = `<div class="empty-state" style="padding:8px;">Chọn hoặc quét mã nhân viên trước</div>`; return; }
-  const days = employeeDailyEarnings(employeeId);
-  if(days.length===0){ wrap.innerHTML = `<div class="empty-state" style="padding:8px;">Chưa có ngày nào (trừ hôm nay) có tiền công để chi</div>`; return; }
+  const allDays = employeeDailyEarnings(employeeId);
+  const paid = paidDateKeysOf(employeeId);
+  const days = allDays.filter(d=>!paid.has(d.dateKey));
+  if(days.length===0){
+    const msg = allDays.length > 0
+      ? '✅ Đã chi hết — nhân viên này không còn ngày nào chưa trả'
+      : 'Chưa có ngày nào (trừ hôm nay) có tiền công để chi';
+    wrap.innerHTML = `<div class="empty-state" style="padding:8px;">${msg}</div>`;
+    return;
+  }
   wrap.innerHTML = days.map(d=>{
     const dateDisplay = new Date(d.dateKey+"T00:00:00").toLocaleDateString("vi-VN",{weekday:"short", day:"2-digit", month:"2-digit"});
     return `
@@ -2126,59 +2191,111 @@ function renderPayableDays(){
 function recalcPayableAmount(){
   const checked = Array.from(document.querySelectorAll('.payable-day-check:checked'));
   const total = checked.reduce((s,cb)=> s + Number(cb.dataset.amount||0), 0);
-  if(checked.length>0) document.getElementById('payAmount').value = total;
+  const totalEl = document.getElementById('payModalTotal');
+  if(totalEl) totalEl.textContent = formatMoney(total);
 }
 
 // ===== CHI TIỀN NHANH + IN BILL 80mm =====
+let billPrintLockUntil = 0;
 function confirmPaymentAndPrintBill(){
-  const employeeId = document.getElementById('payEmployee').value;
+  // Chan Enter/bam trung trong 2 giay - bo qua im lang, khong bao loi
+  if(Date.now() < billPrintLockUntil) return;
+  const employeeId = payModalEmployeeId;
   const emp = employees.find(x=>x.id===employeeId);
   const statusEl = document.getElementById('payBarcodeStatus');
   if(!emp){ statusEl.textContent = '⚠️ Chưa chọn nhân viên — quét mã trước'; statusEl.style.color='var(--rust)'; return; }
-  const amount = Number(document.getElementById('payAmount').value);
-  if(!amount || amount<=0){ statusEl.textContent = '⚠️ Không có số tiền để chi — chưa có ngày nào được chọn'; statusEl.style.color='var(--rust)'; return; }
-  const type = document.getElementById('payType').value;
   const checkedDays = Array.from(document.querySelectorAll('.payable-day-check:checked'))
     .map(cb=>({ dateKey: cb.dataset.date, amount: Number(cb.dataset.amount) }))
     .sort((a,b)=> a.dateKey.localeCompare(b.dateKey));
-  addPayment();
+  const amount = checkedDays.reduce((s,d)=>s+d.amount,0);
+  if(!amount || amount<=0){ statusEl.textContent = '⚠️ Không có số tiền để chi — chưa có ngày nào được chọn'; statusEl.style.color='var(--rust)'; return; }
+  const type = document.getElementById('payModalType').value;
+  const dateKey = todayKey();
+  const note = "Chi cho các ngày: " + checkedDays.map(d=>new Date(d.dateKey+"T00:00:00").toLocaleDateString("vi-VN")).join(", ");
+  billPrintLockUntil = Date.now() + 2000;
+  payments.push({ id: uid(), employeeId, dateKey, type, amount, note, paidDates: checkedDays.map(d=>d.dateKey), createdAt: Date.now() });
+  saveAll();
+  renderDebtTab();
   printBill80(emp, type, amount, checkedDays);
   statusEl.textContent = `✅ Đã chi ${formatMoney(amount)} cho ${emp.name} và in bill.`;
   statusEl.style.color = 'var(--moss)';
-  document.getElementById('payBarcodeInput').focus();
+  closePayableDaysModal();
 }
+// Doc so tien thanh chu (tieng Viet)
+function docSoThanhChu(n){
+  n = Math.round(Number(n)||0);
+  if(n <= 0) return 'Không';
+  const ch = ['không','một','hai','ba','bốn','năm','sáu','bảy','tám','chín'];
+  function doc3(num, full){
+    const tram = Math.floor(num/100), chuc = Math.floor((num%100)/10), dv = num%10;
+    let s = '';
+    if(tram > 0){ s += ch[tram] + ' trăm'; if(chuc===0 && dv>0) s += ' lẻ'; }
+    else if(full){ s += 'không trăm'; if(chuc===0 && dv>0) s += ' lẻ'; }
+    if(chuc > 1){
+      s += ' ' + ch[chuc] + ' mươi';
+      if(dv === 1) s += ' mốt'; else if(dv === 5) s += ' lăm'; else if(dv > 0) s += ' ' + ch[dv];
+    } else if(chuc === 1){
+      s += ' mười';
+      if(dv === 5) s += ' lăm'; else if(dv > 0) s += ' ' + ch[dv];
+    } else if(dv > 0){ s += ' ' + ch[dv]; }
+    return s.trim();
+  }
+  const units = ['','nghìn','triệu','tỷ','nghìn tỷ','triệu tỷ'];
+  const groups = [];
+  let x = n;
+  while(x > 0){ groups.push(x % 1000); x = Math.floor(x/1000); }
+  let out = '';
+  for(let i = groups.length-1; i >= 0; i--){
+    if(groups[i] === 0) continue;
+    out += (out ? ' ' : '') + doc3(groups[i], i < groups.length-1) + (units[i] ? ' ' + units[i] : '');
+  }
+  out = out.replace(/\s+/g,' ').trim();
+  return out.charAt(0).toUpperCase() + out.slice(1);
+}
+
 function printBill80(emp, type, amount, checkedDays){
   const now = new Date();
-  const rows = checkedDays.map(d=>`<tr><td>${new Date(d.dateKey+"T00:00:00").toLocaleDateString("vi-VN")}</td><td class="b-r">${formatNumber(d.amount)}</td></tr>`).join('');
+  const pad = v => String(v).padStart(2,'0');
+  const h24 = now.getHours();
+  const ampm = h24 < 12 ? 'AM' : 'PM';
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  const printStamp = now.toLocaleDateString('vi-VN') + ' ' + pad(h12) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds()) + ' ' + ampm;
+  const rows = checkedDays.map((d,i)=>`<tr>
+        <td class="b-stt">${i+1}</td>
+        <td class="b-date">${new Date(d.dateKey+"T00:00:00").toLocaleDateString("vi-VN")}</td>
+        <td class="b-amt">${formatNumber(d.amount)}</td>
+      </tr>`).join('');
   document.getElementById('printArea').innerHTML = `
     <div class="bill80-page">
-      <div class="b-center b-bold" style="font-size:3.4mm;">${companyInfo.name ? escapeHtml(companyInfo.name) : 'PHIẾU CHI'}</div>
-      ${companyInfo.address?`<div class="b-center" style="font-size:2.4mm;">${escapeHtml(companyInfo.address)}</div>`:''}
-      <div class="b-center b-bold" style="margin-top:2mm;">PHIẾU CHI TIỀN</div>
-      <div class="b-center" style="font-size:2.4mm;">${now.toLocaleString("vi-VN")}</div>
-      <div class="b-line"></div>
-      <div>Nhân viên: <b>${escapeHtml(emp.name)}</b></div>
-      <div>Mã NV: ${escapeHtml(emp.code)}</div>
-      <div>Loại: ${type==='advance'?'Tạm ứng':'Trả lương'}</div>
-      <div class="b-line"></div>
-      <table>
-        <tr><td><b>Ngày</b></td><td class="b-r"><b>Số tiền</b></td></tr>
+      ${companyInfo.name ? `<div class="b-co">${escapeHtml(companyInfo.name)}</div>` : ''}
+      ${companyInfo.address ? `<div class="b-sub">${escapeHtml(companyInfo.address)}</div>` : ''}
+      ${companyInfo.phone ? `<div class="b-sub">${escapeHtml(companyInfo.phone)}</div>` : ''}
+      <div class="b-title">PHIẾU CHI</div>
+      <div class="b-info">Mã Nhân Viên :&nbsp; ${escapeHtml(emp.code||'')}</div>
+      <div class="b-info">Tên : ${escapeHtml(emp.name||'')}</div>
+      <div class="b-info">Ngày : ${now.toLocaleDateString('vi-VN')}</div>
+      <div class="b-info">Ngày in: ${printStamp}</div>
+      <table class="b-tbl">
+        <tr><th style="width:9mm;">STT</th><th>Ngày tháng</th><th>Số tiền</th></tr>
         ${rows}
+        <tr>
+          <td colspan="2" class="b-center b-bold">TỔNG CỘNG :</td>
+          <td class="b-amt b-bold">${formatNumber(amount)}</td>
+        </tr>
       </table>
-      <div class="b-line"></div>
-      <div style="display:flex;justify-content:space-between;font-size:3.6mm;font-weight:700;">
-        <span>TỔNG CỘNG</span><span>${formatMoney(amount)}</span>
-      </div>
-      <div class="b-line"></div>
-      <div style="display:flex;justify-content:space-between;margin-top:5mm;font-size:2.6mm;text-align:center;">
-        <div style="width:45%;">Người nhận<br><br><br>_____________</div>
-        <div style="width:45%;">Người chi<br><br><br>_____________</div>
-      </div>
+      <div class="b-words">Bằng chữ :&nbsp; ${docSoThanhChu(amount)}</div>
+      <div class="b-sign">Ký nhận</div>
     </div>
   `;
+  // Kho trang phai TRUNG khop kho giay may in (72 x 297mm) - neu ngan hon, Chrome se canh giua to giay
   const pageStyle = document.createElement('style');
   pageStyle.id = 'bill80PageStyle';
-  pageStyle.textContent = '@media print { @page { size: 80mm auto; margin: 2mm; } }';
+  pageStyle.textContent = '@media print {'
+    + ' @page { size: 72mm 297mm; margin: 0; }'
+    + ' html, body { margin:0 !important; padding:0 !important; background:#fff; }'
+    + ' body > *:not(#printArea) { display:none !important; }'
+    + ' #printArea { position:static !important; width:72mm !important; left:auto !important; top:auto !important; margin:0 !important; }'
+    + ' }';
   document.head.appendChild(pageStyle);
   const cleanup = () => { pageStyle.remove(); window.removeEventListener('afterprint', cleanup); };
   window.addEventListener('afterprint', cleanup);
@@ -2188,7 +2305,6 @@ function printBill80(emp, type, amount, checkedDays){
 function populateDebtSelects(){
   const opts = employees.length ? employees.map(e=>`<option value="${e.id}">${escapeHtml(e.code)} - ${escapeHtml(e.name)}</option>`).join('') : `<option value="">-- Chưa có nhân viên --</option>`;
   document.getElementById('openEmployee').innerHTML = opts;
-  document.getElementById('payEmployee').innerHTML = opts;
   if(document.getElementById('detailEmployee')) populateDetailEmployeeSelect();
   if(document.getElementById('payableDaysWrap')) renderPayableDays();
 }
@@ -2232,25 +2348,6 @@ function renderOpeningList(){
 }
 
 // ===== CÔNG NỢ: PHIẾU CHI =====
-function addPayment(){
-  const employeeId = document.getElementById('payEmployee').value;
-  const dateKey = document.getElementById('payDate').value || todayKey();
-  const type = document.getElementById('payType').value;
-  const amount = Number(document.getElementById('payAmount').value);
-  let note = document.getElementById('payNote').value.trim();
-  if(!employeeId){ alert("Chọn nhân viên"); return; }
-  if(!amount || amount<=0){ alert("Nhập số tiền hợp lệ"); return; }
-  const checkedDays = Array.from(document.querySelectorAll('.payable-day-check:checked')).map(cb=>cb.dataset.date);
-  if(checkedDays.length>0 && !note){
-    note = "Chi cho các ngày: " + checkedDays.slice().sort().map(dk=>new Date(dk+"T00:00:00").toLocaleDateString("vi-VN")).join(", ");
-  }
-  payments.push({ id: uid(), employeeId, dateKey, type, amount, note, createdAt: Date.now() });
-  saveAll();
-  document.getElementById('payAmount').value='';
-  document.getElementById('payNote').value='';
-  renderDebtTab();
-  renderPayableDays();
-}
 function deletePayment(id){
   if(!confirm("Xoá phiếu chi này?")) return;
   payments = payments.filter(p=>p.id!==id);
@@ -2296,31 +2393,93 @@ function renderDebtTab(){
   renderOpeningList();
   renderPaymentList();
 }
+function prevDateKey(dateKey){
+  const d = new Date(dateKey+"T00:00:00");
+  d.setDate(d.getDate()-1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function clearDebtReportFilter(){
+  document.getElementById('reportFrom').value = '';
+  document.getElementById('reportTo').value = '';
+  renderDebtReport();
+}
+function buildDebtReportRows(){
+  const fromKey = document.getElementById('reportFrom')?.value;
+  const toKey = document.getElementById('reportTo')?.value;
+  return employees.map(e=>{
+    const dauKy = fromKey ? balanceAsOf(e.id, prevDateKey(fromKey)) : totalOpeningBalance(e.id);
+    const weighInPeriod = weighings.filter(w=> w.employeeId===e.id && (!fromKey||w.dateKey>=fromKey) && (!toKey||w.dateKey<=toKey));
+    const baseEarn = weighInPeriod.reduce((s,w)=>s+w.amount,0);
+    const otDays = [...new Set(weighInPeriod.map(w=>w.dateKey))];
+    const mealBonus = otDays.reduce((s,dk)=> s + mealBonusForDay(e.id,dk), 0);
+    const no = baseEarn + mealBonus;
+    const traInPeriod = payments.filter(p=> p.employeeId===e.id && (!fromKey||p.dateKey>=fromKey) && (!toKey||p.dateKey<=toKey));
+    const tra = traInPeriod.reduce((s,p)=>s+p.amount,0);
+    const con = dauKy + no - tra;
+    return { code: e.code, name: e.name, dauKy, no, tra, con };
+  });
+}
+let debtReportShowAll = false;
+function toggleDebtReportShowAll(){ debtReportShowAll = !debtReportShowAll; renderDebtReport(); }
 function renderDebtReport(){
   const wrap = document.getElementById('debtReportWrap');
   if(employees.length===0){ wrap.innerHTML = `<div class="empty-state">Chưa có nhân viên nào</div>`; return; }
-  wrap.innerHTML = employees.map(e=>{
-    const opening = totalOpeningBalance(e.id);
-    const earned = totalEarnedAllTime(e.id);
-    const paid = totalPaid(e.id);
-    const balance = opening + earned - paid;
-    return `
-      <div class="emp-summary-card">
-        <div class="emp-summary-head">
-          <div>
-            <div class="emp-summary-name">${escapeHtml(e.name)}</div>
-            <div class="emp-summary-code">${escapeHtml(e.code)}</div>
-          </div>
-        </div>
-        <div style="margin-top:10px;">
-          <div class="summary-line"><span class="muted">Số dư đầu kỳ</span><span class="amount">${formatMoney(opening)}</span></div>
-          <div class="summary-line"><span class="muted">Tổng tiền công (tất cả)</span><span class="amount">${formatMoney(earned)}</span></div>
-          <div class="summary-line"><span class="muted">Tổng đã chi</span><span class="amount">-${formatMoney(paid)}</span></div>
-          <div class="summary-line total"><span>Còn phải trả</span><span class="amount" style="color:${balance>0?'var(--rust)':'var(--moss)'}">${formatMoney(balance)}</span></div>
-        </div>
-      </div>
-    `;
-  }).join('');
+  const allRows = buildDebtReportRows();
+  const hiddenCount = allRows.filter(r=>r.con===0).length;
+  const rows = debtReportShowAll ? allRows : allRows.filter(r=>r.con!==0);
+  const tongDauKy = rows.reduce((s,r)=>s+r.dauKy,0);
+  const tongNo = rows.reduce((s,r)=>s+r.no,0);
+  const tongTra = rows.reduce((s,r)=>s+r.tra,0);
+  const tongCon = rows.reduce((s,r)=>s+r.con,0);
+  const body = rows.map(r=>`
+    <tr>
+      <td style="text-align:left;">${escapeHtml(r.code)}</td>
+      <td style="text-align:left;">${escapeHtml(r.name)}</td>
+      <td>${formatNumber(r.dauKy)}</td>
+      <td>${formatNumber(r.no)}</td>
+      <td>${formatNumber(r.tra)}</td>
+      <td style="font-weight:700;color:${r.con>0?'var(--rust)':'var(--moss)'};">${formatNumber(r.con)}</td>
+    </tr>
+  `).join('');
+  const toggleBar = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+      <span class="muted" style="font-size:12px;">${debtReportShowAll ? 'Đang hiện tất cả nhân viên' : (hiddenCount>0 ? 'Đang ẩn '+hiddenCount+' người đã hết nợ' : 'Đang hiện người còn nợ')}</span>
+      <button class="btn btn-outline" style="padding:6px 12px;font-size:12.5px;" onclick="toggleDebtReportShowAll()">${debtReportShowAll ? 'Chỉ hiện người còn nợ' : 'Hiện tất cả nhân viên'}</button>
+    </div>`;
+  if(rows.length===0){
+    wrap.innerHTML = toggleBar + `<div class="empty-state">✅ Không còn ai nợ tiền</div>`;
+    return;
+  }
+  wrap.innerHTML = toggleBar + `
+    <table class="debt-report-table">
+      <thead><tr><th style="text-align:left;">Mã NV</th><th style="text-align:left;">Tên nhân viên</th><th>Đầu kỳ</th><th>Nợ (phát sinh)</th><th>Trả</th><th>Còn</th></tr></thead>
+      <tbody>${body}
+        <tr class="total-row"><td colspan="2">TỔNG CỘNG</td><td>${formatNumber(tongDauKy)}</td><td>${formatNumber(tongNo)}</td><td>${formatNumber(tongTra)}</td><td>${formatNumber(tongCon)}</td></tr>
+      </tbody>
+    </table>
+  `;
+}
+function exportDebtReportExcel(){
+  if(employees.length===0){ alert("Chưa có nhân viên nào"); return; }
+  const rows = buildDebtReportRows();
+  const fromKey = document.getElementById('reportFrom')?.value;
+  const toKey = document.getElementById('reportTo')?.value;
+  const aoa = [
+    ["TỔNG HỢP CÔNG NỢ PHẢI TRẢ THEO NHÂN VIÊN"],
+    [`Khoảng thời gian: ${fromKey?new Date(fromKey+"T00:00:00").toLocaleDateString("vi-VN"):'Từ đầu'} - ${toKey?new Date(toKey+"T00:00:00").toLocaleDateString("vi-VN"):'Hiện tại'}`],
+    [],
+    ["Mã NV","Tên nhân viên","Đầu kỳ","Nợ (phát sinh)","Trả","Còn"],
+  ];
+  rows.forEach(r=> aoa.push([r.code, r.name, r.dauKy, r.no, r.tra, r.con]));
+  const tongDauKy = rows.reduce((s,r)=>s+r.dauKy,0);
+  const tongNo = rows.reduce((s,r)=>s+r.no,0);
+  const tongTra = rows.reduce((s,r)=>s+r.tra,0);
+  const tongCon = rows.reduce((s,r)=>s+r.con,0);
+  aoa.push(["", "TỔNG CỘNG", tongDauKy, tongNo, tongTra, tongCon]);
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Tong hop cong no");
+  XLSX.writeFile(wb, `tong-hop-cong-no-${todayKey()}.xlsx`);
 }
 
 // ===== CHI TIẾT CÔNG NỢ THEO KỲ (Đầu kỳ / Tăng / Giảm / Cuối kỳ) =====
@@ -3009,7 +3168,6 @@ document.getElementById('weighDate').value = todayKey();
 populateSelects();
 renderWeighTab();
 document.getElementById('settleDate').value = todayKey();
-document.getElementById('payDate').value = todayKey();
 populateDebtSelects();
 cloudInit();
 checkPinLock();
