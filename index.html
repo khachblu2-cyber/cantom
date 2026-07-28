@@ -91,46 +91,32 @@
     display:flex;align-items:center;justify-content:center;font-size:38px;
     box-shadow:0 8px 26px rgba(6,26,52,.34);
   }
-  .lg-co{font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:#B7D4F5;font-weight:700;}
   .lg-title{font-family:'Fraunces',Georgia,serif;font-size:29px;font-weight:700;line-height:1.15;margin-top:5px;}
   .lg-sub{font-size:13px;color:#C6DCF6;margin-top:7px;}
   .lg-card{background:#fff;border-radius:20px;padding:18px 16px 20px;box-shadow:0 18px 44px rgba(5,22,46,.32);}
   .lg-label{font-size:11.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
-  .lg-users{display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow-y:auto;}
-  .lg-user{
-    display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;
-    padding:11px 12px;border-radius:13px;border:1.5px solid var(--line);background:#fff;
-    transition:border-color .12s ease,background .12s ease,transform .08s ease;
+  .lg-input{
+    display:flex;align-items:center;gap:9px;margin-bottom:11px;
+    border:1.5px solid var(--line);border-radius:13px;background:#fff;padding:0 12px;
+    transition:border-color .12s ease,box-shadow .12s ease;
   }
-  .lg-user:hover{border-color:var(--blue);background:#F2F7FD;}
-  .lg-user:active{transform:scale(.98);}
-  .lg-user:focus-visible{outline:3px solid #7FB2EA;outline-offset:2px;}
-  .lg-ava{
-    width:42px;height:42px;border-radius:50%;flex-shrink:0;
-    background:linear-gradient(150deg,#1D5FAE,#123E77);color:#fff;
-    display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;
+  .lg-input:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(29,95,174,.14);}
+  .lg-ico{font-size:17px;flex-shrink:0;opacity:.65;}
+  .lg-input input{
+    flex:1;min-width:0;border:none;outline:none;background:none;
+    padding:14px 0;font-size:15.5px;font-family:'Inter',sans-serif;color:var(--ink);
   }
-  .lg-uname{font-size:15.5px;font-weight:700;color:var(--ink);line-height:1.2;}
-  .lg-urole{font-size:11.5px;color:var(--muted);margin-top:2px;}
-  .lg-back{
-    background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;
-    cursor:pointer;padding:6px 2px;display:flex;align-items:center;gap:5px;
+  .lg-eye{background:none;border:none;font-size:16px;cursor:pointer;padding:6px 2px;opacity:.6;flex-shrink:0;}
+  .lg-eye:hover{opacity:1;}
+  .lg-err{color:var(--rust);font-size:12.5px;text-align:center;min-height:18px;font-weight:600;margin-bottom:4px;}
+  .lg-go{
+    width:100%;padding:15px 0;border:none;border-radius:13px;cursor:pointer;
+    background:linear-gradient(150deg,#2E7BD1,#123E77);color:#fff;
+    font-size:16px;font-weight:700;font-family:'Inter',sans-serif;letter-spacing:.3px;
+    box-shadow:0 6px 18px rgba(18,62,119,.3);
   }
-  .lg-who{display:flex;align-items:center;gap:11px;margin-bottom:14px;}
-  .lg-pinrow{display:flex;justify-content:center;gap:11px;margin:4px 0 10px;}
-  .lg-dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);background:#fff;transition:all .12s ease;}
-  .lg-dot.on{background:var(--blue);border-color:var(--blue);transform:scale(1.12);}
-  .lg-err{color:var(--rust);font-size:12.5px;text-align:center;height:17px;font-weight:600;}
-  .lg-keys{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
-  .lg-key{
-    flex:0 0 calc((100% - 16px)/3);box-sizing:border-box;
-    padding:15px 0;border-radius:13px;border:1.5px solid var(--line);background:#fff;
-    font-size:22px;font-weight:700;color:var(--ink);cursor:pointer;font-family:'IBM Plex Mono',monospace;
-  }
-  .lg-key:active{background:#E7F0FB;transform:scale(.96);}
-  .lg-key.wide{font-size:16px;font-family:'Inter',sans-serif;color:var(--muted);}
-  .lg-key.go{background:linear-gradient(150deg,#2E7BD1,#123E77);color:#fff;border-color:transparent;}
-  .lg-foot{text-align:center;color:#9FC2E8;font-size:11px;margin-top:16px;}
+  .lg-go:active{transform:scale(.985);}
+  .lg-go:focus-visible{outline:3px solid #7FB2EA;outline-offset:2px;}
   .lg-shake{animation:lgShake .34s;}
   @keyframes lgShake{
     0%,100%{transform:translateX(0);} 20%{transform:translateX(-8px);}
@@ -138,8 +124,10 @@
   }
   @media (prefers-reduced-motion:reduce){
     .lg-shake{animation:none;}
-    .lg-user,.lg-dot,.lg-key{transition:none;}
+    .lg-input,.lg-go{transition:none;}
   }
+  #weighDate:disabled{background:#EDF0F5;color:#8794A8;cursor:not-allowed;border-color:var(--line);}
+  #weighDateNote{font-size:11.5px;color:var(--muted);padding:2px 2px 6px;}
   .emp-table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;}
   table.emp-table{width:100%;border-collapse:collapse;font-size:13.5px;white-space:nowrap;}
   table.emp-table th{background:var(--blue);color:#fff;font-weight:700;padding:8px 10px;text-align:left;font-size:12.5px;position:sticky;top:0;}
@@ -280,7 +268,7 @@
     <span style="color:#93A5C4;font-size:11px;">👤 <span id="currentUserNameLabel"></span></span>
     <button onclick="switchUser()" style="background:none;border:1px solid #2A3B54;color:#93A5C4;font-size:10.5px;padding:2px 8px;border-radius:6px;cursor:pointer;">Đổi người dùng</button>
   </div>
-  <div style="text-align:center;background:#1D5FAE;color:#D3E4F8;font-size:9.5px;padding:2px 0;">Phiên bản: V1.1.1</div>
+  <div style="text-align:center;background:#1D5FAE;color:#D3E4F8;font-size:9.5px;padding:2px 0;">Phiên bản: V1.2.2</div>
 </div>
 
 <!-- ============ TAB: CÂN TÔM ============ -->
@@ -295,6 +283,7 @@
     <input type="text" id="empSearch" placeholder="🔍 Tìm mã NV (hoặc gõ tên)…" inputmode="numeric" autocomplete="off" autocorrect="off" oninput="onEmpSearchInput()" onkeydown="onEmpSearchKeydown(event)" style="flex:1;">
     <input type="date" id="weighDate" onchange="onWeighDateChange()" style="flex:0 0 150px;">
   </div>
+  <div id="weighDateNote" class="hidden" style="max-width:900px;margin:0 auto;padding:0 10px 6px;">🔒 Chỉ cân được cho ngày hôm nay</div>
 
   <div class="weigh-layout">
     <!-- CỘT TRÁI: NHÂN VIÊN -->
@@ -397,13 +386,13 @@
         </label>
         <div id="empBulkBar" class="hidden" style="display:flex;justify-content:space-between;align-items:center;background:#FBEAE6;border-radius:8px;padding:8px 10px;margin-bottom:8px;">
           <span id="empBulkCount" class="muted" style="font-size:12.5px;"></span>
-          <button class="icon-del" id="empBulkDeleteBtn" onclick="bulkDeleteEmployees()" style="color:var(--rust);font-weight:700;font-size:12.5px;">🗑 Xoá đã chọn</button>
+          <button class="icon-del" data-perm="catalogDelete" id="empBulkDeleteBtn" onclick="bulkDeleteEmployees()" style="color:var(--rust);font-weight:700;font-size:12.5px;">🗑 Xoá đã chọn</button>
         </div>
         <div id="empListWrap"></div>
         <div id="empGridWrap" class="hidden" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;"></div>
         <div class="row" style="margin-top:10px;">
-          <button class="btn btn-outline" onclick="exportEmployeesExcel()">📊 Xuất Excel</button>
-          <button class="btn btn-outline" onclick="document.getElementById('empImportFile').click()">📥 Nhập Excel</button>
+          <button class="btn btn-outline" data-perm="exportExcel" onclick="exportEmployeesExcel()">📊 Xuất Excel</button>
+          <button class="btn btn-outline" data-perm="catalogEdit" onclick="document.getElementById('empImportFile').click()">📥 Nhập Excel</button>
           <input type="file" id="empImportFile" accept=".xlsx,.xls" class="hidden" onchange="importEmployeesExcel(event)">
         </div>
       </div>
@@ -430,12 +419,12 @@
         </label>
         <div id="prodBulkBar" class="hidden" style="display:flex;justify-content:space-between;align-items:center;background:#FBEAE6;border-radius:8px;padding:8px 10px;margin-bottom:8px;">
           <span id="prodBulkCount" class="muted" style="font-size:12.5px;"></span>
-          <button class="icon-del" id="prodBulkDeleteBtn" onclick="bulkDeleteProducts()" style="color:var(--rust);font-weight:700;font-size:12.5px;">🗑 Xoá đã chọn</button>
+          <button class="icon-del" data-perm="catalogDelete" id="prodBulkDeleteBtn" onclick="bulkDeleteProducts()" style="color:var(--rust);font-weight:700;font-size:12.5px;">🗑 Xoá đã chọn</button>
         </div>
         <div id="prodListWrap"></div>
         <div class="row" style="margin-top:10px;">
-          <button class="btn btn-outline" onclick="exportProductsExcel()">📊 Xuất Excel</button>
-          <button class="btn btn-outline" onclick="document.getElementById('prodImportFile').click()">📥 Nhập Excel</button>
+          <button class="btn btn-outline" data-perm="exportExcel" onclick="exportProductsExcel()">📊 Xuất Excel</button>
+          <button class="btn btn-outline" data-perm="catalogEdit" onclick="document.getElementById('prodImportFile').click()">📥 Nhập Excel</button>
           <input type="file" id="prodImportFile" accept=".xlsx,.xls" class="hidden" onchange="importProductsExcel(event)">
         </div>
       </div>
@@ -705,7 +694,8 @@
         <div class="muted" style="font-size:12px;margin-bottom:10px;">Mỗi người dùng có tên riêng + mã PIN riêng, chỉ thấy đúng các tab được tick bên dưới. Khi có ít nhất 1 người dùng, mỗi lần mở app sẽ yêu cầu chọn tên + nhập PIN. <b>Nên tạo 1 tài khoản của chính bạn với đầy đủ quyền trước tiên.</b></div>
         <div class="field"><label>Tên hiển thị (ngắn gọn)</label><input type="text" id="newUserName" placeholder="VD: Chủ, Kế toán, Cân A"></div>
         <div class="field"><label>Họ tên đầy đủ</label><input type="text" id="newUserFullName" placeholder="VD: Nguyễn Văn A"></div>
-        <div class="field"><label>Mã PIN (4 số)</label><input type="text" id="newUserPin" maxlength="4" inputmode="numeric" placeholder="VD: 1111"></div>
+        <div class="field"><label>Tên đăng nhập</label><input type="text" id="newUserUsername" autocapitalize="none" autocomplete="off" placeholder="VD: cana (không dấu, không khoảng trắng)"></div>
+        <div class="field"><label>Mật khẩu</label><input type="password" id="newUserPassword" autocomplete="new-password" placeholder="Ít nhất 4 ký tự"></div>
         <div class="field">
           <label>Được xem các tab</label>
           <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
@@ -1401,9 +1391,10 @@ function logActivity(action, detail){
 }
 
 // ===== QUYỀN THAO TÁC =====
-const ALL_ACTIONS = ['catalogEdit','catalogDelete','weighDelete','pay','closePeriod','exportExcel','manageUsers','bypassLock'];
+const ALL_ACTIONS = ['changeDate','catalogEdit','catalogDelete','weighDelete','pay','closePeriod','exportExcel','manageUsers','bypassLock'];
 function actionLabel(k){
   return {
+    changeDate:'📅 Cân cho ngày khác (không phải hôm nay)',
     catalogEdit:'✏️ Thêm / sửa danh mục',
     catalogDelete:'🗑 Xoá danh mục',
     weighDelete:'🗑 Xoá phiếu cân',
@@ -1443,19 +1434,24 @@ function addStaffUser(){
   if(!requirePerm('manageUsers')) return;
   const name = document.getElementById('newUserName').value.trim();
   const fullName = document.getElementById('newUserFullName').value.trim();
-  const pin = document.getElementById('newUserPin').value.trim();
+  const username = document.getElementById('newUserUsername').value.trim().toLowerCase();
+  const password = document.getElementById('newUserPassword').value;
   if(!name){ alert("Nhập tên hiển thị"); return; }
-  if(!/^\d{4}$/.test(pin)){ alert("Mã PIN phải gồm đúng 4 chữ số"); return; }
+  if(!username){ alert("Nhập tên đăng nhập"); return; }
+  if(/\s/.test(username)){ alert("Tên đăng nhập không được có khoảng trắng"); return; }
+  if(staffUsers.some(u=>(u.username||'').toLowerCase()===username)){ alert("Tên đăng nhập này đã có người dùng"); return; }
+  if(password.length < 4){ alert("Mật khẩu phải từ 4 ký tự trở lên"); return; }
   const perms = {};
   document.querySelectorAll('.new-user-perm').forEach(cb=>{ perms[cb.value] = cb.checked; });
   const acts = {};
   document.querySelectorAll('.new-user-act').forEach(cb=>{ acts[cb.value] = cb.checked; });
-  staffUsers.push({ id: uid(), code: nextUserCode(), name, fullName, pin, permissions: perms, actions: acts });
+  staffUsers.push({ id: uid(), code: nextUserCode(), name, fullName, username, password, permissions: perms, actions: acts });
   saveAll();
   logActivity('Thêm người dùng', name);
   document.getElementById('newUserName').value='';
   document.getElementById('newUserFullName').value='';
-  document.getElementById('newUserPin').value='';
+  document.getElementById('newUserUsername').value='';
+  document.getElementById('newUserPassword').value='';
   document.querySelectorAll('.new-user-act').forEach(cb=>{ cb.checked = false; });
   renderUserList();
   alert(`Đã thêm người dùng "${name}".`);
@@ -1470,16 +1466,21 @@ function saveEditUser(id){
   const u = staffUsers.find(x=>x.id===id);
   if(!u) return;
   const nameInput = document.getElementById('editUserName-'+id);
-  const pinInput = document.getElementById('editUserPin-'+id);
+  const userInput = document.getElementById('editUserUsername-'+id);
+  const passInput = document.getElementById('editUserPassword-'+id);
   const newName = nameInput.value.trim();
-  const newPin = pinInput.value.trim();
+  const newUsername = userInput.value.trim().toLowerCase();
+  const newPass = passInput.value;
   if(!newName){ nameInput.style.borderColor='var(--rust)'; return; }
-  if(!/^\d{4}$/.test(newPin)){ pinInput.style.borderColor='var(--rust)'; return; }
+  if(!newUsername || /\s/.test(newUsername)){ userInput.style.borderColor='var(--rust)'; alert("Tên đăng nhập không được trống hoặc có khoảng trắng"); return; }
+  if(staffUsers.some(x=>x.id!==id && (x.username||'').toLowerCase()===newUsername)){ userInput.style.borderColor='var(--rust)'; alert("Tên đăng nhập này đã có người dùng"); return; }
+  if(newPass && newPass.length < 4){ passInput.style.borderColor='var(--rust)'; alert("Mật khẩu phải từ 4 ký tự trở lên"); return; }
   const perms = {};
   document.querySelectorAll('.edit-user-perm-'+id).forEach(cb=>{ perms[cb.value] = cb.checked; });
   const acts = {};
   document.querySelectorAll('.edit-user-act-'+id).forEach(cb=>{ acts[cb.value] = cb.checked; });
-  u.name = newName; u.pin = newPin; u.permissions = perms; u.actions = acts;
+  u.name = newName; u.username = newUsername; u.permissions = perms; u.actions = acts;
+  if(newPass) u.password = newPass;   // để trống = giữ nguyên mật khẩu cũ
   u.fullName = (document.getElementById('editUserFullName-'+id)?.value||'').trim();
   editingUserId = null;
   saveAll();
@@ -1510,7 +1511,8 @@ function renderUserList(){
         <div class="list-item" style="flex-direction:column;align-items:stretch;gap:8px;">
           <input type="text" id="editUserName-${u.id}" value="${escapeHtml(u.name)}" placeholder="Tên hiển thị">
           <input type="text" id="editUserFullName-${u.id}" value="${escapeHtml(u.fullName||'')}" placeholder="Họ tên đầy đủ">
-          <input type="text" id="editUserPin-${u.id}" value="${escapeHtml(u.pin)}" maxlength="4" inputmode="numeric" placeholder="PIN 4 số">
+          <input type="text" id="editUserUsername-${u.id}" value="${escapeHtml(u.username || u.code || '')}" autocapitalize="none" placeholder="Tên đăng nhập">
+          <input type="password" id="editUserPassword-${u.id}" autocomplete="new-password" placeholder="Mật khẩu mới (để trống = giữ nguyên)">
           <div class="muted" style="font-size:11.5px;font-weight:700;margin-top:4px;">Được xem tab</div>
           <div style="display:flex;flex-direction:column;gap:4px;">${checks}</div>
           <div class="muted" style="font-size:11.5px;font-weight:700;margin-top:4px;">Được làm việc</div>
@@ -1531,6 +1533,7 @@ function renderUserList(){
         <div>
           <strong>${escapeHtml(u.name)}</strong> <span class="badge">${escapeHtml(u.code)}</span>
           ${u.fullName?`<div class="muted" style="font-size:12px;">${escapeHtml(u.fullName)}</div>`:''}
+          <div class="muted font-mono" style="font-size:11.5px;margin-top:2px;">🔑 ${escapeHtml(u.username || u.code || '')}</div>
           <div class="muted" style="font-size:11.5px;margin-top:2px;">👁 ${activeTabs}</div>
           <div class="muted" style="font-size:11.5px;margin-top:2px;">🔑 ${activeActs}</div>
         </div>
@@ -1547,144 +1550,138 @@ function renderUserList(){
 
 // ===== MÀN HÌNH CHỌN NGƯỜI DÙNG =====
 function checkUserGate(){
-  if(staffUsers.length===0) return; // chưa thiết lập ai -> mở tự do
+  if(currentUser) return;                                  // đã đăng nhập rồi
+  if(document.getElementById('userPickerOverlay')) return;  // màn hình đăng nhập đang mở
+  if(staffUsers.length===0) return;                         // chưa thiết lập ai -> mở tự do
   const savedId = sessionStorage.getItem('cantom_current_user_id');
   const saved = staffUsers.find(u=>u.id===savedId);
   if(saved){ currentUser = saved; applyCurrentUserPermissions(); return; }
   showUserPickerOverlay();
-}
-function loginRoleSummary(u){
-  const tabs = ALL_TABS.filter(t=>u.permissions && u.permissions[t]).length;
-  if(u.actions && u.actions.manageUsers) return 'Quản lý — toàn quyền';
-  if(u.actions && u.actions.pay) return 'Kế toán — chi tiền, ' + tabs + ' mục';
-  return 'Nhân viên — ' + tabs + ' mục';
 }
 function showUserPickerOverlay(){
   const old = document.getElementById('userPickerOverlay');
   if(old) old.remove();
   const overlay = document.createElement('div');
   overlay.id = 'userPickerOverlay';
-  const coName = (companyInfo && companyInfo.name) ? escapeHtml(companyInfo.name) : 'Phần mềm nội bộ';
-  const rows = staffUsers.map(u=>`
-    <button class="lg-user" onclick="selectUserForLogin('${u.id}')">
-      <div class="lg-ava">${escapeHtml((u.name||'?').trim().charAt(0).toUpperCase())}</div>
-      <div style="min-width:0;">
-        <div class="lg-uname">${escapeHtml(u.name)}</div>
-        <div class="lg-urole">${escapeHtml(u.fullName || loginRoleSummary(u))}</div>
-      </div>
-    </button>`).join('');
   overlay.innerHTML = `
     <div class="lg-shell">
       <div class="lg-hero">
         <div class="lg-badge">⚖️</div>
-        <div class="lg-co">${coName}</div>
         <div class="lg-title">Cân Tôm</div>
         <div class="lg-sub">Tính tiền công nhật</div>
       </div>
-      <div class="lg-card">
-        <div class="lg-label">Chọn tên của bạn</div>
-        <div class="lg-users">${rows}</div>
-      </div>
-      <div class="lg-foot">Mỗi người dùng tên và mã PIN riêng</div>
-    </div>`;
-  document.body.appendChild(overlay);
-}
-
-let loginPinBuffer = '';
-let loginUserId = null;
-function selectUserForLogin(id){
-  const u = staffUsers.find(x=>x.id===id);
-  if(!u) return;
-  loginUserId = id;
-  loginPinBuffer = '';
-  const overlay = document.getElementById('userPickerOverlay');
-  const keys = ['1','2','3','4','5','6','7','8','9'].map(k=>`<button class="lg-key" onclick="loginPinPress('${k}')">${k}</button>`).join('');
-  overlay.innerHTML = `
-    <div class="lg-shell">
-      <div class="lg-hero">
-        <div class="lg-badge">🔒</div>
-        <div class="lg-co">${(companyInfo && companyInfo.name) ? escapeHtml(companyInfo.name) : 'Phần mềm nội bộ'}</div>
-        <div class="lg-title">Nhập mã PIN</div>
-      </div>
-      <div class="lg-card" id="lgPinCard">
-        <button class="lg-back" onclick="showUserPickerOverlay()">← Chọn người khác</button>
-        <div class="lg-who">
-          <div class="lg-ava">${escapeHtml((u.name||'?').trim().charAt(0).toUpperCase())}</div>
-          <div>
-            <div class="lg-uname">${escapeHtml(u.name)}</div>
-            <div class="lg-urole">${escapeHtml(u.fullName || loginRoleSummary(u))}</div>
-          </div>
+      <div class="lg-card" id="lgCard">
+        <div class="lg-label">Đăng nhập</div>
+        <div class="lg-input">
+          <span class="lg-ico">👤</span>
+          <input type="text" id="lgUser" placeholder="Tên đăng nhập" autocapitalize="none"
+                 autocomplete="username" autocorrect="off" spellcheck="false">
         </div>
-        <div class="lg-pinrow" id="lgDots">
-          <div class="lg-dot"></div><div class="lg-dot"></div><div class="lg-dot"></div><div class="lg-dot"></div>
+        <div class="lg-input">
+          <span class="lg-ico">🔒</span>
+          <input type="password" id="lgPass" placeholder="Mật khẩu" autocomplete="current-password">
+          <button type="button" class="lg-eye" id="lgEye" onclick="toggleLoginPassword()" aria-label="Hiện mật khẩu">👁</button>
         </div>
         <div class="lg-err" id="lgErr"></div>
-        <div class="lg-keys">
-          ${keys}
-          <button class="lg-key wide" onclick="loginPinClear()">Xoá</button>
-          <button class="lg-key" onclick="loginPinPress('0')">0</button>
-          <button class="lg-key go" onclick="confirmUserLogin()">Vào</button>
-        </div>
+        <button class="lg-go" onclick="doLogin()">Đăng nhập</button>
       </div>
-      <div class="lg-foot">Quên mã PIN thì hỏi người quản lý</div>
+      <div class="lg-foot">Quên mật khẩu thì hỏi người quản lý</div>
     </div>`;
-  document.addEventListener('keydown', loginKeyHandler);
+  document.body.appendChild(overlay);
+  const uEl = document.getElementById('lgUser');
+  const pEl = document.getElementById('lgPass');
+  const onKey = e => { if(e.key === 'Enter'){ e.preventDefault(); doLogin(); } };
+  uEl.addEventListener('keydown', onKey);
+  pEl.addEventListener('keydown', onKey);
+  setTimeout(()=>uEl.focus(), 60);
 }
-function loginKeyHandler(e){
-  if(!document.getElementById('userPickerOverlay') || loginUserId===null) return;
-  if(/^[0-9]$/.test(e.key)){ e.preventDefault(); loginPinPress(e.key); }
-  else if(e.key==='Backspace'){ e.preventDefault(); loginPinBuffer = loginPinBuffer.slice(0,-1); paintLoginDots(); }
-  else if(e.key==='Enter'){ e.preventDefault(); confirmUserLogin(); }
+function toggleLoginPassword(){
+  const p = document.getElementById('lgPass');
+  const eye = document.getElementById('lgEye');
+  const show = p.type === 'password';
+  p.type = show ? 'text' : 'password';
+  eye.textContent = show ? '🙈' : '👁';
+  eye.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+  p.focus();
 }
-function paintLoginDots(){
-  const dots = document.querySelectorAll('#lgDots .lg-dot');
-  dots.forEach((d,i)=> d.classList.toggle('on', i < loginPinBuffer.length));
+// Tìm tài khoản khớp. Chấp nhận cả tên đăng nhập, mã, hoặc tên hiển thị;
+// mật khẩu mới hoặc mã PIN cũ — để tài khoản tạo trước bản này vẫn đăng nhập được.
+function matchesLoginName(x, q){
+  return (x.username||'').trim().toLowerCase() === q
+      || (x.code||'').trim().toLowerCase() === q
+      || (x.name||'').trim().toLowerCase() === q
+      || (x.fullName||'').trim().toLowerCase() === q;
 }
-function loginPinPress(k){
-  const err = document.getElementById('lgErr');
-  if(err) err.textContent = '';
-  if(loginPinBuffer.length >= 4) return;
-  loginPinBuffer += k;
-  paintLoginDots();
-  if(loginPinBuffer.length === 4) setTimeout(confirmUserLogin, 140);
+// Trả về { user } nếu đúng, hoặc { error } để báo rõ sai ở đâu
+function findLoginUser(uname, pass){
+  const q = (uname||'').trim().toLowerCase();
+  if(!q) return { error:'Nhập tên đăng nhập' };
+  const candidates = staffUsers.filter(x=>matchesLoginName(x, q));
+  if(candidates.length === 0) return { error:'Không có tài khoản tên này' };
+  const noCred = candidates.every(x=>!x.password && !x.pin);
+  if(noCred) return { error:'Tài khoản này chưa đặt mật khẩu — nhờ quản lý đặt giúp' };
+  const hit = candidates.find(x=>
+    (!!x.password && pass === x.password) || (!!x.pin && pass === x.pin)
+  );
+  if(!hit) return { error:'Sai mật khẩu' };
+  return { user: hit };
 }
-function loginPinClear(){
-  loginPinBuffer = '';
-  paintLoginDots();
-  const err = document.getElementById('lgErr');
-  if(err) err.textContent = '';
-}
-function confirmUserLogin(){
-  const u = staffUsers.find(x=>x.id===loginUserId);
-  if(!u) return;
-  if(loginPinBuffer.length < 4){
-    document.getElementById('lgErr').textContent = "Nhập đủ 4 số";
+function doLogin(){
+  const uname = document.getElementById('lgUser').value;
+  const pass  = document.getElementById('lgPass').value;
+  const err   = document.getElementById('lgErr');
+  if(!uname.trim()){ err.textContent = "Nhập tên đăng nhập"; document.getElementById('lgUser').focus(); return; }
+  if(!pass){ err.textContent = "Nhập mật khẩu"; document.getElementById('lgPass').focus(); return; }
+  const res = findLoginUser(uname, pass);
+  if(!res.user){
+    const card = document.getElementById('lgCard');
+    if(card){ card.classList.add('lg-shake'); setTimeout(()=>card.classList.remove('lg-shake'), 360); }
+    err.textContent = res.error;
+    if(res.error === 'Sai mật khẩu'){
+      document.getElementById('lgPass').value = '';
+      document.getElementById('lgPass').focus();
+    }else{
+      document.getElementById('lgUser').focus();
+      document.getElementById('lgUser').select();
+    }
     return;
   }
-  if(loginPinBuffer === u.pin){
-    document.removeEventListener('keydown', loginKeyHandler);
-    currentUser = u;
-    loginUserId = null; loginPinBuffer = '';
-    sessionStorage.setItem('cantom_current_user_id', u.id);
-    const ov = document.getElementById('userPickerOverlay');
-    if(ov) ov.remove();
-    applyCurrentUserPermissions();
-    logActivity('Đăng nhập', thisDeviceLabel());
-  }else{
-    const card = document.getElementById('lgPinCard');
-    if(card){ card.classList.add('lg-shake'); setTimeout(()=>card.classList.remove('lg-shake'), 360); }
-    document.getElementById('lgErr').textContent = "Sai mã PIN, thử lại";
-    loginPinBuffer = '';
-    paintLoginDots();
-  }
+  const u = res.user;
+  currentUser = u;
+  sessionStorage.setItem('cantom_current_user_id', u.id);
+  const ov = document.getElementById('userPickerOverlay');
+  if(ov) ov.remove();
+  applyCurrentUserPermissions();
+  logActivity('Đăng nhập', thisDeviceLabel());
 }
 function switchUser(){
   currentUser = null;
   sessionStorage.removeItem('cantom_current_user_id');
   showUserPickerOverlay();
 }
+function applyWeighDateLock(){
+  const inp = document.getElementById('weighDate');
+  const note = document.getElementById('weighDateNote');
+  if(!inp) return;
+  const locked = !!currentUser && !can('changeDate');
+  if(locked){
+    inp.value = todayKey();
+    inp.min = todayKey();
+    inp.max = todayKey();
+    inp.disabled = true;
+    inp.title = "Chỉ được cân cho ngày hôm nay";
+    if(note) note.classList.remove('hidden');
+  }else{
+    inp.disabled = false;
+    inp.removeAttribute('min');
+    inp.removeAttribute('max');
+    inp.title = "";
+    if(note) note.classList.add('hidden');
+  }
+}
 function applyCurrentUserPermissions(){
   const bar = document.getElementById('currentUserBar');
+  applyWeighDateLock();
   if(!currentUser){
     // Không có ai đăng nhập (chưa thiết lập user nào) -> hiện hết
     ALL_TABS.forEach(t=>{ const el = document.getElementById(TAB_BTN_ID[t]); if(el) el.classList.remove('hidden'); });
@@ -1789,6 +1786,17 @@ function previewEmpPhoto(input, previewId, callback){
   };
   reader.readAsDataURL(file);
 }
+function applyCatalogPermUI(){
+  const cEdit = can('catalogEdit');
+  ['empFormToggleBtn','prodFormToggleBtn'].forEach(id=>{
+    const b = document.getElementById(id);
+    if(b) b.classList.toggle('hidden', !cEdit);
+  });
+  // Ẩn khu nhập/xuất Excel của danh mục khi không có quyền
+  document.querySelectorAll('[data-perm]').forEach(el=>{
+    el.classList.toggle('hidden', !can(el.getAttribute('data-perm')));
+  });
+}
 function toggleAddForm(which){
   const body = document.getElementById(which+'FormBody');
   const btn  = document.getElementById(which+'FormToggleBtn');
@@ -1838,6 +1846,7 @@ function deleteEmployee(id){
 }
 let pendingEditEmpPhotoData = null;
 function editEmployee(id){
+  if(!requirePerm('catalogEdit')) return;
   editingEmployeeId = id;
   pendingEditEmpPhotoData = null;
   renderCatalog();
@@ -1848,6 +1857,7 @@ function cancelEditEmployee(){
   renderCatalog();
 }
 function saveEditEmployee(id){
+  if(!requirePerm('catalogEdit')) return;
   const input = document.getElementById('editEmpName-'+id);
   const newName = input.value.trim();
   if(!newName){ input.style.borderColor = 'var(--rust)'; return; }
@@ -1899,6 +1909,7 @@ function deleteProduct(id){
   });
 }
 function editProduct(id){
+  if(!requirePerm('catalogEdit')) return;
   editingProductId = id;
   renderCatalog();
 }
@@ -1907,6 +1918,7 @@ function cancelEditProduct(){
   renderCatalog();
 }
 function saveEditProduct(id){
+  if(!requirePerm('catalogEdit')) return;
   const nameInput = document.getElementById('editProdName-'+id);
   const priceInput = document.getElementById('editProdPrice-'+id);
   const newName = nameInput.value.trim();
@@ -1922,6 +1934,7 @@ function saveEditProduct(id){
   renderCatalog(); populateSelects(); renderProductGrid(); populateDebtSelects();
 }
 function toggleProductActive(id){
+  if(!requirePerm('catalogEdit')) return;
   const p = products.find(x=>x.id===id);
   if(!p) return;
   p.active = !(p.active !== false);
@@ -1929,6 +1942,7 @@ function toggleProductActive(id){
   renderCatalog(); renderProductGrid();
 }
 function changeProductColor(id){
+  if(!requirePerm('catalogEdit')) return;
   const p = products.find(x=>x.id===id);
   if(!p) return;
   const input = document.createElement('input');
@@ -2021,6 +2035,7 @@ function setCatalogSection(s){
 
 // ===== XUẤT/NHẬP EXCEL: NHÂN VIÊN =====
 function exportEmployeesExcel(){
+  if(!requirePerm('exportExcel')) return;
   if(employees.length===0){ alert("Chưa có nhân viên nào để xuất"); return; }
   const aoa = [["Mã", "Họ tên", "Địa chỉ", "Điện thoại", "CMND", "N Sinh"],
     ...employees.map(e=>[e.code, e.name, e.address||'', e.phone||'', e.cccd||'', e.birth||''])];
@@ -2030,6 +2045,7 @@ function exportEmployeesExcel(){
   XLSX.writeFile(wb, `danh-sach-nhan-vien-${todayKey()}.xlsx`);
 }
 function importEmployeesExcel(e){
+  if(!requirePerm('catalogEdit')) return;
   const file = e.target.files && e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
@@ -2067,6 +2083,7 @@ function importEmployeesExcel(e){
 
 // ===== XUẤT/NHẬP EXCEL: MÃ HÀNG =====
 function exportProductsExcel(){
+  if(!requirePerm('exportExcel')) return;
   if(products.length===0){ alert("Chưa có mã hàng nào để xuất"); return; }
   const aoa = [["Mã", "Nhãn hiển thị", "Đơn giá (đ/kg)"], ...products.map(p=>[p.code, p.name, p.unitPrice])];
   const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -2075,6 +2092,7 @@ function exportProductsExcel(){
   XLSX.writeFile(wb, `danh-sach-ma-hang-${todayKey()}.xlsx`);
 }
 function importProductsExcel(e){
+  if(!requirePerm('catalogEdit')) return;
   const file = e.target.files && e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
@@ -2108,6 +2126,8 @@ function importProductsExcel(e){
 }
 
 function renderCatalog(){
+  applyCatalogPermUI();
+  const cEdit = can('catalogEdit'), cDel = can('catalogDelete');
   const empQ = (document.getElementById('empListSearch')?.value||'').trim().toLowerCase();
   if(empQ !== empLastQuery){ empListLimit = 100; empLastQuery = empQ; }
   const empList = employees.filter(e=> !empQ || e.code.toLowerCase().includes(empQ) || e.name.toLowerCase().includes(empQ))
@@ -2143,7 +2163,7 @@ function renderCatalog(){
     const isChecked = selectedEmpIdsForBulk.has(e.id);
     return `
     <tr>
-      <td class="c-chk"><input type="checkbox" ${isChecked?'checked':''} onchange="toggleBulkEmp('${e.id}')"></td>
+      <td class="c-chk">${cDel?`<input type="checkbox" ${isChecked?'checked':''} onchange="toggleBulkEmp('${e.id}')">`:''}</td>
       <td class="c-code">${escapeHtml(e.code)}</td>
       <td class="c-name">${escapeHtml(e.name)}</td>
       <td>${escapeHtml(e.address||'')}</td>
@@ -2152,10 +2172,10 @@ function renderCatalog(){
       <td class="c-nowrap">${escapeHtml(e.birth||'')}</td>
       <td class="c-act">
         <button class="icon-del" onclick="printEmployeeCard('${e.id}')" title="In thẻ">🪪</button>
-        <button class="icon-del" onclick="editEmployee('${e.id}')">✏️</button>
-        ${isPendingDel
+        ${cEdit ? `<button class="icon-del" onclick="editEmployee('${e.id}')">✏️</button>` : ''}
+        ${!cDel ? '' : (isPendingDel
           ? `<button class="icon-del" style="color:var(--rust);font-weight:700;" onclick="deleteEmployee('${e.id}')">Xoá?✓</button>`
-          : `<button class="icon-del" onclick="deleteEmployee('${e.id}')">🗑</button>`}
+          : `<button class="icon-del" onclick="deleteEmployee('${e.id}')">🗑</button>`)}
       </td>
     </tr>
   `;
@@ -2221,19 +2241,19 @@ function renderCatalog(){
     return `
     <div class="list-item" style="flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:8px;">
-        <input type="checkbox" ${isChecked?'checked':''} onchange="toggleBulkProd('${p.id}')" style="width:16px;height:16px;flex-shrink:0;" title="Chọn để xoá hàng loạt">
-        <button onclick="changeProductColor('${p.id}')" title="Đổi màu" style="width:22px;height:22px;border-radius:6px;border:1px solid var(--line);background:${p.color||'#8FD3A6'};cursor:pointer;flex-shrink:0;"></button>
+        ${cDel ? `<input type="checkbox" ${isChecked?'checked':''} onchange="toggleBulkProd('${p.id}')" style="width:16px;height:16px;flex-shrink:0;" title="Chọn để xoá hàng loạt">` : ''}
+        <button ${cEdit?'':'disabled'} onclick="changeProductColor('${p.id}')" title="Đổi màu" style="width:22px;height:22px;border-radius:6px;border:1px solid var(--line);background:${p.color||'#8FD3A6'};cursor:${cEdit?'pointer':'default'};flex-shrink:0;"></button>
         <div><span class="badge">${escapeHtml(p.code)}</span> <strong>${escapeHtml(p.name)}</strong><div class="muted" style="font-size:12px;">${formatMoney(p.unitPrice)}/kg</div></div>
       </div>
       <div style="display:flex;gap:12px;align-items:center;">
         <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:${isActive?'var(--moss)':'var(--muted)'};cursor:pointer;white-space:nowrap;">
-          <input type="checkbox" ${isActive?'checked':''} onchange="toggleProductActive('${p.id}')" style="width:15px;height:15px;">
+          <input type="checkbox" ${isActive?'checked':''} ${cEdit?'':'disabled'} onchange="toggleProductActive('${p.id}')" style="width:15px;height:15px;">
           ${isActive?'👁 Hiện ở Cân tôm':'🚫 Đang ẩn'}
         </label>
-        <button class="icon-del" onclick="editProduct('${p.id}')">✏️</button>
-        ${isPendingDel
+        ${cEdit ? `<button class="icon-del" onclick="editProduct('${p.id}')">✏️</button>` : ''}
+        ${!cDel ? '' : (isPendingDel
           ? `<button class="icon-del" style="color:var(--rust);font-weight:700;" onclick="deleteProduct('${p.id}')">Xoá?✓</button>`
-          : `<button class="icon-del" onclick="deleteProduct('${p.id}')">🗑</button>`}
+          : `<button class="icon-del" onclick="deleteProduct('${p.id}')">🗑</button>`)}
       </div>
     </div>
   `;
@@ -2268,6 +2288,7 @@ function updateEmpBulkBar(){
   document.getElementById('empBulkDeleteBtn').textContent = bulkConfirmPending ? "⚠️ Bấm lần nữa để XOÁ" : "🗑 Xoá đã chọn";
 }
 function bulkDeleteEmployees(){
+  if(!requirePerm('catalogDelete')) return;
   if(selectedEmpIdsForBulk.size===0) return;
   if(!bulkConfirmPending){
     bulkConfirmPending = true;
@@ -2304,6 +2325,7 @@ function updateProdBulkBar(){
   document.getElementById('prodBulkDeleteBtn').textContent = bulkConfirmPending ? "⚠️ Bấm lần nữa để XOÁ" : "🗑 Xoá đã chọn";
 }
 function bulkDeleteProducts(){
+  if(!requirePerm('catalogDelete')) return;
   if(selectedProdIdsForBulk.size===0) return;
   if(!bulkConfirmPending){
     bulkConfirmPending = true;
@@ -2338,7 +2360,12 @@ let expandedGroups = {};
 let selectedProductId = null;
 let empHighlightIndex = -1;
 
-function onWeighDateChange(){ renderWeighTab(); }
+function onWeighDateChange(){
+  if(currentUser && !can('changeDate')){
+    document.getElementById('weighDate').value = todayKey();
+    alert("Tài khoản của bạn chỉ được cân cho ngày hôm nay.");
+    return;
+  } renderWeighTab(); }
 
 function getFilteredEmployees(){
   const q = (document.getElementById('empSearch').value||'').trim().toLowerCase();
@@ -2566,6 +2593,7 @@ function addWeighing(){
   document.getElementById('wKgBig').focus();
 }
 function deleteWeighing(id){
+  if(!requirePerm('weighDelete')) return;
   if(!confirm("Xoá phiếu cân này?")) return;
   weighings = weighings.filter(w=>w.id!==id);
   saveAll();
@@ -2696,6 +2724,7 @@ function toggleGroupExpand(key){
   renderWeighTab();
 }
 function editSingleWeigh(id){
+  if(!requirePerm('weighDelete')) return;
   editingWeighId = id;
   renderWeighTab();
 }
@@ -2704,6 +2733,7 @@ function cancelEditWeigh(){
   renderWeighTab();
 }
 function saveEditWeigh(id){
+  if(!requirePerm('weighDelete')) return;
   const input = document.getElementById('editKgInput-'+id);
   const newKg = Number(input.value);
   if(!newKg || newKg<=0){ input.style.borderColor = 'var(--rust)'; return; }
@@ -3003,6 +3033,7 @@ function populateDebtSelects(){
   if(document.getElementById('payableDaysWrap')) renderPayableDays();
 }
 function addOpening(){
+  if(!requirePerm('pay')) return;
   const employeeId = document.getElementById('openEmployee').value;
   const amount = Number(document.getElementById('openAmount').value);
   const note = document.getElementById('openNote').value.trim();
@@ -3015,6 +3046,7 @@ function addOpening(){
   renderDebtTab();
 }
 function deleteOpening(id){
+  if(!requirePerm('pay')) return;
   if(!confirm("Xoá dòng số dư đầu kỳ này?")) return;
   openingBalances = openingBalances.filter(o=>o.id!==id);
   saveAll();
@@ -3043,6 +3075,7 @@ function renderOpeningList(){
 
 // ===== CÔNG NỢ: PHIẾU CHI =====
 function deletePayment(id){
+  if(!requirePerm('pay')) return;
   if(!confirm("Xoá phiếu chi này?")) return;
   payments = payments.filter(p=>p.id!==id);
   saveAll();
@@ -3154,6 +3187,7 @@ function renderDebtReport(){
   `;
 }
 function exportDebtReportExcel(){
+  if(!requirePerm('exportExcel')) return;
   if(employees.length===0){ alert("Chưa có nhân viên nào"); return; }
   const rows = buildDebtReportRows();
   const fromKey = document.getElementById('reportFrom')?.value;
@@ -3249,6 +3283,7 @@ function renderDebtDetail(){
   `;
 }
 function exportDebtDetailExcel(){
+  if(!requirePerm('exportExcel')) return;
   const data = buildDebtDetailData();
   const aoa = [
     ["CHI TIẾT CÔNG NỢ CHI"],
@@ -3306,6 +3341,7 @@ function renderDebtBalance(){
   `;
 }
 function exportDebtBalanceExcel(){
+  if(!requirePerm('exportExcel')) return;
   const { fromKey, toKey, rows } = buildDebtBalanceData();
   if(rows.length===0){ alert("Không có số dư để xuất"); return; }
   const aoa = [
@@ -3484,6 +3520,7 @@ function renderPivotTable(dateKey){
   `;
 }
 function exportPivotExcel(){
+  if(!requirePerm('exportExcel')) return;
   const dateKey = document.getElementById('pivotDate').value || todayKey();
   const { orderedProdIds, rows } = buildPivotData(dateKey);
   if(rows.length===0){ alert("Không có dữ liệu để xuất"); return; }
@@ -3599,6 +3636,7 @@ function renderProductReport(){
   `;
 }
 function exportProductReportExcel(){
+  if(!requirePerm('exportExcel')) return;
   const { fromKey, toKey, rows, totalQty, totalAmount } = buildProductReportData();
   if(rows.length===0){ alert("Không có dữ liệu để xuất"); return; }
   const aoa = [
@@ -3793,7 +3831,7 @@ async function cloudInit(){
     fsReady = true;
     updateCloudStatus("synced");
     attachRealtimeListeners();
-    checkUserGate();
+    checkUserGate();   // kiểm tra lại: có thể đám mây có tài khoản mà máy này chưa có
   }catch(e){ console.error("Lỗi kết nối Firebase", e); updateCloudStatus("error"); }
 }
 
@@ -3880,6 +3918,7 @@ populateSelects();
 renderWeighTab();
 document.getElementById('settleDate').value = todayKey();
 populateDebtSelects();
+checkUserGate();   // bật ngay từ dữ liệu lưu trên máy, không đợi Firebase
 cloudInit();
 checkPinLock();
 checkBackupReminder();
