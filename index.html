@@ -33,7 +33,15 @@
   .wrap{max-width:560px;margin:0 auto;padding:0 18px;}
   .hidden{display:none !important;}
   .tabs{position:sticky;top:0;z-index:20;background:var(--blue);border-bottom:1px solid var(--blue-dk);}
-  .tabs-row{display:flex;max-width:700px;margin:0 auto;overflow-x:auto;}
+  .tabs-row{display:flex;align-items:stretch;width:100%;margin:0;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .brand{flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;padding:8px 16px 8px 14px;border-right:1px solid rgba(255,255,255,.2);}
+  .brand-title{font-size:16px;font-weight:700;color:#fff;line-height:1.15;white-space:nowrap;}
+  .brand-status{font-size:10px;color:#C6DCF6;margin-top:2px;white-space:nowrap;}
+  .brand-user{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:0 12px;margin-left:auto;}
+  .brand-user > span{color:#D3E4F8;font-size:11.5px;white-space:nowrap;}
+  .brand-user button{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;font-size:10.5px;padding:3px 9px;border-radius:6px;cursor:pointer;}
+  .brand-user .ver{font-size:9.5px;color:#9FC2E8;}
+  #weighSearchRow input{background:#fff;}
   .tab-btn{white-space:nowrap;}
   .tab-btn{flex:1 0 auto;min-width:96px;display:flex;align-items:center;justify-content:center;gap:6px;padding:15px 10px;border:none;border-bottom:2px solid transparent;background:transparent;color:#D3E4F8;font-weight:600;font-size:15px;cursor:pointer;}
   .tab-btn.active{color:#fff;border-bottom-color:#FFFFFF;}
@@ -95,6 +103,11 @@
   .lg-sub{font-size:13px;color:#C6DCF6;margin-top:7px;}
   .lg-card{background:#fff;border-radius:20px;padding:18px 16px 20px;box-shadow:0 18px 44px rgba(5,22,46,.32);}
   .lg-label{font-size:11.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  #appSplash{
+    position:fixed;inset:0;z-index:998;
+    background:linear-gradient(160deg,#0E3667 0%,#1D5FAE 55%,#2E7BD1 100%);
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
   .lg-input{
     display:flex;align-items:center;gap:9px;margin-bottom:11px;
     border:1.5px solid var(--line);border-radius:13px;background:#fff;padding:0 12px;
@@ -155,18 +168,19 @@
   .prod-btn.selected{border-color:var(--ink);transform:scale(0.96);}
   .prod-btn .p-code{font-size:15px;line-height:1.2;}
   .prod-btn .p-price{font-size:13px;font-weight:600;opacity:.92;margin-top:2px;}
-  .weigh-layout{display:flex;gap:8px;max-width:900px;margin:0 auto;padding:0 8px;align-items:flex-start;}
-  .emp-col{flex:0 0 190px;position:sticky;top:68px;max-height:calc(100vh - 76px);overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;}
-  .emp-col-list{max-height:calc(100vh - 236px);overflow-y:auto;}
+  .weigh-layout{display:flex;gap:10px;width:100%;margin:0;padding:10px 10px 0;align-items:flex-start;box-sizing:border-box;}
+  .emp-col{flex:0 0 200px;position:sticky;top:calc(var(--topH,110px) + 10px);max-height:calc(100vh - var(--topH,110px) - 20px);overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;}
+  .emp-col-list{overflow-y:auto;}
   .prod-col{flex:1;min-width:0;}
-  .product-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;}
+  #prodGridSearchRow{position:sticky;top:calc(var(--topH,110px) + 10px);z-index:15;background:var(--paper);padding:6px 0 8px;}
+  .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px;margin-bottom:12px;}
   @media (max-width:520px){
     .weigh-layout{gap:6px;padding:0 6px;}
     .emp-col{flex:0 0 112px;padding:7px;}
     .emp-chip{padding:8px 6px;}
     .emp-chip .c-code{font-size:10.5px;}
     .emp-chip .c-name{font-size:13.5px;line-height:1.2;}
-    .product-grid{grid-template-columns:repeat(3,1fr);}
+    .product-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));}
     .prod-btn{padding:17px 4px;}
     .prod-btn .p-code{font-size:13px;}
     .prod-btn .p-price{font-size:11.5px;}
@@ -255,8 +269,12 @@
 </head>
 <body>
 
-<div class="tabs">
+<div class="tabs" id="topBar">
   <div class="tabs-row">
+    <div class="brand">
+      <div class="brand-title">⚖️ Cân Tôm</div>
+      <div class="brand-status">✓ Lưu trên máy · <span id="cloudStatus"></span></div>
+    </div>
     <button class="tab-btn active" id="tabBtnWeigh" onclick="switchTab('weigh')">⚖️ Cân tôm</button>
     <button class="tab-btn" id="tabBtnCatalog" onclick="switchTab('catalog')">📋 Danh mục</button>
     <button class="tab-btn" id="tabBtnDebt" onclick="switchTab('debt')">💰 Công nợ</button>
@@ -264,27 +282,22 @@
     <button class="tab-btn" id="tabBtnReport" onclick="switchTab('report')">📊 Báo cáo</button>
     <button class="tab-btn" id="tabBtnConfig" onclick="switchTab('config')">⚙️ Cài đặt</button>
   </div>
-  <div id="currentUserBar" class="hidden" style="display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:4px 10px;background:#1D5FAE;">
-    <span style="color:#93A5C4;font-size:11px;">👤 <span id="currentUserNameLabel"></span></span>
-    <button onclick="switchUser()" style="background:none;border:1px solid #2A3B54;color:#93A5C4;font-size:10.5px;padding:2px 8px;border-radius:6px;cursor:pointer;">Đổi người dùng</button>
+    <div id="currentUserBar" class="hidden brand-user">
+      <span>👤 <span id="currentUserNameLabel"></span></span>
+      <button onclick="switchUser()">Đổi</button>
+      <span class="ver">V1.2.3</span>
+    </div>
   </div>
-  <div style="text-align:center;background:#1D5FAE;color:#D3E4F8;font-size:9.5px;padding:2px 0;">Phiên bản: V1.2.2</div>
+  <!-- Hàng tìm kiếm dính theo, chỉ hiện ở tab Cân tôm -->
+  <div id="weighSearchRow" style="display:flex;gap:8px;padding:6px 10px 8px;background:var(--blue);">
+    <input type="text" id="empSearch" placeholder="🔍 Tìm mã NV (hoặc gõ tên)…" inputmode="numeric" autocomplete="off" autocorrect="off" oninput="onEmpSearchInput()" onkeydown="onEmpSearchKeydown(event)" style="flex:1;">
+    <input type="date" id="weighDate" onchange="onWeighDateChange()" style="flex:0 0 150px;">
+  </div>
+  <div id="weighDateNote" class="hidden" style="padding:0 12px 6px;background:var(--blue);color:#D3E4F8;">🔒 Chỉ cân được cho ngày hôm nay</div>
 </div>
 
 <!-- ============ TAB: CÂN TÔM ============ -->
 <div id="weighTab">
-  <div class="app-header" style="padding-bottom:6px;max-width:900px;margin:0 auto;">
-    <div class="app-title">⚖️ Cân Tôm</div>
-    <div class="save-status">✓ Lưu ngay trên máy</div>
-    <div class="save-status" id="cloudStatus"></div>
-  </div>
-
-  <div style="max-width:900px;margin:0 auto;padding:0 8px 8px;display:flex;gap:8px;">
-    <input type="text" id="empSearch" placeholder="🔍 Tìm mã NV (hoặc gõ tên)…" inputmode="numeric" autocomplete="off" autocorrect="off" oninput="onEmpSearchInput()" onkeydown="onEmpSearchKeydown(event)" style="flex:1;">
-    <input type="date" id="weighDate" onchange="onWeighDateChange()" style="flex:0 0 150px;">
-  </div>
-  <div id="weighDateNote" class="hidden" style="max-width:900px;margin:0 auto;padding:0 10px 6px;">🔒 Chỉ cân được cho ngày hôm nay</div>
-
   <div class="weigh-layout">
     <!-- CỘT TRÁI: NHÂN VIÊN -->
     <div class="emp-col">
@@ -306,7 +319,7 @@
         </div>
       </div>
 
-      <div style="display:flex;gap:6px;position:sticky;top:52px;z-index:6;background:var(--paper);margin-bottom:8px;">
+      <div id="prodGridSearchRow" style="display:flex;gap:6px;margin-bottom:8px;">
         <input type="text" id="prodGridSearch" placeholder="🔍 Tìm mã hàng / size…" inputmode="text" autocomplete="off" autocorrect="off" oninput="renderProductGrid()" style="flex:1;">
         <button class="icon-btn" id="prodGridToggleBtn" onclick="toggleProductGridCollapse()" title="Ẩn/hiện lưới mã hàng" style="width:44px;flex-shrink:0;">▲</button>
       </div>
@@ -888,7 +901,20 @@ let empLastQuery = null;
 function showMoreEmployees(){ empListLimit += 100; renderCatalog(); }
 
 // ===== TABS =====
+// Đo chiều cao thanh trên cùng để các phần dính bám đúng vị trí
+function measureTopBar(){
+  const bar = document.getElementById('topBar');
+  if(!bar) return;
+  document.documentElement.style.setProperty('--topH', bar.offsetHeight + 'px');
+}
+window.addEventListener('resize', measureTopBar);
+window.addEventListener('orientationchange', ()=>setTimeout(measureTopBar,150));
+
 function switchTab(tab){
+  const sr = document.getElementById('weighSearchRow');
+  if(sr) sr.style.display = (tab==='weigh') ? 'flex' : 'none';
+  if(tab!=='weigh'){ const dn=document.getElementById('weighDateNote'); if(dn) dn.classList.add('hidden'); }
+  setTimeout(measureTopBar, 0);
   document.getElementById('weighTab').classList.toggle('hidden', tab!=='weigh');
   document.getElementById('catalogTab').classList.toggle('hidden', tab!=='catalog');
   document.getElementById('debtTab').classList.toggle('hidden', tab!=='debt');
@@ -1549,10 +1575,42 @@ function renderUserList(){
 }
 
 // ===== MÀN HÌNH CHỌN NGƯỜI DÙNG =====
+let splashDone = false;
+function showSplash(){
+  if(document.getElementById('appSplash')) return;
+  const d = document.createElement('div');
+  d.id = 'appSplash';
+  d.innerHTML = `
+    <div class="lg-shell" style="text-align:center;">
+      <div class="lg-hero">
+        <div class="lg-badge">⚖️</div>
+        <div class="lg-title">Cân Tôm</div>
+        <div class="lg-sub" id="splashMsg">Đang tải dữ liệu…</div>
+      </div>
+    </div>`;
+  document.body.appendChild(d);
+}
+function hideSplash(){
+  const d = document.getElementById('appSplash');
+  if(d) d.remove();
+}
+// Chốt cửa: gọi khi đã biết chắc có tài khoản hay không
+function finalizeUserGate(){
+  splashDone = true;
+  hideSplash();
+  checkUserGate();
+}
 function checkUserGate(){
-  if(currentUser) return;                                  // đã đăng nhập rồi
+  if(currentUser){ hideSplash(); return; }                  // đã đăng nhập rồi
   if(document.getElementById('userPickerOverlay')) return;  // màn hình đăng nhập đang mở
-  if(staffUsers.length===0) return;                         // chưa thiết lập ai -> mở tự do
+  if(staffUsers.length===0){
+    // Chưa thấy tài khoản nào. Nếu đám mây chưa tải xong thì giữ màn hình chờ,
+    // tránh cho vào app rồi mới đòi mật khẩu.
+    if(!splashDone){ showSplash(); return; }
+    hideSplash();
+    return;                                                 // thật sự chưa thiết lập ai -> mở tự do
+  }
+  hideSplash();
   const savedId = sessionStorage.getItem('cantom_current_user_id');
   const saved = staffUsers.find(u=>u.id===savedId);
   if(saved){ currentUser = saved; applyCurrentUserPermissions(); return; }
@@ -2443,6 +2501,14 @@ function renderEmployeePicker(){
   `;
   }).join('');
 }
+function clearSelectedEmployee(){
+  selectedEmployeeId = null;
+  empHighlightIndex = -1;
+  const box = document.getElementById('empSearch');
+  if(box) box.value = '';
+  renderEmployeePicker();
+  renderWeighTab();
+}
 function selectEmployee(id){
   selectedEmployeeId = id;
   const list = getFilteredEmployees();
@@ -2581,6 +2647,7 @@ function addWeighing(){
   weighings.unshift({
     id: uid(), employeeId: selectedEmployeeId, productId: selectedProductId,
     weightKg: kg, unitPrice: p.unitPrice, amount, createdAt: Date.now(), dateKey,
+    employeeCode: emp ? emp.code : '',
     byUserId: currentUser ? currentUser.id : '',
     byUserName: currentUser ? currentUser.name : '',
     deviceId: thisDeviceId(),
@@ -2611,6 +2678,9 @@ function renderWeighTab(){
 
   const empCard = document.getElementById('selectedEmpCard');
   let listEntries = dayEntries;
+  if(selectedEmployeeId && !employees.some(e=>e.id===selectedEmployeeId)){
+    selectedEmployeeId = null;   // người này đã bị xoá khỏi danh mục
+  }
   if(selectedEmployeeId){
     const emp = employees.find(e=>e.id===selectedEmployeeId);
     if(emp){
@@ -2629,7 +2699,16 @@ function renderWeighTab(){
   }
 
   const wrap = document.getElementById('weighListWrap');
-  if(listEntries.length===0){ wrap.innerHTML = `<div class="empty-state">Chưa có phiếu cân nào</div>`; return; }
+  if(listEntries.length===0){
+    if(selectedEmployeeId){
+      const em = employees.find(e=>e.id===selectedEmployeeId);
+      wrap.innerHTML = `<div class="empty-state">${em?escapeHtml(em.name):''} chưa có phiếu cân nào trong ngày ${dateObj.toLocaleDateString('vi-VN')}<br>
+        <button class="btn btn-outline" style="margin-top:10px;padding:6px 14px;font-size:12.5px;" onclick="clearSelectedEmployee()">Xem tất cả nhân viên</button></div>`;
+    }else{
+      wrap.innerHTML = `<div class="empty-state">Chưa có phiếu cân nào</div>`;
+    }
+    return;
+  }
 
   // Gộp các phiếu cùng nhân viên + cùng mã hàng trong danh sách đang xem
   const groups = {};
@@ -3791,7 +3870,7 @@ function attachRealtimeListeners(){
 }
 
 async function cloudInit(){
-  if(!window.firebaseConfig){ updateCloudStatus("off"); return; }
+  if(!window.firebaseConfig){ updateCloudStatus("off"); finalizeUserGate(); return; }
   updateCloudStatus("connecting");
   try{
     const app = firebase.initializeApp(window.firebaseConfig);
@@ -3826,13 +3905,14 @@ async function cloudInit(){
       employees: deepCopy(employees), products: deepCopy(products), weighings: deepCopy(weighings),
       openingBalances: deepCopy(openingBalances), payments: deepCopy(payments), overtimeDays: deepCopy(overtimeDays),
       staffUsers: deepCopy(staffUsers),
+      activityLog: deepCopy(activityLog), devices: deepCopy(devices),
       companyInfo: deepCopy(companyInfo), appOptions: deepCopy(appOptions),
     };
     fsReady = true;
     updateCloudStatus("synced");
     attachRealtimeListeners();
-    checkUserGate();   // kiểm tra lại: có thể đám mây có tài khoản mà máy này chưa có
-  }catch(e){ console.error("Lỗi kết nối Firebase", e); updateCloudStatus("error"); }
+    finalizeUserGate();   // giờ mới biết chắc có tài khoản hay không
+  }catch(e){ console.error("Lỗi kết nối Firebase", e); updateCloudStatus("error"); finalizeUserGate(); }
 }
 
 function deepCopy(x){ return JSON.parse(JSON.stringify(x)); }
@@ -3918,7 +3998,12 @@ populateSelects();
 renderWeighTab();
 document.getElementById('settleDate').value = todayKey();
 populateDebtSelects();
-checkUserGate();   // bật ngay từ dữ liệu lưu trên máy, không đợi Firebase
+measureTopBar();
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(measureTopBar);
+switchTab('weigh');
+showSplash();      // khoá app ngay từ giây đầu, tránh vào được rồi mới đòi mật khẩu
+checkUserGate();   // nếu máy đã có sẵn tài khoản thì hiện đăng nhập ngay
+setTimeout(()=>{ if(!splashDone) finalizeUserGate(); }, 10000);  // mạng lỗi thì không kẹt quá 10 giây
 cloudInit();
 checkPinLock();
 checkBackupReminder();
