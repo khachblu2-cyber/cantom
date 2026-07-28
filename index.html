@@ -34,11 +34,12 @@
   .hidden{display:none !important;}
   .tabs{position:sticky;top:0;z-index:20;background:var(--blue);border-bottom:1px solid var(--blue-dk);}
   .tabs-row{display:flex;align-items:stretch;width:100%;margin:0;overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  .brand{flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;padding:8px 16px 8px 14px;border-right:1px solid rgba(255,255,255,.2);}
-  .brand-title{font-size:16px;font-weight:700;color:#fff;line-height:1.15;white-space:nowrap;}
-  .brand-status{font-size:10px;color:#C6DCF6;margin-top:2px;white-space:nowrap;}
-  .brand-user{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:0 12px;margin-left:auto;}
-  .brand-user > span{color:#D3E4F8;font-size:11.5px;white-space:nowrap;}
+  .brand-row{display:flex;align-items:center;gap:10px;padding:7px 12px 5px;border-bottom:1px solid rgba(255,255,255,.16);}
+  .brand{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;}
+  .brand-title{font-size:15.5px;font-weight:700;color:#fff;line-height:1.15;white-space:nowrap;}
+  .brand-status{font-size:10px;color:#C6DCF6;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .brand-user{flex:0 0 auto;display:flex;align-items:center;gap:7px;}
+  .brand-user > span{color:#D3E4F8;font-size:11.5px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
   .brand-user button{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;font-size:10.5px;padding:3px 9px;border-radius:6px;cursor:pointer;}
   .brand-user .ver{font-size:9.5px;color:#9FC2E8;}
   #weighSearchRow input{background:#fff;}
@@ -174,8 +175,18 @@
   .prod-col{flex:1;min-width:0;}
   #prodGridSearchRow{position:sticky;top:calc(var(--topH,110px) + 10px);z-index:15;background:var(--paper);padding:6px 0 8px;}
   .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px;margin-bottom:12px;}
+  @media (max-width:760px){
+    /* Thu gọn thanh trên để chừa chỗ cho khu làm việc */
+    .brand-row{padding:5px 10px 4px;}
+    .brand-title{font-size:14px;}
+    .brand-status{font-size:9.5px;}
+    .brand-user > span{font-size:10.5px;max-width:90px;}
+    .brand-user .ver{display:none;}
+    .tab-btn{padding:10px 8px;font-size:13px;min-width:auto;gap:4px;}
+    #weighSearchRow{padding:5px 8px 6px;}
+  }
   @media (max-width:520px){
-    .weigh-layout{gap:6px;padding:0 6px;}
+    .weigh-layout{gap:6px;padding:6px 6px 0;}
     .emp-col{flex:0 0 112px;padding:7px;}
     .emp-chip{padding:8px 6px;}
     .emp-chip .c-code{font-size:10.5px;}
@@ -270,23 +281,24 @@
 <body>
 
 <div class="tabs" id="topBar">
-  <div class="tabs-row">
+  <div class="brand-row">
     <div class="brand">
       <div class="brand-title">⚖️ Cân Tôm</div>
       <div class="brand-status">✓ Lưu trên máy · <span id="cloudStatus"></span></div>
     </div>
+    <div id="currentUserBar" class="hidden brand-user">
+      <span>👤 <span id="currentUserNameLabel"></span></span>
+      <button onclick="switchUser()">Đổi</button>
+      <span class="ver">V1.2.4</span>
+    </div>
+  </div>
+  <div class="tabs-row">
     <button class="tab-btn active" id="tabBtnWeigh" onclick="switchTab('weigh')">⚖️ Cân tôm</button>
     <button class="tab-btn" id="tabBtnCatalog" onclick="switchTab('catalog')">📋 Danh mục</button>
     <button class="tab-btn" id="tabBtnDebt" onclick="switchTab('debt')">💰 Công nợ</button>
     <button class="tab-btn" id="tabBtnSettle" onclick="switchTab('settle')">🧾 Chốt & In</button>
     <button class="tab-btn" id="tabBtnReport" onclick="switchTab('report')">📊 Báo cáo</button>
     <button class="tab-btn" id="tabBtnConfig" onclick="switchTab('config')">⚙️ Cài đặt</button>
-  </div>
-    <div id="currentUserBar" class="hidden brand-user">
-      <span>👤 <span id="currentUserNameLabel"></span></span>
-      <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.2.3</span>
-    </div>
   </div>
   <!-- Hàng tìm kiếm dính theo, chỉ hiện ở tab Cân tôm -->
   <div id="weighSearchRow" style="display:flex;gap:8px;padding:6px 10px 8px;background:var(--blue);">
@@ -3772,13 +3784,13 @@ function updateCloudStatus(state){
   if(!el) return;
   const map = {
     off: "",
-    connecting: "☁️ Đang kết nối Firebase…",
-    syncing: "☁️ Đang đồng bộ lên Firebase…",
-    synced: "☁️ Đã đồng bộ Firebase — an toàn dù mất dữ liệu máy",
-    error: "⚠️ Lỗi đồng bộ Firebase (dữ liệu vẫn lưu tạm trên máy)",
+    connecting: "☁️ Đang kết nối…",
+    syncing: "☁️ Đang đồng bộ…",
+    synced: "☁️ Đã đồng bộ Firebase",
+    error: "⚠️ Lỗi đồng bộ — vẫn lưu trên máy",
   };
   el.textContent = map[state] || "";
-  el.style.color = state === "error" ? "#C0392B" : "#2F7D5A";
+  el.style.color = state === "error" ? "#FFD2CC" : "#B9F5D8";
 }
 
 const COLLECTIONS = {
