@@ -375,7 +375,7 @@
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.7.1</span>
+      <span class="ver">V1.8.0</span>
     </div>
   </div>
   <div class="tabs-row">
@@ -2619,8 +2619,15 @@ function isOvertimeDay(employeeId, dateKey){
 }
 function toggleOvertimeDay(employeeId, dateKey){
   const idx = overtimeDays.findIndex(o=>o.employeeId===employeeId && o.dateKey===dateKey);
-  if(idx>=0){ overtimeDays.splice(idx,1); }
-  else{ overtimeDays.push({ id: uid(), employeeId, dateKey }); }
+  if(idx>=0){
+    const bo = overtimeDays[idx];
+    overtimeDays.splice(idx,1);
+    xoaNgay('overtimeDays', bo.id);
+  }else{
+    const them = { id: uid(), employeeId, dateKey };
+    overtimeDays.push(them);
+    ghiNgay('overtimeDays', them);
+  }
   saveAll();
   renderEmployeePicker();
   renderWeighTab();
@@ -2740,7 +2747,7 @@ function addWeighing(){
   const p = products.find(x=>x.id===selectedProductId);
   const amount = kg * p.unitPrice;
   const emp = employees.find(x=>x.id===selectedEmployeeId);
-  weighings.unshift({
+  const phieu = {
     id: uid(), employeeId: selectedEmployeeId, productId: selectedProductId,
     weightKg: kg, unitPrice: p.unitPrice, amount, createdAt: Date.now(), dateKey,
     employeeCode: emp ? emp.code : '',
@@ -2748,7 +2755,9 @@ function addWeighing(){
     byUserName: currentUser ? currentUser.name : '',
     deviceId: thisDeviceId(),
     flags: (gate.flags && gate.flags.length) ? gate.flags.join(', ') : ''
-  });
+  };
+  weighings.unshift(phieu);
+  ghiNgay('weighings', phieu);      // gửi Firebase ngay, không chờ
   saveAll();
   document.getElementById('wKgBig').value='';
   updateWeighPricePreview();
@@ -3059,6 +3068,7 @@ function saveEditWeigh(id){
   w.weightKg = newKg;
   w.amount = newKg * w.unitPrice;
   editingWeighId = null;
+  ghiNgay('weighings', w);
   saveAll();
   renderWeighTab();
 }
@@ -3085,6 +3095,7 @@ function deleteSingleWeigh(id){
   if(pendingDeleteKey !== key){ armPendingDelete(key); return; }
   pendingDeleteKey = null;
   weighings = weighings.filter(w=>w.id!==id);
+  xoaNgay('weighings', id);
   saveAll();
   renderWeighTab();
 }
@@ -3101,6 +3112,7 @@ function deleteWeighGroup(idsStr){
   if(pendingDeleteKey !== key){ armPendingDelete(key); return; }
   pendingDeleteKey = null;
   weighings = weighings.filter(w=>!ids.includes(w.id));
+  ids.forEach(i=>xoaNgay('weighings', i));
   saveAll();
   renderWeighTab();
 }
@@ -3252,8 +3264,10 @@ function confirmPaymentAndPrintBill(){
   const note = "Chi cho các ngày: " + checkedDays.map(d=>new Date(d.dateKey+"T00:00:00").toLocaleDateString("vi-VN")).join(", ");
   if(!can('pay')){ alert("Tài khoản của bạn không có quyền chi tiền"); return; }
   billPrintLockUntil = Date.now() + 2000;
-  payments.push({ id: uid(), employeeId, dateKey, type, amount, note, paidDates: checkedDays.map(d=>d.dateKey), createdAt: Date.now(),
-    byUserId: currentUser?currentUser.id:'', byUserName: currentUser?currentUser.name:'', deviceId: thisDeviceId() });
+  const phieuChi = { id: uid(), employeeId, dateKey, type, amount, note, paidDates: checkedDays.map(d=>d.dateKey), createdAt: Date.now(),
+    byUserId: currentUser?currentUser.id:'', byUserName: currentUser?currentUser.name:'', deviceId: thisDeviceId() };
+  payments.push(phieuChi);
+  ghiNgay('payments', phieuChi);
   logActivity('Chi tiền', `${emp?emp.name:''} — ${formatNumber(amount)} đ`);
   saveAll();
   renderDebtTab();
@@ -3395,6 +3409,7 @@ function deletePayment(id){
   if(!requirePerm('pay')) return;
   if(!confirm("Xoá phiếu chi này?")) return;
   payments = payments.filter(p=>p.id!==id);
+  xoaNgay('payments', id);
   saveAll();
   renderDebtTab();
 }
@@ -4203,6 +4218,25 @@ async function cloudInit(){
 }
 
 function deepCopy(x){ return JSON.parse(JSON.stringify(x)); }
+
+// Gửi NGAY một bản ghi cho Firebase, không chờ 900ms.
+// Khi Firebase đã nhận, bản ghi được tính vào MỌI gói dữ liệu trả về
+// (kể cả lúc chưa kịp lên server), nên không bị gói từ máy khác xoá mất.
+// Đây là chỗ vá lỗ hổng 900ms gây mất phiếu khi nhiều máy cân cùng lúc.
+function ghiNgay(name, doc){
+  if(!fsReady || !fsDb || !doc || !doc.id) return;
+  try{
+    fsDb.collection(name).doc(String(doc.id)).set(doc)
+      .catch(err=>console.error('Không ghi ngay được '+name+'/'+doc.id+':', (err && (err.code||err.message))||err));
+  }catch(e){ console.error('Lỗi ghi ngay', name, e); }
+}
+function xoaNgay(name, id){
+  if(!fsReady || !fsDb || !id) return;
+  try{
+    fsDb.collection(name).doc(String(id)).delete()
+      .catch(err=>console.error('Không xoá ngay được '+name+'/'+id+':', (err && (err.code||err.message))||err));
+  }catch(e){ console.error('Lỗi xoá ngay', name, e); }
+}
 
 function cloudSync(){
   if(!fsReady || !fsDb) return;
