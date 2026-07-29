@@ -375,7 +375,7 @@
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.5.8</span>
+      <span class="ver">V1.6.0</span>
     </div>
   </div>
   <div class="tabs-row">
@@ -4053,8 +4053,6 @@ let fsDb = null;
 let fsReady = false;
 let cloudSyncTimer = null;
 let firestoreListeners = [];
-let baselineReady = false;   // đã lấy được danh sách THẬT từ server chưa
-const daNhanTuServer = new Set();   // các kho đã nhận được dữ liệu thật từ server
 let khoGhiLoi = [];          // các kho ghi lên server không được
 let syncInFlight = false;    // đang gửi -> không chồng lệnh
 let syncQueued = false;      // có thay đổi mới trong lúc đang gửi
@@ -4085,30 +4083,6 @@ function renderEverything(){
   }
 }
 
-// Ghép dữ liệu server với thay đổi trên máy chưa kịp gửi.
-// CHỈ so sánh mã số — nhanh gấp ~24 lần so với đối chiếu từng nội dung.
-function mergeSnapshot(name, docs, tuBoNhoDem){
-  const cur  = COLLECTIONS[name]() || [];
-  const prev = lastSynced[name] || [];
-  const idsServer = new Set(docs.map(d=>d.id));
-  const idsCur    = new Set(cur.map(x=>x.id));
-
-  // bản ghi vừa tạo trên máy, server chưa có
-  const chiCoTrenMay = cur.filter(x=>!idsServer.has(x.id));
-  // bản ghi vừa xoá trên máy, server chưa kịp biết
-  const vuaXoa = new Set(prev.filter(x=>!idsCur.has(x.id)).map(x=>x.id));
-
-  let merged = vuaXoa.size ? docs.filter(d=>!vuaXoa.has(d.id)) : docs;
-  if(chiCoTrenMay.length) merged = merged.concat(chiCoTrenMay);
-
-  COLLECTION_SETTERS[name](merged);
-  try{ localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(merged)); }catch(e){}
-  if(!tuBoNhoDem){
-    lastSynced[name] = deepCopy(docs);           // mốc = đúng những gì server đang có
-    if(chiCoTrenMay.length || vuaXoa.size) cloudSync();
-  }
-}
-
 // Gom nhiều lần vẽ lại thành một — đỡ giật trên máy yếu
 let renderTimer = null;
 function renderSoon(){
@@ -4123,22 +4097,16 @@ function attachRealtimeListeners(){
 
   Object.keys(COLLECTIONS).forEach(name=>{
     const unsub = fsDb.collection(name).onSnapshot(qs=>{
-      // LUÔN nhận dữ liệu — kể cả gói được đánh dấu "từ bộ nhớ đệm",
-      // vì Firestore đánh dấu như vậy cho mọi gói khi máy còn bản ghi chưa gửi được.
-      // Chỉ KHÔNG lấy gói bộ nhớ đệm làm mốc đối chiếu.
-      const tuBoNhoDem = !!(qs.metadata && qs.metadata.fromCache);
+      // Server là bản chuẩn — thay thẳng. Firestore đã tự gộp sẵn
+      // các bản ghi máy này vừa ghi mà chưa kịp lên server.
       const docs = qs.docs.map(d=>d.data());
-      mergeSnapshot(name, docs, tuBoNhoDem);
-      if(!tuBoNhoDem){
-        daNhanTuServer.add(name);
-        if(daNhanTuServer.size >= Object.keys(COLLECTIONS).length) updateCloudStatus("synced");
-      }
+      COLLECTION_SETTERS[name](docs);
+      try{ localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(docs)); }catch(e){}
+      lastSynced[name] = deepCopy(docs);
       if(name==='staffUsers'){ finalizeUserGate(); applyCurrentUserPermissions(); }
       renderSoon();
     }, err=>{
       console.error("Lỗi lắng nghe realtime", name, err);
-      // Vẫn tính là đã xử lý xong kho này, tránh treo mãi ở "Đang đồng bộ"
-      daNhanTuServer.add(name);
       if(name==='staffUsers') finalizeUserGate();
       updateCloudStatus("error");
     });
@@ -4166,18 +4134,61 @@ async function cloudInit(){
   updateCloudStatus("connecting");
   try{
     if(!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
+    await firebase.auth().signInAnonymously();
     if(!fsDb) fsDb = firebase.firestore();
-    try{
-      if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
-    }catch(e){ console.warn("Chua dang nhap duoc (co the dang mat mang)", e && e.code); }
 
-    // KHONG tai truoc nua - du lieu lay thang tu ket noi thoi gian thuc,
-    // tranh tai dup toan bo co so du lieu moi lan mo app.
+    // Tải dữ liệu ban đầu 1 lần
+    const snaps = {};
+    for(const name of Object.keys(COLLECTIONS)){
+      const qs = await fsDb.collection(name).get();
+      snaps[name] = qs.docs.map(d=>d.data());
+    }
+    const settingsDoc = await fsDb.collection("settings").doc("app").get();
+    const cloudHasData = snaps.employees.length>0 || snaps.products.length>0 || snaps.weighings.length>0;
+    const localHasData = employees.length>0 || products.length>0 || weighings.length>0;
+
+    // Giữ lại phiếu cân chỉ có trên máy (cân lúc mất mạng rồi đóng trình duyệt).
+    // Chỉ làm 1 lần lúc khởi động, trước khi bật lắng nghe — không thể gây giằng co giữa các máy.
+    let phieuCuuDuoc = [];
+    if(cloudHasData){
+      const idsServer = new Set((snaps.weighings||[]).map(w=>w.id));
+      phieuCuuDuoc = weighings.filter(w=>!idsServer.has(w.id));
+    }
+
+    if(cloudHasData || !localHasData){
+      Object.keys(COLLECTIONS).forEach(name=>{
+        COLLECTION_SETTERS[name](snaps[name]);
+        try{ localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(snaps[name])); }catch(e){}
+      });
+      if(settingsDoc.exists){
+        const sd = settingsDoc.data();
+        if(sd.companyInfo) companyInfo = sd.companyInfo;
+        if(sd.appOptions)  appOptions  = Object.assign({}, appOptions, sd.appOptions);
+      }
+      try{
+        localStorage.setItem(COMPANY_KEY, JSON.stringify(companyInfo));
+        localStorage.setItem(OPTIONS_KEY, JSON.stringify(appOptions));
+      }catch(e){}
+    }
+
+    lastSynced = { companyInfo: deepCopy(companyInfo), appOptions: deepCopy(appOptions) };
+    Object.keys(COLLECTIONS).forEach(n=>{ lastSynced[n] = deepCopy(COLLECTIONS[n]()); });
+
+    // Đưa lại phiếu cứu được rồi đẩy lên server
+    if(phieuCuuDuoc.length){
+      weighings = weighings.concat(phieuCuuDuoc);
+      try{ localStorage.setItem(WEIGH_KEY, JSON.stringify(weighings)); }catch(e){}
+      console.warn('Đưa lại ' + phieuCuuDuoc.length + ' phiếu cân chỉ có trên máy');
+    }
+
     fsReady = true;
+    renderEverything();
+    updateCloudStatus("synced");
     attachRealtimeListeners();
-    updateCloudStatus("syncing");
+    finalizeUserGate();
+    if(phieuCuuDuoc.length) cloudSync();
   }catch(e){
-    console.error("Loi ket noi Firebase", e);
+    console.error("Lỗi kết nối Firebase", e);
     updateCloudStatus("error");
     finalizeUserGate();
   }finally{
@@ -4190,7 +4201,7 @@ function deepCopy(x){ return JSON.parse(JSON.stringify(x)); }
 function cloudSync(){
   if(!fsReady || !fsDb) return;
   clearTimeout(cloudSyncTimer);
-  cloudSyncTimer = setTimeout(syncNow, 300);   // 300ms: thu hẹp khe hở
+  cloudSyncTimer = setTimeout(syncNow, 900);
 }
 async function syncNow(){
   if(!fsReady || !fsDb) return;
