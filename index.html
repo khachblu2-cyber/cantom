@@ -375,7 +375,7 @@
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.5.6</span>
+      <span class="ver">V1.5.7</span>
     </div>
   </div>
   <div class="tabs-row">
@@ -4081,7 +4081,7 @@ function renderEverything(){
 
 // Ghép dữ liệu server với thay đổi trên máy chưa kịp gửi.
 // CHỈ so sánh mã số — nhanh gấp ~24 lần so với đối chiếu từng nội dung.
-function mergeSnapshot(name, docs){
+function mergeSnapshot(name, docs, tuBoNhoDem){
   const cur  = COLLECTIONS[name]() || [];
   const prev = lastSynced[name] || [];
   const idsServer = new Set(docs.map(d=>d.id));
@@ -4097,8 +4097,10 @@ function mergeSnapshot(name, docs){
 
   COLLECTION_SETTERS[name](merged);
   try{ localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(merged)); }catch(e){}
-  lastSynced[name] = deepCopy(docs);
-  if(chiCoTrenMay.length || vuaXoa.size) cloudSync();
+  if(!tuBoNhoDem){
+    lastSynced[name] = deepCopy(docs);           // mốc = đúng những gì server đang có
+    if(chiCoTrenMay.length || vuaXoa.size) cloudSync();
+  }
 }
 
 // Gom nhiều lần vẽ lại thành một — đỡ giật trên máy yếu
@@ -4115,14 +4117,17 @@ function attachRealtimeListeners(){
 
   Object.keys(COLLECTIONS).forEach(name=>{
     const unsub = fsDb.collection(name).onSnapshot(qs=>{
-      // Chỉ tin dữ liệu từ server. Bản từ bộ nhớ đệm có thể thiếu,
-      // dùng nó sẽ xoá nhầm bản ghi đang có trên máy.
-      if(qs.metadata && qs.metadata.fromCache) return;
+      // LUÔN nhận dữ liệu — kể cả gói được đánh dấu "từ bộ nhớ đệm",
+      // vì Firestore đánh dấu như vậy cho mọi gói khi máy còn bản ghi chưa gửi được.
+      // Chỉ KHÔNG lấy gói bộ nhớ đệm làm mốc đối chiếu.
+      const tuBoNhoDem = !!(qs.metadata && qs.metadata.fromCache);
       const docs = qs.docs.map(d=>d.data());
-      mergeSnapshot(name, docs);
-      daNhanTuServer.add(name);
+      mergeSnapshot(name, docs, tuBoNhoDem);
+      if(!tuBoNhoDem){
+        daNhanTuServer.add(name);
+        if(daNhanTuServer.size >= Object.keys(COLLECTIONS).length) updateCloudStatus("synced");
+      }
       if(name==='staffUsers'){ finalizeUserGate(); applyCurrentUserPermissions(); }
-      if(daNhanTuServer.size >= Object.keys(COLLECTIONS).length) updateCloudStatus("synced");
       renderSoon();
     }, err=>{
       console.error("Lỗi lắng nghe realtime", name, err);
