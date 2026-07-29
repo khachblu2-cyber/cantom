@@ -375,7 +375,7 @@
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.5.7</span>
+      <span class="ver">V1.5.8</span>
     </div>
   </div>
   <div class="tabs-row">
@@ -4007,6 +4007,11 @@ function printProductReportA4(){
 function updateCloudStatus(state){
   const el = document.getElementById('cloudStatus');
   if(!el) return;
+  if(state === 'error' && khoGhiLoi.length){
+    el.textContent = "⚠️ Không ghi được: " + khoGhiLoi.join(', ');
+    el.style.color = "#FFD2CC";
+    return;
+  }
   const map = {
     off: "",
     connecting: "☁️ Đang kết nối…",
@@ -4050,6 +4055,7 @@ let cloudSyncTimer = null;
 let firestoreListeners = [];
 let baselineReady = false;   // đã lấy được danh sách THẬT từ server chưa
 const daNhanTuServer = new Set();   // các kho đã nhận được dữ liệu thật từ server
+let khoGhiLoi = [];          // các kho ghi lên server không được
 let syncInFlight = false;    // đang gửi -> không chồng lệnh
 let syncQueued = false;      // có thay đổi mới trong lúc đang gửi
 let cloudInitRunning = false;
@@ -4188,50 +4194,64 @@ function cloudSync(){
 }
 async function syncNow(){
   if(!fsReady || !fsDb) return;
-  if(syncInFlight){ syncQueued = true; return; }   // đang gửi -> xếp hàng, không chồng lệnh
+  if(syncInFlight){ syncQueued = true; return; }
   syncInFlight = true;
+  const khoLoi = [];
+  let coGiDeGui = false;
   try{
-    const allWrites = [];
+    // Gửi TỪNG KHO RIÊNG. Firestore huỷ trọn lô nếu một bản ghi bị từ chối,
+    // nên gộp chung sẽ khiến 1 bản ghi hỏng chặn hết phiếu cân.
     for(const name of Object.keys(COLLECTIONS)){
       const current = COLLECTIONS[name]();
       const prev = lastSynced[name] || [];
       const currentMap = new Map(current.map(x=>[x.id,x]));
       const prevMap = new Map(prev.map(x=>[x.id,x]));
+      const writes = [];
       currentMap.forEach((item,id)=>{
         const old = prevMap.get(id);
-        if(!old || JSON.stringify(old)!==JSON.stringify(item)){
-          allWrites.push({ col:name, id, data:item, op:'set' });
-        }
+        if(!old || JSON.stringify(old)!==JSON.stringify(item)) writes.push({ id, data:item, op:'set' });
       });
-      prevMap.forEach((item,id)=>{
-        if(!currentMap.has(id)) allWrites.push({ col:name, id, op:'delete' });
-      });
-    }
-    // Cài đặt công ty / tuỳ chọn — gộp vào 1 document riêng
-    const settingsChanged = JSON.stringify(lastSynced.companyInfo)!==JSON.stringify(companyInfo) || JSON.stringify(lastSynced.appOptions)!==JSON.stringify(appOptions);
+      prevMap.forEach((item,id)=>{ if(!currentMap.has(id)) writes.push({ id, op:'delete' }); });
+      if(writes.length === 0) continue;
 
-    if(allWrites.length === 0 && !settingsChanged){
-      updateCloudStatus("synced");
-      return;                       // không có gì để gửi
+      coGiDeGui = true;
+      updateCloudStatus("syncing");
+      // Chốt bản sao TRƯỚC khi gửi: dữ liệu nhập thêm trong lúc đang gửi
+      // vẫn được coi là chưa gửi, không bị đánh dấu nhầm là xong.
+      const banChot = deepCopy(current);
+      try{
+        for(let i=0; i<writes.length; i+=400){
+          const batch = fsDb.batch();
+          writes.slice(i, i+400).forEach(w=>{
+            const ref = fsDb.collection(name).doc(String(w.id));
+            if(w.op==='set') batch.set(ref, w.data); else batch.delete(ref);
+          });
+          await batch.commit();
+        }
+        lastSynced[name] = banChot;         // ghi nhận riêng cho kho này
+      }catch(err){
+        khoLoi.push(name);
+        console.error('Không ghi được kho "'+name+'":', (err && (err.code || err.message)) || err);
+      }
     }
-    updateCloudStatus("syncing");
-    // Ghi theo lô, tối đa 400 thao tác / batch (giới hạn Firestore là 500)
-    for(let i=0; i<allWrites.length; i+=400){
-      const batch = fsDb.batch();
-      allWrites.slice(i, i+400).forEach(w=>{
-        const ref = fsDb.collection(w.col).doc(String(w.id));
-        if(w.op==='set') batch.set(ref, w.data);
-        else batch.delete(ref);
-      });
-      await batch.commit();
-    }
+
+    const settingsChanged = JSON.stringify(lastSynced.companyInfo)!==JSON.stringify(companyInfo)
+                         || JSON.stringify(lastSynced.appOptions)!==JSON.stringify(appOptions);
     if(settingsChanged){
-      await fsDb.collection("settings").doc("app").set({ companyInfo, appOptions });
+      coGiDeGui = true;
+      const ci = deepCopy(companyInfo), ao = deepCopy(appOptions);
+      try{
+        await fsDb.collection("settings").doc("app").set({ companyInfo: ci, appOptions: ao });
+        lastSynced.companyInfo = ci;
+        lastSynced.appOptions  = ao;
+      }catch(err){
+        khoLoi.push('settings');
+        console.error('Không ghi được cài đặt:', (err && (err.code || err.message)) || err);
+      }
     }
-    // Dựng mốc từ chính danh sách kho — thêm kho mới sau này không bị sót
-    lastSynced = { companyInfo: deepCopy(companyInfo), appOptions: deepCopy(appOptions) };
-    Object.keys(COLLECTIONS).forEach(n=>{ lastSynced[n] = deepCopy(COLLECTIONS[n]()); });
-    updateCloudStatus("synced");
+
+    khoGhiLoi = khoLoi.slice();
+    updateCloudStatus(khoLoi.length ? "error" : "synced");
   }catch(e){
     console.error("Lỗi đồng bộ Firebase", e);
     updateCloudStatus("error");
@@ -4274,7 +4294,8 @@ document.getElementById('settleDate').value = todayKey();
 populateDebtSelects();
 // Tự nối lại và gửi tiếp: 20 giây một lần, và ngay khi máy có mạng trở lại
 setInterval(()=>{
-  if(!fsReady) cloudInit();
+  if(!fsReady){ cloudInit(); return; }
+  if(khoGhiLoi.length) cloudSync();   // thử lại kho đang lỗi
 }, 20000);
 window.addEventListener('online', ()=>{
   if(!fsReady) cloudInit(); else cloudSync();
