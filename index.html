@@ -375,7 +375,7 @@
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.6.0</span>
+      <span class="ver">V1.7.0</span>
     </div>
   </div>
   <div class="tabs-row">
@@ -954,11 +954,12 @@ function saveAll(){
   try{
     localStorage.setItem(EMP_KEY, JSON.stringify(employees));
     localStorage.setItem(PROD_KEY, JSON.stringify(products));
-    localStorage.setItem(WEIGH_KEY, JSON.stringify(weighings));
+    if(!boNhoDemBat) localStorage.setItem(WEIGH_KEY, JSON.stringify(weighings));
     localStorage.setItem(OPEN_KEY, JSON.stringify(openingBalances));
     localStorage.setItem(PAY_KEY, JSON.stringify(payments));
     localStorage.setItem(OVERTIME_KEY, JSON.stringify(overtimeDays));
     localStorage.setItem(STAFF_KEY, JSON.stringify(staffUsers));
+    localStorage.setItem('cantom_devices', JSON.stringify(devices));
     localStorage.setItem(COMPANY_KEY, JSON.stringify(companyInfo));
     localStorage.setItem(OPTIONS_KEY, JSON.stringify(appOptions));
   }catch(e){ alert("Không lưu được dữ liệu trên máy: " + e.message); }
@@ -4007,6 +4008,12 @@ function printProductReportA4(){
 function updateCloudStatus(state){
   const el = document.getElementById('cloudStatus');
   if(!el) return;
+  // Lỗi ĐỌC là nặng nhất — luôn hiện, không cho trạng thái khác đè lên
+  if(khoDocLoi.length){
+    el.textContent = "⚠️ Không đọc được: " + khoDocLoi.join(', ');
+    el.style.color = "#FFD2CC";
+    return;
+  }
   if(state === 'error' && khoGhiLoi.length){
     el.textContent = "⚠️ Không ghi được: " + khoGhiLoi.join(', ');
     el.style.color = "#FFD2CC";
@@ -4015,7 +4022,7 @@ function updateCloudStatus(state){
   const map = {
     off: "",
     connecting: "☁️ Đang kết nối…",
-    syncing: "☁️ Đang đồng bộ…",
+    syncing: soMucDangGui > 0 ? ("☁️ Đang gửi " + soMucDangGui.toLocaleString("en-US") + " mục…") : "☁️ Đang đồng bộ…",
     synced: "☁️ Đã đồng bộ Firebase",
     error: "⚠️ Lỗi đồng bộ — vẫn lưu trên máy",
   };
@@ -4031,7 +4038,6 @@ const COLLECTIONS = {
   payments: () => payments,
   overtimeDays: () => overtimeDays,
   staffUsers: () => staffUsers,
-  devices: () => devices,
 };
 const COLLECTION_SETTERS = {
   employees: (v)=>{ employees = v; },
@@ -4041,19 +4047,22 @@ const COLLECTION_SETTERS = {
   payments: (v)=>{ payments = v; },
   overtimeDays: (v)=>{ overtimeDays = v; },
   staffUsers: (v)=>{ staffUsers = v; },
-  devices: (v)=>{ devices = v; },
 };
 const COLLECTION_LOCALKEYS = {
   employees: EMP_KEY, products: PROD_KEY, weighings: WEIGH_KEY, openingBalances: OPEN_KEY,
   payments: PAY_KEY, overtimeDays: OVERTIME_KEY, staffUsers: STAFF_KEY,
-  devices: 'cantom_devices',
 };
-let lastSynced = { employees:[], products:[], weighings:[], openingBalances:[], payments:[], overtimeDays:[], staffUsers:[], activityLog:[], devices:[], companyInfo:null, appOptions:null };
+let lastSynced = { employees:[], products:[], weighings:[], openingBalances:[], payments:[], overtimeDays:[], staffUsers:[], companyInfo:null, appOptions:null };
 let fsDb = null;
 let fsReady = false;
 let cloudSyncTimer = null;
 let firestoreListeners = [];
+let boNhoDemBat = false;     // đã bật được bộ nhớ đệm Firebase chưa
+let phieuTruocKhiNoi = [];   // phiếu cân có sẵn trên máy trước khi nối server
+let daCuuPhieuCan = false;   // đã đối chiếu cứu phiếu ngoại tuyến chưa
+let khoDocLoi = [];          // các kho ĐỌC từ server không được
 let khoGhiLoi = [];          // các kho ghi lên server không được
+let soMucDangGui = 0;        // số bản ghi đang chờ gửi trong lượt này
 let syncInFlight = false;    // đang gửi -> không chồng lệnh
 let syncQueued = false;      // có thay đổi mới trong lúc đang gửi
 let cloudInitRunning = false;
@@ -4090,6 +4099,14 @@ function renderSoon(){
   renderTimer = setTimeout(renderEverything, 200);
 }
 
+// Phiếu cân rất nhiều (3.000/ngày). Khi đã có bộ nhớ đệm Firebase thì
+// không chép thêm vào bộ nhớ trình duyệt nữa — chính chỗ đó mới bị trần 5 MB.
+function luuKhoLenMay(name, docs){
+  if(name === 'weighings' && boNhoDemBat) return;
+  try{ localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(docs)); }
+  catch(e){ console.warn('Không lưu được kho "'+name+'" trên máy:', e && e.name); }
+}
+
 function attachRealtimeListeners(){
   // Dọn listener cũ (nếu gọi lại)
   firestoreListeners.forEach(unsub=>unsub());
@@ -4099,14 +4116,33 @@ function attachRealtimeListeners(){
     const unsub = fsDb.collection(name).onSnapshot(qs=>{
       // Server là bản chuẩn — thay thẳng. Firestore đã tự gộp sẵn
       // các bản ghi máy này vừa ghi mà chưa kịp lên server.
-      const docs = qs.docs.map(d=>d.data());
+      let docs = qs.docs.map(d=>d.data());
+
+      // Gói ĐẦU TIÊN của kho phiếu cân: đối chiếu với phiếu đang có trên máy.
+      // Phiếu nào máy có mà server chưa có (cân lúc mất mạng) thì giữ lại và đẩy lên.
+      // Chỉ chạy đúng 1 lần nên không gây giằng co giữa các máy.
+      let phaiGuiLai = false;
+      if(name === 'weighings' && !daCuuPhieuCan){
+        daCuuPhieuCan = true;
+        const idsServer = new Set(docs.map(w=>w.id));
+        const conThieu = phieuTruocKhiNoi.filter(w=>!idsServer.has(w.id));
+        if(conThieu.length){
+          console.warn('Cứu ' + conThieu.length + ' phiếu cân chỉ có trên máy');
+          docs = docs.concat(conThieu);
+          phaiGuiLai = true;
+        }
+        phieuTruocKhiNoi = [];
+      }
+
       COLLECTION_SETTERS[name](docs);
-      try{ localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(docs)); }catch(e){}
-      lastSynced[name] = deepCopy(docs);
+      luuKhoLenMay(name, docs);
+      lastSynced[name] = phaiGuiLai ? deepCopy(qs.docs.map(d=>d.data())) : deepCopy(docs);
+      if(phaiGuiLai) cloudSync();
       if(name==='staffUsers'){ finalizeUserGate(); applyCurrentUserPermissions(); }
       renderSoon();
     }, err=>{
       console.error("Lỗi lắng nghe realtime", name, err);
+      if(khoDocLoi.indexOf(name) < 0) khoDocLoi.push(name);
       if(name==='staffUsers') finalizeUserGate();
       updateCloudStatus("error");
     });
@@ -4134,59 +4170,45 @@ async function cloudInit(){
   updateCloudStatus("connecting");
   try{
     if(!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
-    await firebase.auth().signInAnonymously();
-    if(!fsDb) fsDb = firebase.firestore();
-
-    // Tải dữ liệu ban đầu 1 lần
-    const snaps = {};
-    for(const name of Object.keys(COLLECTIONS)){
-      const qs = await fsDb.collection(name).get();
-      snaps[name] = qs.docs.map(d=>d.data());
-    }
-    const settingsDoc = await fsDb.collection("settings").doc("app").get();
-    const cloudHasData = snaps.employees.length>0 || snaps.products.length>0 || snaps.weighings.length>0;
-    const localHasData = employees.length>0 || products.length>0 || weighings.length>0;
-
-    // Giữ lại phiếu cân chỉ có trên máy (cân lúc mất mạng rồi đóng trình duyệt).
-    // Chỉ làm 1 lần lúc khởi động, trước khi bật lắng nghe — không thể gây giằng co giữa các máy.
-    let phieuCuuDuoc = [];
-    if(cloudHasData){
-      const idsServer = new Set((snaps.weighings||[]).map(w=>w.id));
-      phieuCuuDuoc = weighings.filter(w=>!idsServer.has(w.id));
-    }
-
-    if(cloudHasData || !localHasData){
-      Object.keys(COLLECTIONS).forEach(name=>{
-        COLLECTION_SETTERS[name](snaps[name]);
-        try{ localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(snaps[name])); }catch(e){}
-      });
-      if(settingsDoc.exists){
-        const sd = settingsDoc.data();
-        if(sd.companyInfo) companyInfo = sd.companyInfo;
-        if(sd.appOptions)  appOptions  = Object.assign({}, appOptions, sd.appOptions);
+    if(!fsDb){
+      fsDb = firebase.firestore();
+      // Bộ nhớ đệm: lần mở sau chỉ tải phần THAY ĐỔI thay vì cả 4.100 bản ghi.
+      // Dùng kho lưu trữ riêng của trình duyệt, dung lượng lớn hơn nhiều so với 5 MB.
+      try{
+        fsDb.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
+        await fsDb.enablePersistence({ synchronizeTabs:true });
+        boNhoDemBat = true;
+      }catch(e){
+        console.warn("Không bật được bộ nhớ đệm Firebase:", e && e.code);
       }
+    }
+    await firebase.auth().signInAnonymously();
+
+    // Ghi nhớ phiếu cân đang có trên máy TRƯỚC khi nối server.
+    // Dùng để cứu phiếu cân lúc mất mạng — chỉ đối chiếu 1 lần ở gói dữ liệu đầu tiên.
+    phieuTruocKhiNoi = weighings.slice();
+    daCuuPhieuCan = false;
+
+    // Cài đặt chung: 1 tài liệu, rất nhẹ
+    const settingsDoc = await fsDb.collection("settings").doc("app").get();
+    if(settingsDoc.exists){
+      const sd = settingsDoc.data();
+      if(sd.companyInfo) companyInfo = sd.companyInfo;
+      if(sd.appOptions)  appOptions  = Object.assign({}, appOptions, sd.appOptions);
       try{
         localStorage.setItem(COMPANY_KEY, JSON.stringify(companyInfo));
         localStorage.setItem(OPTIONS_KEY, JSON.stringify(appOptions));
       }catch(e){}
     }
 
+    // Mốc = dữ liệu đang có trên máy, để chưa vội đẩy gì lên khi vừa mở app.
+    // Bộ lắng nghe bên dưới sẽ mang bản chuẩn từ server về ngay sau đó.
     lastSynced = { companyInfo: deepCopy(companyInfo), appOptions: deepCopy(appOptions) };
     Object.keys(COLLECTIONS).forEach(n=>{ lastSynced[n] = deepCopy(COLLECTIONS[n]()); });
 
-    // Đưa lại phiếu cứu được rồi đẩy lên server
-    if(phieuCuuDuoc.length){
-      weighings = weighings.concat(phieuCuuDuoc);
-      try{ localStorage.setItem(WEIGH_KEY, JSON.stringify(weighings)); }catch(e){}
-      console.warn('Đưa lại ' + phieuCuuDuoc.length + ' phiếu cân chỉ có trên máy');
-    }
-
     fsReady = true;
     renderEverything();
-    updateCloudStatus("synced");
     attachRealtimeListeners();
-    finalizeUserGate();
-    if(phieuCuuDuoc.length) cloudSync();
   }catch(e){
     console.error("Lỗi kết nối Firebase", e);
     updateCloudStatus("error");
@@ -4208,10 +4230,10 @@ async function syncNow(){
   if(syncInFlight){ syncQueued = true; return; }
   syncInFlight = true;
   const khoLoi = [];
-  let coGiDeGui = false;
   try{
-    // Gửi TỪNG KHO RIÊNG. Firestore huỷ trọn lô nếu một bản ghi bị từ chối,
-    // nên gộp chung sẽ khiến 1 bản ghi hỏng chặn hết phiếu cân.
+    // B1: tính trước tất cả thay đổi để biết khối lượng
+    const viecTheoKho = {};
+    let tong = 0;
     for(const name of Object.keys(COLLECTIONS)){
       const current = COLLECTIONS[name]();
       const prev = lastSynced[name] || [];
@@ -4223,13 +4245,27 @@ async function syncNow(){
         if(!old || JSON.stringify(old)!==JSON.stringify(item)) writes.push({ id, data:item, op:'set' });
       });
       prevMap.forEach((item,id)=>{ if(!currentMap.has(id)) writes.push({ id, op:'delete' }); });
-      if(writes.length === 0) continue;
+      if(writes.length){
+        viecTheoKho[name] = { writes, banChot: deepCopy(current) };
+        tong += writes.length;
+      }
+    }
+    const settingsChanged = JSON.stringify(lastSynced.companyInfo)!==JSON.stringify(companyInfo)
+                         || JSON.stringify(lastSynced.appOptions)!==JSON.stringify(appOptions);
 
-      coGiDeGui = true;
-      updateCloudStatus("syncing");
-      // Chốt bản sao TRƯỚC khi gửi: dữ liệu nhập thêm trong lúc đang gửi
-      // vẫn được coi là chưa gửi, không bị đánh dấu nhầm là xong.
-      const banChot = deepCopy(current);
+    if(tong === 0 && !settingsChanged){
+      khoGhiLoi = [];
+      updateCloudStatus("synced");
+      return;
+    }
+    console.log('Đồng bộ: gửi ' + tong + ' mục',
+      Object.keys(viecTheoKho).map(n=>n+'='+viecTheoKho[n].writes.length).join(', '));
+    soMucDangGui = tong;
+    updateCloudStatus("syncing");
+
+    // B2: gửi từng kho riêng — 1 kho lỗi không chặn các kho khác
+    for(const name of Object.keys(viecTheoKho)){
+      const { writes, banChot } = viecTheoKho[name];
       try{
         for(let i=0; i<writes.length; i+=400){
           const batch = fsDb.batch();
@@ -4238,37 +4274,38 @@ async function syncNow(){
             if(w.op==='set') batch.set(ref, w.data); else batch.delete(ref);
           });
           await batch.commit();
+          soMucDangGui = Math.max(0, soMucDangGui - Math.min(400, writes.length - i));
+          updateCloudStatus("syncing");
         }
-        lastSynced[name] = banChot;         // ghi nhận riêng cho kho này
+        lastSynced[name] = banChot;
       }catch(err){
         khoLoi.push(name);
         console.error('Không ghi được kho "'+name+'":', (err && (err.code || err.message)) || err);
       }
     }
 
-    const settingsChanged = JSON.stringify(lastSynced.companyInfo)!==JSON.stringify(companyInfo)
-                         || JSON.stringify(lastSynced.appOptions)!==JSON.stringify(appOptions);
     if(settingsChanged){
-      coGiDeGui = true;
       const ci = deepCopy(companyInfo), ao = deepCopy(appOptions);
       try{
         await fsDb.collection("settings").doc("app").set({ companyInfo: ci, appOptions: ao });
         lastSynced.companyInfo = ci;
         lastSynced.appOptions  = ao;
       }catch(err){
-        khoLoi.push('settings');
+        khoLoi.push('cài đặt');
         console.error('Không ghi được cài đặt:', (err && (err.code || err.message)) || err);
       }
     }
 
+    soMucDangGui = 0;
     khoGhiLoi = khoLoi.slice();
     updateCloudStatus(khoLoi.length ? "error" : "synced");
   }catch(e){
     console.error("Lỗi đồng bộ Firebase", e);
+    soMucDangGui = 0;
     updateCloudStatus("error");
   }finally{
     syncInFlight = false;
-    if(syncQueued){ syncQueued = false; setTimeout(syncNow, 300); }
+    if(syncQueued){ syncQueued = false; setTimeout(syncNow, 900); }
   }
 }
 
