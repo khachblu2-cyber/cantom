@@ -42,7 +42,64 @@
   .brand-user > span{color:#D3E4F8;font-size:11.5px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
   .brand-user button{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;font-size:10.5px;padding:3px 9px;border-radius:6px;cursor:pointer;}
   .brand-user .ver{font-size:9.5px;color:#9FC2E8;}
-  #weighSearchRow input{background:#fff;}
+  /* ===== HÀNG THAO TÁC TRÊN CÙNG ===== */
+  .action-row{display:flex;gap:8px;align-items:stretch;padding:7px 10px 8px;background:var(--blue);flex-wrap:wrap;}
+  .action-row input{border:none !important;border-radius:10px;padding:11px 12px;font-size:15px;font-family:inherit;background:#fff;color:var(--ink);}
+  .action-row .f-emp{flex:1 1 200px;min-width:140px;}
+  .action-row .f-date{flex:0 0 148px;}
+  .action-row .f-kg{flex:0 0 118px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:700;padding:6px 12px;}
+  .btn-form{flex:0 0 auto;background:#fff;border:none;border-radius:10px;padding:5px 13px;font-size:12.5px;font-weight:700;
+    color:var(--blue);cursor:pointer;font-family:inherit;line-height:1.25;white-space:nowrap;}
+  .btn-nhap{flex:0 0 auto;background:linear-gradient(150deg,#2E7BD1,#123E77);border:1px solid rgba(255,255,255,.35);
+    border-radius:10px;padding:0 24px;color:#fff;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.4px;}
+  .btn-nhap:active{transform:scale(.98);}
+  #activeProdBar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:0 12px 7px;background:var(--blue);
+    color:#C6DCF6;font-size:12.5px;}
+  #activeProdBar b{color:#fff;font-weight:700;}
+
+  /* ===== CỘT CHI TIẾT BÊN PHẢI ===== */
+  .detail-col{flex:0 0 390px;min-width:0;position:sticky;top:calc(var(--topH,150px) + 10px);
+    max-height:calc(100vh - var(--topH,150px) - 20px);overflow-y:auto;}
+  .dcard{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .dhead{background:#EAF1FB;padding:10px 12px;border-bottom:1px solid var(--line);}
+  .dhead .n{font-size:16px;font-weight:700;line-height:1.2;}
+  .dhead .c{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);margin-top:1px;}
+  table.dtb{width:100%;border-collapse:collapse;font-size:13px;}
+  table.dtb th{background:#F7F9FC;color:var(--muted);font-size:10px;letter-spacing:.4px;text-transform:uppercase;
+    padding:6px 9px;text-align:left;border-bottom:1px solid var(--line);}
+  table.dtb th.r,table.dtb td.r{text-align:right;}
+  table.dtb td{padding:8px 9px;border-bottom:1px solid var(--line);}
+  table.dtb tr.item{cursor:pointer;}
+  table.dtb tr.item:active td{background:#EAF1FB;}
+  table.dtb td.sz{font-weight:700;}
+  table.dtb td.kg{font-family:'IBM Plex Mono',monospace;font-weight:700;}
+  table.dtb td.mn{font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--blue);font-size:12.5px;}
+  table.dtb tr.sub td{background:#FBFCFE;font-size:11.5px;color:var(--muted);padding:5px 9px 5px 20px;}
+  table.dtb tr.tot td{background:#EAF1FB;font-weight:700;border-bottom:none;}
+  .dfoot{padding:9px 12px;background:#EAF1FB;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;}
+  .dfoot .lbl{font-size:11.5px;color:var(--muted);}
+  .dfoot .val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--blue);}
+
+  /* ===== PHIẾU CHI TIẾT TRONG NGÀY ===== */
+  .slip-ovl{position:fixed;inset:0;background:rgba(10,25,48,.62);z-index:80;display:none;
+    align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto;}
+  .slip-ovl.show{display:flex;}
+  .slip-bar{width:340px;max-width:100%;display:flex;justify-content:space-between;gap:8px;margin-bottom:8px;}
+  .slip-bar button{background:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;
+    cursor:pointer;font-family:'Inter',sans-serif;color:var(--ink);}
+  .slip{background:#fff;width:340px;max-width:100%;padding:16px 18px 22px;border-radius:4px;
+    font-family:'Times New Roman',Times,serif;color:#000;}
+  .slip .s-co{font-size:15px;font-weight:700;text-align:center;line-height:1.25;}
+  .slip .s-sub{font-size:12px;text-align:center;margin-top:3px;}
+  .slip .s-ttl{font-size:17px;font-weight:700;text-align:center;margin:14px 0 12px;line-height:1.3;}
+  .slip .s-inf{font-size:13px;margin-bottom:3px;}
+  .slip table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:9px;}
+  .slip th,.slip td{border:1px solid #000;padding:4px 5px;}
+  .slip th{text-align:center;font-weight:700;}
+  .slip td.c{text-align:center;}
+  .slip td.r{text-align:right;}
+  .slip tr.sum td{font-weight:700;}
+  .slip .s-words{font-size:12.5px;margin-top:8px;}
   .tab-btn{white-space:nowrap;}
   .tab-btn{flex:1 0 auto;min-width:96px;display:flex;align-items:center;justify-content:center;gap:6px;padding:15px 10px;border:none;border-bottom:2px solid transparent;background:transparent;color:#D3E4F8;font-weight:600;font-size:15px;cursor:pointer;}
   .tab-btn.active{color:#fff;border-bottom-color:#FFFFFF;}
@@ -79,6 +136,15 @@
   .weigh-emp{font-weight:700;font-size:15px;}
   .weigh-prod{font-size:12.5px;color:var(--muted);margin-top:2px;}
   .weigh-amt{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;color:var(--blue);}
+  /* Chi tiết đã cân: tên nhân viên 1 lần ở trên, mã hàng liệt kê bên dưới */
+  .weigh-emp-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:7px;border-bottom:1.5px solid var(--line);}
+  .weigh-emp-total{display:flex;align-items:baseline;gap:8px;flex-shrink:0;}
+  .weigh-prod-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0 8px 2px;}
+  .weigh-prod-row + .weigh-prod-row{border-top:1px dashed var(--line);}
+  .weigh-prod-row .weigh-prod{margin-top:0;}
+  .weigh-prod-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .weigh-amt-sm{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px;color:var(--blue);}
+  .weigh-detail-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0 6px 16px;border-top:1px dashed var(--line);font-size:12.5px;}
   .icon-del{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;}
   .totalbar{background:#EAF1FB;border:1px solid #C9DDF5;border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin:10px 0;}
   .totalbar .lbl{font-weight:700;font-size:14px;}
@@ -174,8 +240,16 @@
   .emp-col-list{overflow-y:auto;}
   .prod-col{flex:1;min-width:0;}
   #prodGridSearchRow{position:sticky;top:calc(var(--topH,110px) + 10px);z-index:15;background:var(--paper);padding:6px 0 8px;}
-  .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px;margin-bottom:12px;}
+  .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:7px;margin-bottom:12px;}
+  @media (max-width:1000px){
+    .weigh-layout{flex-wrap:wrap;}
+    .detail-col{flex:1 1 100%;order:-1;position:static;max-height:none;}
+    .emp-col{position:static;max-height:420px;}
+  }
   @media (max-width:760px){
+    .action-row .f-kg{flex:1 1 90px;}
+    .btn-nhap{flex:1 1 110px;padding:12px 18px;}
+    .btn-form{padding:5px 10px;font-size:11.5px;}
     /* Thu gọn thanh trên để chừa chỗ cho khu làm việc */
     .brand-row{padding:5px 10px 4px;}
     .brand-title{font-size:14px;}
@@ -289,7 +363,7 @@
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.2.4</span>
+      <span class="ver">V1.3.0</span>
     </div>
   </div>
   <div class="tabs-row">
@@ -301,9 +375,16 @@
     <button class="tab-btn" id="tabBtnConfig" onclick="switchTab('config')">⚙️ Cài đặt</button>
   </div>
   <!-- Hàng tìm kiếm dính theo, chỉ hiện ở tab Cân tôm -->
-  <div id="weighSearchRow" style="display:flex;gap:8px;padding:6px 10px 8px;background:var(--blue);">
-    <input type="text" id="empSearch" placeholder="🔍 Tìm mã NV (hoặc gõ tên)…" inputmode="numeric" autocomplete="off" autocorrect="off" oninput="onEmpSearchInput()" onkeydown="onEmpSearchKeydown(event)" style="flex:1;">
-    <input type="date" id="weighDate" onchange="onWeighDateChange()" style="flex:0 0 150px;">
+  <div id="weighSearchRow" class="action-row">
+    <input type="text" id="empSearch" class="f-emp" placeholder="🔍 Tìm mã NV (hoặc gõ tên)…" inputmode="numeric" autocomplete="off" autocorrect="off" oninput="onEmpSearchInput()" onkeydown="onEmpSearchKeydown(event)">
+    <input type="date" id="weighDate" class="f-date" onchange="onWeighDateChange()">
+    <button class="btn-form" onclick="openDaySlip()" title="Xem phiếu chi tiết trong ngày">📄 Chi tiết<br>trong ngày</button>
+    <input type="number" id="wKgBig" class="f-kg" placeholder="0.0" step="0.1" inputmode="decimal" oninput="updateWeighPricePreview()" onkeydown="if(event.key==='Enter'){event.preventDefault();addWeighing();}">
+    <button class="btn-nhap" onclick="addWeighing()">NHẬP</button>
+  </div>
+  <div id="activeProdBar">
+    <span>Đang chọn:</span> <b id="activeProdLabel">— chưa chọn mã hàng —</b>
+    <span style="margin-left:auto;">Thành tiền: <b id="wPreview">0 đ</b></span>
   </div>
   <div id="weighDateNote" class="hidden" style="padding:0 12px 6px;background:var(--blue);color:#D3E4F8;">🔒 Chỉ cân được cho ngày hôm nay</div>
 </div>
@@ -316,51 +397,36 @@
       <div id="empPickerWrap" class="emp-col-list"></div>
     </div>
 
-    <!-- CỘT PHẢI: MÃ HÀNG + NHẬP CÂN -->
+    <!-- CỘT GIỮA: MÃ HÀNG -->
     <div class="prod-col">
-      <div class="card" id="selectedEmpCard" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-size:16px;font-weight:700;" id="selEmpName">-</div>
-            <div class="muted font-mono" style="font-size:11px;" id="selEmpCode">-</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="muted" style="font-size:11px;">Tổng ngày này</div>
-            <div class="amount" style="font-size:17px;color:var(--blue-dk);" id="selEmpDayTotal">0 đ</div>
-          </div>
-        </div>
-      </div>
-
       <div id="prodGridSearchRow" style="display:flex;gap:6px;margin-bottom:8px;">
         <input type="text" id="prodGridSearch" placeholder="🔍 Tìm mã hàng / size…" inputmode="text" autocomplete="off" autocorrect="off" oninput="renderProductGrid()" style="flex:1;">
         <button class="icon-btn" id="prodGridToggleBtn" onclick="toggleProductGridCollapse()" title="Ẩn/hiện lưới mã hàng" style="width:44px;flex-shrink:0;">▲</button>
       </div>
       <div id="productGrid" class="product-grid"></div>
-
-      <div class="card" style="position:sticky;bottom:10px;box-shadow:0 4px 16px rgba(21,34,56,.12);">
-        <div style="display:flex;gap:8px;align-items:flex-end;">
-          <div style="flex:1;">
-            <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:4px;">Đang chọn</label>
-            <div id="activeProdLabel" style="font-weight:700;font-size:14px;">— chưa chọn mã hàng —</div>
-          </div>
-        </div>
-        <div class="row" style="margin-top:10px;">
-          <input type="number" id="wKgBig" placeholder="0.0" step="0.1" inputmode="decimal" style="font-size:24px;font-weight:700;text-align:center;padding:14px;" oninput="updateWeighPricePreview()" onkeydown="if(event.key==='Enter'){event.preventDefault();addWeighing();}">
-          <button class="btn btn-primary" style="font-size:17px;font-weight:800;flex:0.8;" onclick="addWeighing()">NHẬP</button>
-        </div>
-        <div style="text-align:center;margin-top:6px;font-size:13px;" class="muted">Thành tiền: <span class="amount" id="wPreview" style="color:var(--blue);">0 đ</span></div>
-      </div>
-
-      <div class="totalbar" style="margin-top:16px;">
+      <div class="totalbar" style="margin-top:14px;">
         <div class="lbl">Tổng ngày <span id="weighDateLabel"></span></div>
         <div class="val" id="weighDayTotal">0 đ</div>
       </div>
+    </div>
 
-      <div class="card-title">Chi tiết đã cân</div>
+    <!-- CỘT PHẢI: CHI TIẾT ĐÃ CÂN -->
+    <div class="detail-col">
       <div id="weighListWrap"></div>
     </div>
   </div>
-  <div style="height:40px;"></div>
+  <div style="height:30px;"></div>
+</div>
+
+<!-- PHIẾU CHI TIẾT TRONG NGÀY -->
+<div class="slip-ovl" id="daySlipOverlay" onclick="if(event.target===this)closeDaySlip()">
+  <div>
+    <div class="slip-bar">
+      <button onclick="closeDaySlip()">✕ Đóng</button>
+      <button onclick="shareDaySlip()">📤 Lưu ảnh / Chia sẻ</button>
+    </div>
+    <div class="slip" id="daySlipBody"></div>
+  </div>
 </div>
 
 
@@ -2688,128 +2754,261 @@ function renderWeighTab(){
   const dayTotal = dayEntries.reduce((s,w)=>s+w.amount,0);
   document.getElementById('weighDayTotal').textContent = formatMoney(dayTotal);
 
-  const empCard = document.getElementById('selectedEmpCard');
-  let listEntries = dayEntries;
   if(selectedEmployeeId && !employees.some(e=>e.id===selectedEmployeeId)){
     selectedEmployeeId = null;   // người này đã bị xoá khỏi danh mục
   }
+
+  const kgTxt = v => {
+    const d = Number(appOptions.kgDecimals) || 1;
+    return String(Number(Number(v).toFixed(d)));   // 20.000000000000004 -> 20
+  };
+  const wrap = document.getElementById('weighListWrap');
+  const ngay = dateObj.toLocaleDateString('vi-VN');
+
+  // ================= ĐANG CHỌN 1 NGƯỜI =================
   if(selectedEmployeeId){
     const emp = employees.find(e=>e.id===selectedEmployeeId);
-    if(emp){
-      empCard.style.display = 'block';
-      document.getElementById('selEmpName').textContent = emp.name;
-      document.getElementById('selEmpCode').textContent = emp.code;
-      const empEntries = dayEntries.filter(w=>w.employeeId===selectedEmployeeId);
-      const empTotalRaw = empEntries.reduce((s,w)=>s+w.amount,0);
-      const bonus = mealBonusForDay(selectedEmployeeId, dateKey);
-      const empTotal = empTotalRaw + bonus;
-      document.getElementById('selEmpDayTotal').textContent = formatMoney(empTotal) + (bonus>0 ? ` (+🍚${formatMoney(bonus)})` : '');
-      listEntries = empEntries;
-    }
-  }else{
-    empCard.style.display = 'none';
-  }
+    const empEntries = dayEntries.filter(w=>w.employeeId===selectedEmployeeId);
+    const rows = daySizeRows(selectedEmployeeId, dateKey);
+    const tongKg = rows.reduce((a,r)=>a+r.kg,0);
+    const tongTien = rows.reduce((a,r)=>a+r.amount,0);
+    const bonus = mealBonusForDay(selectedEmployeeId, dateKey);
 
-  const wrap = document.getElementById('weighListWrap');
-  if(listEntries.length===0){
-    if(selectedEmployeeId){
-      const em = employees.find(e=>e.id===selectedEmployeeId);
-      wrap.innerHTML = `<div class="empty-state">${em?escapeHtml(em.name):''} chưa có phiếu cân nào trong ngày ${dateObj.toLocaleDateString('vi-VN')}<br>
-        <button class="btn btn-outline" style="margin-top:10px;padding:6px 14px;font-size:12.5px;" onclick="clearSelectedEmployee()">Xem tất cả nhân viên</button></div>`;
-    }else{
-      wrap.innerHTML = `<div class="empty-state">Chưa có phiếu cân nào</div>`;
-    }
+    const body = rows.length===0
+      ? `<tr><td colspan="4" style="padding:18px 10px;text-align:center;color:var(--muted);font-size:12.5px;">
+           Chưa cân gì trong ngày ${ngay}</td></tr>`
+      : rows.map(r=>{
+          const key = selectedEmployeeId + '|' + r.productId;
+          const isExp = !!expandedGroups[key];
+          const detail = isExp ? empEntries
+            .filter(w=>r.ids.includes(w.id))
+            .sort((a,b)=>b.createdAt-a.createdAt)
+            .map(w=>{
+              const t = new Date(w.createdAt).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
+              if(editingWeighId===w.id){
+                return `<tr class="sub"><td colspan="4">
+                  ${t} ·
+                  <input type="number" id="editKgInput-${w.id}" value="${w.weightKg}" step="0.1" style="width:74px;padding:3px 6px;font-size:12.5px;">
+                  <span>kg</span>
+                  <button class="icon-del" style="padding:1px;" onclick="event.stopPropagation();saveEditWeigh('${w.id}')">✅</button>
+                  <button class="icon-del" style="padding:1px;" onclick="event.stopPropagation();cancelEditWeigh()">✕</button>
+                </td></tr>`;
+              }
+              const pend = pendingDeleteKey === ('single:'+w.id);
+              return `<tr class="sub"><td colspan="4">
+                ${t} · ${kgTxt(w.weightKg)} kg — ${formatMoney(w.amount)}${w.byUserName?` · 👤 ${escapeHtml(w.byUserName)}`:''}${w.flags?` · <span style="color:var(--rust);font-weight:700;">⚑ ${escapeHtml(w.flags)}</span>`:''}
+                <button class="icon-del" style="padding:1px;" onclick="event.stopPropagation();editSingleWeigh('${w.id}')">✏️</button>
+                ${pend
+                  ? `<button class="icon-del" style="padding:1px;color:var(--rust);font-weight:700;" onclick="event.stopPropagation();deleteSingleWeigh('${w.id}')">Xoá?✓</button>`
+                  : `<button class="icon-del" style="padding:1px;" onclick="event.stopPropagation();deleteSingleWeigh('${w.id}')">🗑</button>`}
+              </td></tr>`;
+            }).join('') : '';
+          return `
+            <tr class="item" onclick="toggleGroupExpand('${key}')">
+              <td class="sz">${escapeHtml(r.name)} ${r.count>1?(isExp?'▲':'▼'):''}</td>
+              <td class="r kg">${kgTxt(r.kg)}</td>
+              <td class="r muted" style="font-size:11.5px;">${formatNumber(r.unitPrice)}</td>
+              <td class="r mn">${formatNumber(r.amount)}</td>
+            </tr>${detail}`;
+        }).join('');
+
+    wrap.innerHTML = `
+      <div class="dcard">
+        <div class="dhead">
+          <div class="n">${emp ? escapeHtml(emp.name) : '(đã xoá)'}</div>
+          <div class="c">${emp?escapeHtml(emp.code):''} · ${ngay}</div>
+        </div>
+        <table class="dtb">
+          <thead><tr><th>Size</th><th class="r">KG</th><th class="r">Đơn giá</th><th class="r">Thành tiền</th></tr></thead>
+          <tbody>
+            ${body}
+            ${rows.length? `<tr class="tot"><td>CỘNG</td><td class="r kg">${kgTxt(tongKg)}</td><td></td><td class="r mn">${formatNumber(tongTien)}</td></tr>`:''}
+            ${bonus>0? `<tr class="tot"><td>🍚 TIỀN CƠM</td><td></td><td></td><td class="r mn">${formatNumber(bonus)}</td></tr>`:''}
+          </tbody>
+        </table>
+        <div class="dfoot">
+          <span class="lbl">Tổng ngày này</span>
+          <span class="val">${formatMoney(tongTien + bonus)}</span>
+        </div>
+        <div style="padding:9px 12px;display:flex;gap:8px;">
+          <button class="btn btn-outline" style="flex:1;padding:7px;font-size:12.5px;" onclick="openDaySlip()">📄 Xem phiếu</button>
+          <button class="btn btn-outline" style="flex:1;padding:7px;font-size:12.5px;" onclick="clearSelectedEmployee()">Xem cả xưởng</button>
+        </div>
+      </div>`;
     return;
   }
 
-  // Gộp các phiếu cùng nhân viên + cùng mã hàng trong danh sách đang xem
-  const groups = {};
-  listEntries.forEach(w=>{
-    const key = w.employeeId + '|' + w.productId;
-    if(!groups[key]) groups[key] = { employeeId:w.employeeId, productId:w.productId, kg:0, amount:0, count:0, ids:[], lastTime:w.createdAt };
-    const g = groups[key];
-    g.kg += w.weightKg;
-    g.amount += w.amount;
-    g.count += 1;
-    g.ids.push(w.id);
-    if(w.createdAt > g.lastTime) g.lastTime = w.createdAt;
+  // ================= CHƯA CHỌN AI: cả xưởng =================
+  const byEmp = {};
+  dayEntries.forEach(w=>{
+    if(!byEmp[w.employeeId]) byEmp[w.employeeId] = { employeeId:w.employeeId, kg:0, amount:0, last:w.createdAt };
+    const b = byEmp[w.employeeId];
+    b.kg += w.weightKg; b.amount += w.amount;
+    if(w.createdAt > b.last) b.last = w.createdAt;
   });
-  const groupList = Object.values(groups).sort((a,b)=>b.lastTime-a.lastTime);
+  const list = Object.values(byEmp).sort((a,b)=>b.last-a.last);
+  const sumKg = list.reduce((a,b)=>a+b.kg,0);
+  const sumTien = list.reduce((a,b)=>a+b.amount,0);
 
-  wrap.innerHTML = groupList.map(g=>{
-    const emp = employees.find(e=>e.id===g.employeeId);
-    const prod = products.find(p=>p.id===g.productId);
-    const time = new Date(g.lastTime).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
-    const key = g.employeeId + '|' + g.productId;
-    const isExpandable = g.count > 1;
-    const isExpanded = !!expandedGroups[key];
-    const countLabel = g.count > 1 ? ` · gộp ${g.count} lần cân ${isExpanded?'▲':'▼'}` : '';
-    const detailRows = isExpanded ? weighings
-      .filter(w=>g.ids.includes(w.id))
-      .sort((a,b)=>b.createdAt-a.createdAt)
-      .map(w=>{
-        const t = new Date(w.createdAt).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
-        if(editingWeighId===w.id){
-          return `
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0 7px 14px;border-top:1px dashed var(--line);font-size:12.5px;" onclick="event.stopPropagation();">
-              <div class="muted">${t}</div>
-              <div style="display:flex;align-items:center;gap:6px;">
-                <input type="number" id="editKgInput-${w.id}" value="${w.weightKg}" step="0.1" style="width:80px;padding:5px 7px;font-size:13px;">
-                <span class="muted">kg</span>
-                <button class="icon-del" style="padding:2px;" onclick="saveEditWeigh('${w.id}')">✅</button>
-                <button class="icon-del" style="padding:2px;" onclick="cancelEditWeigh()">✕</button>
-              </div>
-            </div>
-          `;
-        }
-        const isPendingDel = pendingDeleteKey === ('single:'+w.id);
-        return `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0 7px 14px;border-top:1px dashed var(--line);font-size:12.5px;">
-            <div class="muted">${t} · ${w.weightKg} kg${w.byUserName?` · 👤 ${escapeHtml(w.byUserName)}`:''}${w.flags?` · <span style="color:var(--rust);font-weight:700;">⚑ ${escapeHtml(w.flags)}</span>`:''}</div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div class="amount">${formatMoney(w.amount)}</div>
-              <button class="icon-del" style="padding:2px;" onclick="event.stopPropagation();editSingleWeigh('${w.id}')">✏️</button>
-              ${isPendingDel
-                ? `<button class="icon-del" style="padding:2px;color:var(--rust);font-weight:700;" onclick="event.stopPropagation();deleteSingleWeigh('${w.id}')">Xoá?✓</button>`
-                : `<button class="icon-del" style="padding:2px;" onclick="event.stopPropagation();deleteSingleWeigh('${w.id}')">🗑</button>`}
-            </div>
-          </div>
-        `;
-      }).join('') : '';
-    const singleId = g.ids[0];
-    const isPendingDelGroup = pendingDeleteKey === ('group:'+g.ids.join(','));
-    const headerIsEditing = g.count===1 && editingWeighId===singleId;
-    return `
-      <div class="weigh-entry" ${(isExpandable && !headerIsEditing)?`style="cursor:pointer;" onclick="toggleGroupExpand('${key}')"`:''}>
-        <div class="weigh-top">
-          <div>
-            <div class="weigh-emp">${emp ? escapeHtml(emp.name) : '(đã xoá)'} <span class="badge">${emp?escapeHtml(emp.code):''}</span></div>
-            <div class="weigh-prod">${prod ? escapeHtml(prod.name) : '(đã xoá)'} · ${g.kg} kg · gần nhất ${time}${countLabel}</div>
-          </div>
-          ${headerIsEditing ? `
-          <div style="display:flex;align-items:center;gap:6px;" onclick="event.stopPropagation();">
-            <input type="number" id="editKgInput-${singleId}" value="${g.kg}" step="0.1" style="width:80px;padding:5px 7px;font-size:13px;">
-            <span class="muted">kg</span>
-            <button class="icon-del" style="padding:2px;" onclick="saveEditWeigh('${singleId}')">✅</button>
-            <button class="icon-del" style="padding:2px;" onclick="cancelEditWeigh()">✕</button>
-          </div>
-          ` : `
-          <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-            <div class="weigh-amt">${formatMoney(g.amount)}</div>
-            <div style="display:flex;gap:8px;">
-              ${g.count===1 ? `<button class="icon-del" onclick="event.stopPropagation();editSingleWeigh('${singleId}')">✏️</button>` : ''}
-              ${isPendingDelGroup
-                ? `<button class="icon-del" style="color:var(--rust);font-weight:700;" onclick="event.stopPropagation();deleteWeighGroup('${g.ids.join(',')}')">Xoá?✓</button>`
-                : `<button class="icon-del" onclick="event.stopPropagation();deleteWeighGroup('${g.ids.join(',')}')">🗑</button>`}
-            </div>
-          </div>
-          `}
-        </div>
-        ${detailRows}
+  if(list.length===0){
+    wrap.innerHTML = `
+      <div class="dcard">
+        <div class="dhead"><div class="n">Cả xưởng hôm nay</div><div class="c">${ngay}</div></div>
+        <div class="empty-state" style="padding:20px 12px;font-size:12.5px;">Chưa có phiếu cân nào</div>
+      </div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="dcard">
+      <div class="dhead">
+        <div class="n">Cả xưởng hôm nay</div>
+        <div class="c">${ngay} · ${list.length} người</div>
       </div>
-    `;
-  }).join('');
+      <table class="dtb">
+        <thead><tr><th>Nhân viên</th><th class="r">KG</th><th class="r">Thành tiền</th></tr></thead>
+        <tbody>
+          ${list.map(b=>{
+            const em = employees.find(e=>e.id===b.employeeId);
+            return `<tr class="item" onclick="selectEmployee('${b.employeeId}')">
+              <td class="sz">${em?escapeHtml(em.name):'(đã xoá)'}
+                <span class="muted font-mono" style="font-size:10.5px;font-weight:400;">${em?escapeHtml(em.code):''}</span></td>
+              <td class="r kg">${kgTxt(b.kg)}</td>
+              <td class="r mn">${formatNumber(b.amount)}</td>
+            </tr>`;
+          }).join('')}
+          <tr class="tot"><td>CỘNG</td><td class="r kg">${kgTxt(sumKg)}</td><td class="r mn">${formatNumber(sumTien)}</td></tr>
+        </tbody>
+      </table>
+      <div class="dfoot"><span class="lbl">Tổng ngày này</span><span class="val">${formatMoney(sumTien)}</span></div>
+    </div>`;
 }
+
+// ===== PHIẾU CHI TIẾT TRONG NGÀY =====
+function openDaySlip(){
+  const dateKey = document.getElementById('weighDate').value || todayKey();
+  const ngay = new Date(dateKey + "T00:00:00").toLocaleDateString('vi-VN');
+  if(!selectedEmployeeId){
+    alert("Chọn một nhân viên trước để xem phiếu chi tiết trong ngày.");
+    return;
+  }
+  const emp = employees.find(e=>e.id===selectedEmployeeId);
+  if(!emp){ alert("Nhân viên này không còn trong danh mục."); return; }
+
+  const rows = daySizeRows(selectedEmployeeId, dateKey);
+  if(rows.length===0){ alert(`${emp.name} chưa cân gì trong ngày ${ngay}.`); return; }
+
+  const d = Number(appOptions.kgDecimals) || 1;
+  const kgTxt = v => String(Number(Number(v).toFixed(d)));
+  const tongKg   = rows.reduce((a,r)=>a+r.kg,0);
+  const tongTien = rows.reduce((a,r)=>a+r.amount,0);
+  const bonus    = mealBonusForDay(selectedEmployeeId, dateKey);
+  const tongCong = tongTien + bonus;
+
+  const now = new Date();
+  const pad = v => String(v).padStart(2,'0');
+  const inLuc = `${ngay.length?now.toLocaleDateString('vi-VN'):''} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  document.getElementById('daySlipBody').innerHTML = `
+    ${companyInfo.name ? `<div class="s-co">${escapeHtml(companyInfo.name)}</div>` : ''}
+    ${companyInfo.address ? `<div class="s-sub">${escapeHtml(companyInfo.address)}</div>` : ''}
+    ${companyInfo.phone ? `<div class="s-sub">${escapeHtml(companyInfo.phone)}</div>` : ''}
+    <div class="s-ttl">CHI TIẾT TỔNG HỢP NHÂN VIÊN LÀM TRONG NGÀY</div>
+    <div class="s-inf">Tên :&nbsp; ${escapeHtml(emp.name)}</div>
+    <div class="s-inf">Mã số :&nbsp; ${escapeHtml(emp.code)}</div>
+    <div class="s-inf">Ngày làm :&nbsp; ${ngay}</div>
+    <div class="s-inf">Ngày giờ in : ${inLuc}</div>
+    <table>
+      <tr><th style="width:26px;">TT</th><th>Size</th><th style="width:46px;">KG</th><th style="width:54px;">Đơn Giá</th><th style="width:64px;">Thành tiền</th></tr>
+      ${rows.map((r,i)=>`<tr>
+        <td class="c">${i+1}</td>
+        <td>${escapeHtml(r.name)}</td>
+        <td class="r">${kgTxt(r.kg)}</td>
+        <td class="r">${formatNumber(r.unitPrice)}</td>
+        <td class="r">${formatNumber(r.amount)}</td>
+      </tr>`).join('')}
+      <tr class="sum"><td colspan="2" class="c">CỘNG</td><td class="r">${kgTxt(tongKg)}</td><td></td><td class="r">${formatNumber(tongTien)}</td></tr>
+      <tr class="sum"><td colspan="2" class="c">TIỀN CƠM</td><td></td><td></td><td class="r">${bonus>0?formatNumber(bonus):''}</td></tr>
+      <tr class="sum"><td colspan="2" class="c">TỔNG TIỀN</td><td></td><td></td><td class="r">${formatNumber(tongCong)}</td></tr>
+    </table>
+    <div class="s-words">Bằng chữ :&nbsp; ${docSoThanhChu(tongCong)}</div>`;
+  document.getElementById('daySlipOverlay').classList.add('show');
+}
+function closeDaySlip(){
+  document.getElementById('daySlipOverlay').classList.remove('show');
+}
+// Vẽ phiếu ra ảnh PNG bằng SVG foreignObject (không cần thư viện ngoài)
+async function shareDaySlip(){
+  const el = document.getElementById('daySlipBody');
+  const w = el.offsetWidth, h = el.offsetHeight;
+  const cloned = el.cloneNode(true);
+  cloned.setAttribute('xmlns','http://www.w3.org/1999/xhtml');
+  const css = `
+    *{box-sizing:border-box;margin:0;padding:0;}
+    div{font-family:'Times New Roman',Times,serif;color:#000;}
+    .s-co{font-size:15px;font-weight:700;text-align:center;line-height:1.25;}
+    .s-sub{font-size:12px;text-align:center;margin-top:3px;}
+    .s-ttl{font-size:17px;font-weight:700;text-align:center;margin:14px 0 12px;line-height:1.3;}
+    .s-inf{font-size:13px;margin-bottom:3px;}
+    table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:9px;font-family:'Times New Roman',Times,serif;}
+    th,td{border:1px solid #000;padding:4px 5px;}
+    th{text-align:center;font-weight:700;}
+    td.c{text-align:center;} td.r{text-align:right;}
+    tr.sum td{font-weight:700;}
+    .s-words{font-size:12.5px;margin-top:8px;}`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+    <foreignObject width="100%" height="100%">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="background:#fff;padding:16px 18px;width:${w}px;">
+        <style>${css}</style>${cloned.innerHTML}
+      </div>
+    </foreignObject></svg>`;
+  try{
+    const img = new Image();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    await new Promise((ok,no)=>{ img.onload=ok; img.onerror=no; });
+    const sc = 2;
+    const cv = document.createElement('canvas');
+    cv.width = w*sc; cv.height = (h+32)*sc;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.scale(sc,sc);
+    ctx.drawImage(img,0,0);
+    const blob = await new Promise(r=>cv.toBlob(r,'image/png'));
+    const emp = employees.find(e=>e.id===selectedEmployeeId);
+    const dateKey = document.getElementById('weighDate').value || todayKey();
+    const file = new File([blob], `chi-tiet-${emp?emp.code:''}-${dateKey}.png`, {type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({ files:[file], title:'Chi tiết trong ngày' });
+    }else{
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = file.name;
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    }
+  }catch(e){
+    console.error(e);
+    alert("Không tạo được ảnh trên máy này. Anh có thể chụp màn hình thay thế.");
+  }
+}
+
+// Gom phiếu cân của 1 người trong 1 ngày theo từng size
+function daySizeRows(employeeId, dateKey){
+  const map = {};
+  weighings.filter(w=>w.employeeId===employeeId && w.dateKey===dateKey).forEach(w=>{
+    if(!map[w.productId]) map[w.productId] = { productId:w.productId, kg:0, amount:0, count:0, ids:[], unitPrice:w.unitPrice, last:w.createdAt };
+    const g = map[w.productId];
+    g.kg += w.weightKg; g.amount += w.amount; g.count += 1; g.ids.push(w.id);
+    g.unitPrice = w.unitPrice;
+    if(w.createdAt > g.last) g.last = w.createdAt;
+  });
+  return Object.values(map).map(g=>{
+    const p = products.find(x=>x.id===g.productId);
+    g.name = p ? p.name : '(đã xoá)';
+    return g;
+  }).sort((a,b)=>b.last-a.last);
+}
+
 function toggleGroupExpand(key){
   expandedGroups[key] = !expandedGroups[key];
   renderWeighTab();
