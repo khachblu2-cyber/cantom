@@ -38,6 +38,8 @@
   .brand{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;}
   .brand-title{font-size:15.5px;font-weight:700;color:#fff;line-height:1.15;white-space:nowrap;}
   .brand-status{font-size:10px;color:#C6DCF6;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #sendNowBtn{background:#FFE9A8;border:none;border-radius:5px;color:#7A5A12;font-size:9.5px;font-weight:700;
+    padding:2px 7px;margin-left:5px;cursor:pointer;font-family:inherit;}
   .brand-user{flex:0 0 auto;display:flex;align-items:center;gap:7px;}
   .brand-user > span{color:#D3E4F8;font-size:11.5px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
   .brand-user button{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;font-size:10.5px;padding:3px 9px;border-radius:6px;cursor:pointer;}
@@ -45,7 +47,13 @@
   /* ===== HÀNG THAO TÁC TRÊN CÙNG ===== */
   .action-row{display:flex;gap:8px;align-items:stretch;padding:7px 10px 8px;background:var(--blue);flex-wrap:wrap;}
   .action-row input{border:none !important;border-radius:10px;padding:11px 12px;font-size:15px;font-family:inherit;background:#fff;color:var(--ink);}
-  .action-row .f-emp{flex:1 1 200px;min-width:140px;}
+  .action-row .f-emp{flex:1 1 150px;min-width:120px;}
+  .daystat{flex:0 0 auto;display:flex;align-items:stretch;background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.3);border-radius:10px;overflow:hidden;}
+  .daystat .cell{padding:5px 13px;text-align:center;display:flex;flex-direction:column;justify-content:center;min-width:64px;}
+  .daystat .cell + .cell{border-left:1px solid rgba(255,255,255,.22);}
+  .daystat .v{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:700;color:#fff;line-height:1.1;}
+  .daystat .l{font-size:8.5px;letter-spacing:.7px;text-transform:uppercase;color:#B7D4F5;margin-top:2px;}
   .action-row .f-date{flex:0 0 148px;}
   .action-row .f-kg{flex:0 0 118px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:700;padding:6px 12px;}
   .btn-form{flex:0 0 auto;background:#fff;border:none;border-radius:10px;padding:5px 13px;font-size:12.5px;font-weight:700;
@@ -61,9 +69,12 @@
   .detail-col{flex:0 0 390px;min-width:0;position:sticky;top:calc(var(--topH,150px) + 10px);
     max-height:calc(100vh - var(--topH,150px) - 20px);overflow-y:auto;}
   .dcard{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
-  .dhead{background:#EAF1FB;padding:10px 12px;border-bottom:1px solid var(--line);}
-  .dhead .n{font-size:16px;font-weight:700;line-height:1.2;}
-  .dhead .c{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);margin-top:1px;}
+  .dhead{background:#EAF1FB;padding:7px 12px;border-bottom:1px solid var(--line);}
+  .dhead .n{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--blue-dk);line-height:1.2;}
+  .dhead .c{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:2px;}
+  .dhead.one{padding:9px 12px;}
+  .dhead.one .n{font-size:16px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--ink);}
+  .dhead.one .c{font-size:11px;}
   table.dtb{width:100%;border-collapse:collapse;font-size:13px;}
   table.dtb th{background:#F7F9FC;color:var(--muted);font-size:10px;letter-spacing:.4px;text-transform:uppercase;
     padding:6px 9px;text-align:left;border-bottom:1px solid var(--line);}
@@ -248,6 +259,9 @@
   }
   @media (max-width:760px){
     .action-row .f-kg{flex:1 1 90px;}
+    .daystat .cell{padding:4px 9px;min-width:52px;}
+    .daystat .v{font-size:15px;}
+    .daystat .l{font-size:8px;}
     .btn-nhap{flex:1 1 110px;padding:12px 18px;}
     .btn-form{padding:5px 10px;font-size:11.5px;}
     /* Thu gọn thanh trên để chừa chỗ cho khu làm việc */
@@ -358,12 +372,14 @@
   <div class="brand-row">
     <div class="brand">
       <div class="brand-title">⚖️ Cân Tôm</div>
-      <div class="brand-status">✓ Lưu trên máy · <span id="cloudStatus"></span></div>
+      <div class="brand-status">✓ Lưu trên máy · <span id="cloudStatus"></span>
+        <button id="sendNowBtn" class="hidden" onclick="forceSendNow()">Gửi ngay</button>
+      </div>
     </div>
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.3.0</span>
+      <span class="ver">V1.5.0</span>
     </div>
   </div>
   <div class="tabs-row">
@@ -376,7 +392,12 @@
   </div>
   <!-- Hàng tìm kiếm dính theo, chỉ hiện ở tab Cân tôm -->
   <div id="weighSearchRow" class="action-row">
-    <input type="text" id="empSearch" class="f-emp" placeholder="🔍 Tìm mã NV (hoặc gõ tên)…" inputmode="numeric" autocomplete="off" autocorrect="off" oninput="onEmpSearchInput()" onkeydown="onEmpSearchKeydown(event)">
+    <input type="text" id="empSearch" class="f-emp" placeholder="🔍 Tìm mã NV…" inputmode="numeric" autocomplete="off" autocorrect="off" oninput="onEmpSearchInput()" onkeydown="onEmpSearchKeydown(event)">
+    <div class="daystat" title="Thống kê trong ngày">
+      <div class="cell"><div class="v" id="dsPeople">0</div><div class="l">Người</div></div>
+      <div class="cell"><div class="v" id="dsCodes">0</div><div class="l">Mã</div></div>
+      <div class="cell"><div class="v" id="dsKg">0</div><div class="l">KG</div></div>
+    </div>
     <input type="date" id="weighDate" class="f-date" onchange="onWeighDateChange()">
     <button class="btn-form" onclick="openDaySlip()" title="Xem phiếu chi tiết trong ngày">📄 Chi tiết<br>trong ngày</button>
     <input type="number" id="wKgBig" class="f-kg" placeholder="0.0" step="0.1" inputmode="decimal" oninput="updateWeighPricePreview()" onkeydown="if(event.key==='Enter'){event.preventDefault();addWeighing();}">
@@ -2754,6 +2775,16 @@ function renderWeighTab(){
   const dayTotal = dayEntries.reduce((s,w)=>s+w.amount,0);
   document.getElementById('weighDayTotal').textContent = formatMoney(dayTotal);
 
+  // Ô thống kê trên thanh thao tác: mỗi người lên cân tính 1, dù cân bao nhiêu lần
+  const dsD = Number(appOptions.kgDecimals) || 1;
+  const soNguoi = new Set(dayEntries.map(w=>w.employeeId)).size;
+  const soMa    = new Set(dayEntries.map(w=>w.productId)).size;
+  const soKg    = dayEntries.reduce((a,w)=>a+w.weightKg,0);
+  const dsP=document.getElementById('dsPeople'), dsC=document.getElementById('dsCodes'), dsK=document.getElementById('dsKg');
+  if(dsP) dsP.textContent = soNguoi;
+  if(dsC) dsC.textContent = soMa;
+  if(dsK) dsK.textContent = String(Number(soKg.toFixed(dsD)));
+
   if(selectedEmployeeId && !employees.some(e=>e.id===selectedEmployeeId)){
     selectedEmployeeId = null;   // người này đã bị xoá khỏi danh mục
   }
@@ -2814,9 +2845,9 @@ function renderWeighTab(){
 
     wrap.innerHTML = `
       <div class="dcard">
-        <div class="dhead">
+        <div class="dhead one">
           <div class="n">${emp ? escapeHtml(emp.name) : '(đã xoá)'}</div>
-          <div class="c">${emp?escapeHtml(emp.code):''} · ${ngay}</div>
+          <div class="c">${emp?escapeHtml(emp.code):''} · ${ngay} · ${rows.length} mã · ${kgTxt(tongKg)} KG</div>
         </div>
         <table class="dtb">
           <thead><tr><th>Size</th><th class="r">KG</th><th class="r">Đơn giá</th><th class="r">Thành tiền</th></tr></thead>
@@ -2853,7 +2884,7 @@ function renderWeighTab(){
   if(list.length===0){
     wrap.innerHTML = `
       <div class="dcard">
-        <div class="dhead"><div class="n">Cả xưởng hôm nay</div><div class="c">${ngay}</div></div>
+        <div class="dhead"><div class="n">Cả xưởng hôm nay</div><div class="c">${ngay} · 0 người · 0 mã · 0 KG</div></div>
         <div class="empty-state" style="padding:20px 12px;font-size:12.5px;">Chưa có phiếu cân nào</div>
       </div>`;
     return;
@@ -2863,7 +2894,7 @@ function renderWeighTab(){
     <div class="dcard">
       <div class="dhead">
         <div class="n">Cả xưởng hôm nay</div>
-        <div class="c">${ngay} · ${list.length} người</div>
+        <div class="c">${ngay} · ${list.length} người · ${soMa} mã · ${kgTxt(sumKg)} KG</div>
       </div>
       <table class="dtb">
         <thead><tr><th>Nhân viên</th><th class="r">KG</th><th class="r">Thành tiền</th></tr></thead>
@@ -3978,18 +4009,35 @@ function printProductReportA4(){
 
 
 // ===== CLOUD SYNC (Firebase Firestore) =====
+let cloudState = "connecting";
 function updateCloudStatus(state){
+  if(state) cloudState = state;
   const el = document.getElementById('cloudStatus');
   if(!el) return;
+  let n = 0;
+  try{ n = pendingChanges(); }catch(e){}
+  const btn = document.getElementById('sendNowBtn');
+  if(btn) btn.classList.toggle('hidden', n===0 || cloudState==='off');
+
+  if(cloudState === 'off'){ el.textContent = ''; return; }
+  if(n > 0){
+    el.textContent = (cloudState==='error' ? '⚠️ ' : '⏳ ') + 'Còn ' + n + ' mục chưa gửi';
+    el.style.color = cloudState==='error' ? '#FFD2CC' : '#FFE9A8';
+    return;
+  }
   const map = {
-    off: "",
     connecting: "☁️ Đang kết nối…",
     syncing: "☁️ Đang đồng bộ…",
-    synced: "☁️ Đã đồng bộ Firebase",
-    error: "⚠️ Lỗi đồng bộ — vẫn lưu trên máy",
+    synced: "☁️ Đã gửi hết lên server",
+    error: "⚠️ Mất kết nối — dữ liệu vẫn an toàn trên máy",
   };
-  el.textContent = map[state] || "";
-  el.style.color = state === "error" ? "#FFD2CC" : "#B9F5D8";
+  el.textContent = map[cloudState] || "";
+  el.style.color = cloudState === "error" ? "#FFD2CC" : "#B9F5D8";
+}
+function forceSendNow(){
+  if(!fsReady){ cloudInit(); return; }
+  clearTimeout(cloudSyncTimer);
+  syncNow();
 }
 
 const COLLECTIONS = {
@@ -4024,6 +4072,29 @@ let fsDb = null;
 let fsReady = false;
 let cloudSyncTimer = null;
 let firestoreListeners = [];
+let syncInFlight = false;    // đang gửi -> không chồng lệnh
+let syncQueued = false;      // có thay đổi mới trong lúc đang gửi
+let cloudInitRunning = false;
+
+// Đếm số mục trên máy chưa được server xác nhận
+function pendingChanges(){
+  let n = 0;
+  Object.keys(COLLECTIONS).forEach(name=>{
+    const cur = COLLECTIONS[name]();
+    const prev = lastSynced[name] || [];
+    const prevMap = new Map(prev.map(x=>[x.id,x]));
+    const curIds = new Set();
+    cur.forEach(x=>{
+      curIds.add(x.id);
+      const o = prevMap.get(x.id);
+      if(!o || JSON.stringify(o)!==JSON.stringify(x)) n++;
+    });
+    prev.forEach(x=>{ if(!curIds.has(x.id)) n++; });
+  });
+  if(JSON.stringify(lastSynced.companyInfo)!==JSON.stringify(companyInfo)) n++;
+  if(JSON.stringify(lastSynced.appOptions)!==JSON.stringify(appOptions)) n++;
+  return n;
+}
 
 function renderEverything(){
   // Chỉ vẽ lại tab đang mở — tránh dựng lại toàn bộ giao diện mỗi lần đồng bộ
@@ -4049,6 +4120,41 @@ function renderEverything(){
   }
 }
 
+// Ghép dữ liệu server với các thay đổi trên máy chưa kịp gửi.
+// Nếu ghi đè thẳng, phiếu vừa nhập trong khe chờ sẽ biến mất không dấu vết.
+function mergeSnapshot(name, docs){
+  const prev = lastSynced[name] || [];
+  const cur  = COLLECTIONS[name]();
+  const prevMap = new Map(prev.map(x=>[x.id,x]));
+  const curIds  = new Set(cur.map(x=>x.id));
+
+  // mục mới thêm hoặc vừa sửa trên máy, chưa được server xác nhận
+  const chuaGui = cur.filter(x=>{
+    const o = prevMap.get(x.id);
+    return !o || JSON.stringify(o)!==JSON.stringify(x);
+  });
+  // mục vừa xoá trên máy, chưa kịp báo server
+  const vuaXoa = prev.filter(x=>!curIds.has(x.id)).map(x=>x.id);
+
+  const map = new Map(docs.map(d=>[d.id, d]));
+  chuaGui.forEach(x=>map.set(x.id, x));
+  vuaXoa.forEach(id=>map.delete(id));
+
+  const merged = Array.from(map.values());
+  COLLECTION_SETTERS[name](merged);
+  try{ localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(merged)); }catch(e){}
+  lastSynced[name] = deepCopy(docs);          // mốc so sánh = đúng những gì server đang có
+  if(chuaGui.length || vuaXoa.length) cloudSync();   // gửi lại phần còn thiếu
+  updateCloudStatus();
+}
+
+// Gom nhiều lần vẽ lại thành một — đỡ giật trên máy yếu
+let renderTimer = null;
+function renderSoon(){
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(renderEverything, 200);
+}
+
 function attachRealtimeListeners(){
   // Dọn listener cũ (nếu gọi lại)
   firestoreListeners.forEach(unsub=>unsub());
@@ -4057,12 +4163,13 @@ function attachRealtimeListeners(){
   Object.keys(COLLECTIONS).forEach(name=>{
     const unsub = fsDb.collection(name).onSnapshot(qs=>{
       const docs = qs.docs.map(d=>d.data());
-      COLLECTION_SETTERS[name](docs);
-      localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(docs));
-      lastSynced[name] = deepCopy(docs);
-      renderEverything();
+      mergeSnapshot(name, docs);
+      renderSoon();
       if(name==='staffUsers') applyCurrentUserPermissions();
-    }, err=>{ console.error("Lỗi lắng nghe realtime", name, err); });
+    }, err=>{
+      console.error("Lỗi lắng nghe realtime", name, err);
+      updateCloudStatus("error");
+    });
     firestoreListeners.push(unsub);
   });
 
@@ -4082,59 +4189,85 @@ function attachRealtimeListeners(){
 
 async function cloudInit(){
   if(!window.firebaseConfig){ updateCloudStatus("off"); finalizeUserGate(); return; }
+  if(cloudInitRunning) return;
+  cloudInitRunning = true;
   updateCloudStatus("connecting");
   try{
-    const app = firebase.initializeApp(window.firebaseConfig);
-    await firebase.auth().signInAnonymously();
-    fsDb = firebase.firestore();
+    if(!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
+    if(!fsDb){
+      fsDb = firebase.firestore();
+      // Lưu ngoại tuyến: lệnh ghi lúc mất mạng được giữ bền, tải lại trang vẫn còn
+      try{ await fsDb.enablePersistence({ synchronizeTabs:true }); }
+      catch(e){ console.warn("Không bật được lưu ngoại tuyến:", e && e.code); }
+    }
+    // Đăng nhập: mất mạng thì dùng lại phiên đã lưu, không chặn việc cân
+    try{
+      if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
+    }catch(e){ console.warn("Chưa đăng nhập được (có thể đang mất mạng)", e && e.code); }
 
-    // Tải dữ liệu ban đầu 1 lần (để quyết định máy nào có dữ liệu ưu tiên)
+    // Tải dữ liệu ban đầu (mất mạng thì đọc từ bộ nhớ đệm của Firebase)
     const snaps = {};
     for(const name of Object.keys(COLLECTIONS)){
       const qs = await fsDb.collection(name).get();
       snaps[name] = qs.docs.map(d=>d.data());
     }
     const settingsDoc = await fsDb.collection("settings").doc("app").get();
-    const cloudHasData = snaps.employees.length>0;
-    const localHasData = employees.length>0 || products.length>0 || weighings.length>0;
 
-    if(cloudHasData || !localHasData){
-      Object.keys(COLLECTIONS).forEach(name=>{
-        COLLECTION_SETTERS[name](snaps[name]);
-        localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(snaps[name]));
-      });
-      if(settingsDoc.exists){
-        const sd = settingsDoc.data();
-        if(sd.companyInfo) companyInfo = sd.companyInfo;
-        if(sd.appOptions) appOptions = sd.appOptions;
-      }
+    // GHÉP, KHÔNG ĐÈ: giữ lại mọi bản ghi chỉ có trên máy để gửi lên sau.
+    // Thà thừa một bản ghi cũ còn hơn mất cả buổi cân lúc mất mạng.
+    Object.keys(COLLECTIONS).forEach(name=>{
+      const server = snaps[name] || [];
+      const local  = COLLECTIONS[name]() || [];
+      const ids = new Set(server.map(x=>x.id));
+      const chiCoTrenMay = local.filter(x=>!ids.has(x.id));
+      const merged = server.concat(chiCoTrenMay);
+      COLLECTION_SETTERS[name](merged);
+      try{ localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(merged)); }catch(e){}
+    });
+    if(settingsDoc.exists){
+      const sd = settingsDoc.data();
+      if(sd.companyInfo) companyInfo = sd.companyInfo;
+      if(sd.appOptions) appOptions = Object.assign({}, appOptions, sd.appOptions);
+    }
+    try{
       localStorage.setItem(COMPANY_KEY, JSON.stringify(companyInfo));
       localStorage.setItem(OPTIONS_KEY, JSON.stringify(appOptions));
-      renderEverything();
-    }
+    }catch(e){}
+    renderEverything();
+
+    // Mốc so sánh = đúng những gì server đang có, phần thừa trên máy sẽ tự được gửi lên
     lastSynced = {
-      employees: deepCopy(employees), products: deepCopy(products), weighings: deepCopy(weighings),
-      openingBalances: deepCopy(openingBalances), payments: deepCopy(payments), overtimeDays: deepCopy(overtimeDays),
-      staffUsers: deepCopy(staffUsers),
-      activityLog: deepCopy(activityLog), devices: deepCopy(devices),
       companyInfo: deepCopy(companyInfo), appOptions: deepCopy(appOptions),
     };
+    Object.keys(COLLECTIONS).forEach(name=>{ lastSynced[name] = deepCopy(snaps[name] || []); });
+
     fsReady = true;
+    if(pendingChanges() > 0) cloudSync();
     updateCloudStatus("synced");
     attachRealtimeListeners();
     finalizeUserGate();   // giờ mới biết chắc có tài khoản hay không
-  }catch(e){ console.error("Lỗi kết nối Firebase", e); updateCloudStatus("error"); finalizeUserGate(); }
+  }catch(e){
+    console.error("Lỗi kết nối Firebase", e);
+    updateCloudStatus("error");
+    finalizeUserGate();
+  }finally{
+    cloudInitRunning = false;
+  }
 }
 
 function deepCopy(x){ return JSON.parse(JSON.stringify(x)); }
 
 function cloudSync(){
+  updateCloudStatus();               // cập nhật số mục chưa gửi ngay lập tức
   if(!fsReady || !fsDb) return;
   clearTimeout(cloudSyncTimer);
   updateCloudStatus("syncing");
-  cloudSyncTimer = setTimeout(syncNow, 900);
+  cloudSyncTimer = setTimeout(syncNow, 300);   // 300ms: thu hẹp khe hở
 }
 async function syncNow(){
+  if(!fsReady || !fsDb) return;
+  if(syncInFlight){ syncQueued = true; return; }   // đang gửi -> xếp hàng, không chồng lệnh
+  syncInFlight = true;
   try{
     const allWrites = [];
     for(const name of Object.keys(COLLECTIONS)){
@@ -4175,7 +4308,13 @@ async function syncNow(){
       companyInfo: deepCopy(companyInfo), appOptions: deepCopy(appOptions),
     };
     updateCloudStatus("synced");
-  }catch(e){ console.error("Lỗi đồng bộ Firebase", e); updateCloudStatus("error"); }
+  }catch(e){
+    console.error("Lỗi đồng bộ Firebase", e);
+    updateCloudStatus("error");
+  }finally{
+    syncInFlight = false;
+    if(syncQueued){ syncQueued = false; setTimeout(syncNow, 300); }
+  }
 }
 
 function seedExtraEmployeesOnce(){
@@ -4209,6 +4348,22 @@ populateSelects();
 renderWeighTab();
 document.getElementById('settleDate').value = todayKey();
 populateDebtSelects();
+// Tự nối lại và gửi tiếp: 20 giây một lần, và ngay khi máy có mạng trở lại
+setInterval(()=>{
+  if(!fsReady){ cloudInit(); return; }
+  if(pendingChanges() > 0) cloudSync(); else updateCloudStatus();
+}, 20000);
+window.addEventListener('online', ()=>{
+  if(!fsReady) cloudInit(); else cloudSync();
+});
+window.addEventListener('offline', ()=> updateCloudStatus("error"));
+// Nhắc trước khi đóng trang nếu còn dữ liệu chưa gửi
+window.addEventListener('beforeunload', e=>{
+  try{
+    if(fsReady && pendingChanges() > 0){ e.preventDefault(); e.returnValue = ''; return ''; }
+  }catch(err){}
+});
+
 measureTopBar();
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(measureTopBar);
 switchTab('weigh');
