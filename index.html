@@ -375,7 +375,7 @@
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.7.0</span>
+      <span class="ver">V1.7.1</span>
     </div>
   </div>
   <div class="tabs-row">
@@ -4058,8 +4058,6 @@ let fsReady = false;
 let cloudSyncTimer = null;
 let firestoreListeners = [];
 let boNhoDemBat = false;     // đã bật được bộ nhớ đệm Firebase chưa
-let phieuTruocKhiNoi = [];   // phiếu cân có sẵn trên máy trước khi nối server
-let daCuuPhieuCan = false;   // đã đối chiếu cứu phiếu ngoại tuyến chưa
 let khoDocLoi = [];          // các kho ĐỌC từ server không được
 let khoGhiLoi = [];          // các kho ghi lên server không được
 let soMucDangGui = 0;        // số bản ghi đang chờ gửi trong lượt này
@@ -4101,8 +4099,14 @@ function renderSoon(){
 
 // Phiếu cân rất nhiều (3.000/ngày). Khi đã có bộ nhớ đệm Firebase thì
 // không chép thêm vào bộ nhớ trình duyệt nữa — chính chỗ đó mới bị trần 5 MB.
+let daDonPhieuCu = false;
 function luuKhoLenMay(name, docs){
-  if(name === 'weighings' && boNhoDemBat) return;
+  if(name === 'weighings' && boNhoDemBat){
+    // Xoá bản sao phiếu cân cũ còn sót lại từ các bản trước,
+    // tránh dữ liệu đã xoá bị hiểu nhầm là còn tồn tại.
+    if(!daDonPhieuCu){ daDonPhieuCu = true; try{ localStorage.removeItem(WEIGH_KEY); }catch(e){} }
+    return;
+  }
   try{ localStorage.setItem(COLLECTION_LOCALKEYS[name], JSON.stringify(docs)); }
   catch(e){ console.warn('Không lưu được kho "'+name+'" trên máy:', e && e.name); }
 }
@@ -4116,28 +4120,13 @@ function attachRealtimeListeners(){
     const unsub = fsDb.collection(name).onSnapshot(qs=>{
       // Server là bản chuẩn — thay thẳng. Firestore đã tự gộp sẵn
       // các bản ghi máy này vừa ghi mà chưa kịp lên server.
-      let docs = qs.docs.map(d=>d.data());
-
-      // Gói ĐẦU TIÊN của kho phiếu cân: đối chiếu với phiếu đang có trên máy.
-      // Phiếu nào máy có mà server chưa có (cân lúc mất mạng) thì giữ lại và đẩy lên.
-      // Chỉ chạy đúng 1 lần nên không gây giằng co giữa các máy.
-      let phaiGuiLai = false;
-      if(name === 'weighings' && !daCuuPhieuCan){
-        daCuuPhieuCan = true;
-        const idsServer = new Set(docs.map(w=>w.id));
-        const conThieu = phieuTruocKhiNoi.filter(w=>!idsServer.has(w.id));
-        if(conThieu.length){
-          console.warn('Cứu ' + conThieu.length + ' phiếu cân chỉ có trên máy');
-          docs = docs.concat(conThieu);
-          phaiGuiLai = true;
-        }
-        phieuTruocKhiNoi = [];
-      }
-
+      // Server là bản chuẩn — thay thẳng.
+      // Không tự "cứu" bản ghi cũ trên máy: Firebase đã tự giữ và gửi lại
+      // các lệnh ghi lúc mất mạng. Tự làm thêm sẽ làm sống lại dữ liệu đã xoá.
+      const docs = qs.docs.map(d=>d.data());
       COLLECTION_SETTERS[name](docs);
       luuKhoLenMay(name, docs);
-      lastSynced[name] = phaiGuiLai ? deepCopy(qs.docs.map(d=>d.data())) : deepCopy(docs);
-      if(phaiGuiLai) cloudSync();
+      lastSynced[name] = deepCopy(docs);
       if(name==='staffUsers'){ finalizeUserGate(); applyCurrentUserPermissions(); }
       renderSoon();
     }, err=>{
@@ -4183,11 +4172,6 @@ async function cloudInit(){
       }
     }
     await firebase.auth().signInAnonymously();
-
-    // Ghi nhớ phiếu cân đang có trên máy TRƯỚC khi nối server.
-    // Dùng để cứu phiếu cân lúc mất mạng — chỉ đối chiếu 1 lần ở gói dữ liệu đầu tiên.
-    phieuTruocKhiNoi = weighings.slice();
-    daCuuPhieuCan = false;
 
     // Cài đặt chung: 1 tài liệu, rất nhẹ
     const settingsDoc = await fsDb.collection("settings").doc("app").get();
