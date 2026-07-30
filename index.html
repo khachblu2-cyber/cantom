@@ -43,6 +43,22 @@
   .brand-user button{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;font-size:10.5px;padding:3px 9px;border-radius:6px;cursor:pointer;}
   .brand-user .ver{font-size:9.5px;color:#9FC2E8;}
   /* ===== HÀNG THAO TÁC TRÊN CÙNG ===== */
+  /* Cảnh báo server từ chối ghi */
+  .err-bar{display:none;background:#8E2018;color:#fff;padding:10px 13px;font-size:13px;line-height:1.5;}
+  .err-bar.show{display:block;}
+  .err-bar b{display:block;font-size:14px;margin-bottom:2px;}
+  .err-bar .why{color:#FFD9D4;font-size:12px;}
+  .err-bar .acts{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap;}
+  .err-bar button{background:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;
+    cursor:pointer;font-family:inherit;color:#8E2018;}
+  .err-bar button.ghost{background:rgba(255,255,255,.18);color:#fff;}
+  .brand-status.warn{color:#FFD2CC;font-weight:700;}
+  /* Dấu trạng thái từng phiếu */
+  .dau{display:inline-block;font-size:11px;margin-left:5px;vertical-align:1px;}
+  .dau.cho{color:var(--amber);}
+  .dau.loi{color:var(--rust);font-weight:700;}
+  table.dtb tr.cho td{background:#FFFCF2;}
+  table.dtb tr.loi td{background:#FDF1EF;}
   .action-row{display:flex;gap:8px;align-items:stretch;padding:7px 10px 8px;background:var(--blue);flex-wrap:wrap;}
   .action-row input{border:none !important;border-radius:10px;padding:11px 12px;font-size:15px;font-family:inherit;background:#fff;color:var(--ink);}
   .action-row .f-emp{flex:1 1 150px;min-width:120px;}
@@ -375,7 +391,7 @@
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.8.0</span>
+      <span class="ver">V1.8.1</span>
     </div>
   </div>
   <div class="tabs-row">
@@ -385,6 +401,15 @@
     <button class="tab-btn" id="tabBtnSettle" onclick="switchTab('settle')">🧾 Chốt & In</button>
     <button class="tab-btn" id="tabBtnReport" onclick="switchTab('report')">📊 Báo cáo</button>
     <button class="tab-btn" id="tabBtnConfig" onclick="switchTab('config')">⚙️ Cài đặt</button>
+  </div>
+  <div class="err-bar" id="errBar">
+    <b id="errBarTitle"></b>
+    <div class="why" id="errBarWhy"></div>
+    <div class="acts">
+      <button onclick="thuGuiLai()">Thử gửi lại</button>
+      <button class="ghost" onclick="luuPhieuLoiRaFile()">Lưu ra file</button>
+      <button class="ghost" onclick="anCanhBaoLoi()">Ẩn</button>
+    </div>
   </div>
   <!-- Hàng tìm kiếm dính theo, chỉ hiện ở tab Cân tôm -->
   <div id="weighSearchRow" class="action-row">
@@ -2841,8 +2866,8 @@ function renderWeighTab(){
               </td></tr>`;
             }).join('') : '';
           return `
-            <tr class="item" onclick="toggleGroupExpand('${key}')">
-              <td class="sz">${escapeHtml(r.name)} ${r.count>1?(isExp?'▲':'▼'):''}</td>
+            <tr class="item ${trangThaiNhom(r.ids)}" onclick="toggleGroupExpand('${key}')">
+              <td class="sz">${escapeHtml(r.name)} ${r.count>1?(isExp?'▲':'▼'):''}${dauTrangThai(r.ids)}</td>
               <td class="r kg">${kgTxt(r.kg)}</td>
               <td class="r mn">${formatNumber(r.amount)}</td>
             </tr>${detail}`;
@@ -3029,6 +3054,21 @@ async function shareDaySlip(){
 }
 
 // Gom phiếu cân của 1 người trong 1 ngày theo từng size
+// Trạng thái gửi của một nhóm phiếu: đỏ nếu có phiếu bị từ chối,
+// vàng nếu còn phiếu chờ server xác nhận, trống nếu đã xong.
+function trangThaiNhom(ids){
+  if(!ids || !ids.length) return '';
+  if(ids.some(i=>phieuLoiGui.some(x=>x.id===i))) return 'loi';
+  if(ids.some(i=>idsChoXacNhan.has(i))) return 'cho';
+  return '';
+}
+function dauTrangThai(ids){
+  const t = trangThaiNhom(ids);
+  if(t === 'loi') return '<span class="dau loi" title="Server từ chối — bấm Thử gửi lại ở bảng đỏ">⚠</span>';
+  if(t === 'cho') return '<span class="dau cho" title="Đang chờ server xác nhận">⏳</span>';
+  return '';
+}
+
 function daySizeRows(employeeId, dateKey){
   const map = {};
   weighings.filter(w=>w.employeeId===employeeId && w.dateKey===dateKey).forEach(w=>{
@@ -4023,6 +4063,13 @@ function printProductReportA4(){
 function updateCloudStatus(state){
   const el = document.getElementById('cloudStatus');
   if(!el) return;
+  if(phieuLoiGui.length){
+    el.textContent = "⚠️ " + phieuLoiGui.length + " bản ghi chưa lên được server";
+    el.style.color = "#FFD2CC";
+    el.style.fontWeight = "700";
+    return;
+  }
+  el.style.fontWeight = "";
   // Lỗi ĐỌC là nặng nhất — luôn hiện, không cho trạng thái khác đè lên
   if(khoDocLoi.length){
     el.textContent = "⚠️ Không đọc được: " + khoDocLoi.join(', ');
@@ -4073,6 +4120,8 @@ let fsReady = false;
 let cloudSyncTimer = null;
 let firestoreListeners = [];
 let boNhoDemBat = false;     // đã bật được bộ nhớ đệm Firebase chưa
+let idsChoXacNhan = new Set(); // bản ghi Firebase đã nhận nhưng server chưa xác nhận
+let phieuLoiGui = [];          // bản ghi server TỪ CHỐI — nguy cơ mất dữ liệu
 let khoDocLoi = [];          // các kho ĐỌC từ server không được
 let khoGhiLoi = [];          // các kho ghi lên server không được
 let soMucDangGui = 0;        // số bản ghi đang chờ gửi trong lượt này
@@ -4138,6 +4187,12 @@ function attachRealtimeListeners(){
       // Server là bản chuẩn — thay thẳng.
       // Không tự "cứu" bản ghi cũ trên máy: Firebase đã tự giữ và gửi lại
       // các lệnh ghi lúc mất mạng. Tự làm thêm sẽ làm sống lại dữ liệu đã xoá.
+      // Ghi nhận bản ghi Firebase đã nhận nhưng server chưa xác nhận,
+      // để hiện dấu ⏳ cạnh phiếu trong bảng chi tiết.
+      qs.docs.forEach(d=>{
+        if(d.metadata && d.metadata.hasPendingWrites) idsChoXacNhan.add(d.id);
+        else idsChoXacNhan.delete(d.id);
+      });
       const docs = qs.docs.map(d=>d.data());
       COLLECTION_SETTERS[name](docs);
       luuKhoLenMay(name, docs);
@@ -4223,19 +4278,90 @@ function deepCopy(x){ return JSON.parse(JSON.stringify(x)); }
 // Khi Firebase đã nhận, bản ghi được tính vào MỌI gói dữ liệu trả về
 // (kể cả lúc chưa kịp lên server), nên không bị gói từ máy khác xoá mất.
 // Đây là chỗ vá lỗ hổng 900ms gây mất phiếu khi nhiều máy cân cùng lúc.
+// ===== CẢNH BÁO SERVER TỪ CHỐI GHI =====
+function veCanhBaoLoi(){
+  const bar = document.getElementById('errBar');
+  if(!bar) return;
+  if(!phieuLoiGui.length){ bar.classList.remove('show'); return; }
+  const soPhieuCan = phieuLoiGui.filter(x=>x.name==='weighings').length;
+  const moTa = soPhieuCan === phieuLoiGui.length
+    ? soPhieuCan + ' phiếu cân'
+    : phieuLoiGui.length + ' bản ghi';
+  document.getElementById('errBarTitle').textContent = '⚠️ Không gửi được ' + moTa + ' lên server';
+  const lyDoHay = {};
+  phieuLoiGui.forEach(x=>{ lyDoHay[x.lyDo] = (lyDoHay[x.lyDo]||0) + 1; });
+  document.getElementById('errBarWhy').textContent =
+    'Lý do: ' + Object.keys(lyDoHay).join(' · ');
+  bar.classList.add('show');
+}
+function anCanhBaoLoi(){
+  const bar = document.getElementById('errBar');
+  if(bar) bar.classList.remove('show');
+}
+function thuGuiLai(){
+  if(!phieuLoiGui.length){ anCanhBaoLoi(); return; }
+  const danhSach = phieuLoiGui.slice();
+  phieuLoiGui = [];
+  veCanhBaoLoi();
+  danhSach.forEach(x=>{
+    if(x.doc) ghiNgay(x.name, x.doc);
+    else xoaNgay(x.name, x.id);
+  });
+  updateCloudStatus();
+  renderSoon();
+}
+function luuPhieuLoiRaFile(){
+  if(!phieuLoiGui.length){ alert("Không có bản ghi nào bị từ chối."); return; }
+  const noiDung = {
+    ghiLuc: new Date().toISOString(),
+    may: thisDeviceId(),
+    soBanGhi: phieuLoiGui.length,
+    banGhi: phieuLoiGui
+  };
+  const blob = new Blob([JSON.stringify(noiDung, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'phieu-chua-len-server-' + todayKey() + '.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+
+function lyDoDeHieu(err){
+  const ma = (err && err.code) || '';
+  if(ma.indexOf('permission') >= 0) return 'Firebase chặn quyền ghi (permission-denied)';
+  if(ma.indexOf('resource-exhausted') >= 0) return 'Hết hạn mức Firebase trong ngày (resource-exhausted)';
+  if(ma.indexOf('unavailable') >= 0) return 'Không kết nối được Firebase (unavailable)';
+  if(ma.indexOf('unauthenticated') >= 0) return 'Chưa đăng nhập được Firebase (unauthenticated)';
+  return ma || (err && err.message) || 'Lỗi không rõ';
+}
+function ghiNhanLoiGui(name, id, doc, err){
+  const lyDo = lyDoDeHieu(err);
+  console.error('Không gửi được ' + name + '/' + id + ':', lyDo, err);
+  if(!phieuLoiGui.some(x=>x.name===name && x.id===id)){
+    phieuLoiGui.push({ name, id, doc: doc || null, lyDo, luc: Date.now() });
+  }
+  idsChoXacNhan.delete(id);
+  veCanhBaoLoi();
+  updateCloudStatus();
+  renderSoon();
+}
 function ghiNgay(name, doc){
   if(!fsReady || !fsDb || !doc || !doc.id) return;
+  idsChoXacNhan.add(doc.id);
   try{
     fsDb.collection(name).doc(String(doc.id)).set(doc)
-      .catch(err=>console.error('Không ghi ngay được '+name+'/'+doc.id+':', (err && (err.code||err.message))||err));
-  }catch(e){ console.error('Lỗi ghi ngay', name, e); }
+      .then(()=>{ idsChoXacNhan.delete(doc.id); renderSoon(); })
+      .catch(err=>ghiNhanLoiGui(name, doc.id, doc, err));
+  }catch(e){ ghiNhanLoiGui(name, doc.id, doc, e); }
 }
 function xoaNgay(name, id){
   if(!fsReady || !fsDb || !id) return;
+  idsChoXacNhan.add(id);
   try{
     fsDb.collection(name).doc(String(id)).delete()
-      .catch(err=>console.error('Không xoá ngay được '+name+'/'+id+':', (err && (err.code||err.message))||err));
-  }catch(e){ console.error('Lỗi xoá ngay', name, e); }
+      .then(()=>{ idsChoXacNhan.delete(id); renderSoon(); })
+      .catch(err=>ghiNhanLoiGui(name, id, null, err));
+  }catch(e){ ghiNhanLoiGui(name, id, null, e); }
 }
 
 function cloudSync(){
