@@ -233,6 +233,13 @@
   }
   #weighDate:disabled{background:#EDF0F5;color:#8794A8;cursor:not-allowed;border-color:var(--line);}
   #weighDateNote{font-size:11.5px;color:var(--muted);padding:2px 2px 6px;}
+  .seg-log{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .seg-log button{flex:1;min-width:150px;padding:10px 12px;border:1px solid var(--line);background:#fff;border-radius:10px;
+    font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--muted);}
+  .seg-log button.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+  table.emp-table tr.ngo td{background:#FDF1EF !important;}
+  table.emp-table tr.ngo td.c-time{color:#9B2F22;font-weight:700;}
+  .co-ngo{display:inline-block;background:#9B2F22;color:#fff;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:5px;margin-left:6px;}
   .emp-table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;}
   table.emp-table{width:100%;border-collapse:collapse;font-size:13.5px;white-space:nowrap;}
   table.emp-table th{background:var(--blue);color:#fff;font-weight:700;padding:8px 10px;text-align:left;font-size:12.5px;position:sticky;top:0;}
@@ -391,7 +398,7 @@
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.8.1</span>
+      <span class="ver">V1.9.0</span>
     </div>
   </div>
   <div class="tabs-row">
@@ -416,7 +423,7 @@
     <input type="text" id="empSearch" class="f-emp" placeholder="🔍 Tìm mã NV…" inputmode="numeric" autocomplete="off" autocorrect="off" oninput="onEmpSearchInput()" onkeydown="onEmpSearchKeydown(event)">
     <div class="daystat" title="Thống kê trong ngày">
       <div class="cell"><div class="v" id="dsPeople">0</div><div class="l">Người</div></div>
-      <div class="cell"><div class="v" id="dsCodes">0</div><div class="l">Mã</div></div>
+      <div class="cell"><div class="v" id="dsCodes">0</div><div class="l">Mã cân</div></div>
       <div class="cell"><div class="v" id="dsKg">0</div><div class="l">KG</div></div>
     </div>
     <input type="date" id="weighDate" class="f-date" onchange="onWeighDateChange()">
@@ -914,7 +921,31 @@
 
     <!-- LỊCH SỬ TRUY XUẤT -->
     <div id="cfgLogSection" class="hidden">
-      <div class="card">
+      <div class="seg-log">
+        <button id="logTabHt" class="on" onclick="doiTabLichSu('ht')">🖥 Thao tác hệ thống</button>
+        <button id="logTabCan" onclick="doiTabLichSu('can')">⚖️ Lịch sử cân</button>
+      </div>
+
+      <div class="card" id="logCardCan" style="display:none;">
+        <div class="card-title">⚖️ Lịch sử cân</div>
+        <div class="row">
+          <div class="field"><label>Từ ngày</label><input type="date" id="lscFrom" onchange="renderLichSuCan()"></div>
+          <div class="field"><label>Đến ngày</label><input type="date" id="lscTo" onchange="renderLichSuCan()"></div>
+        </div>
+        <div class="field">
+          <label>Người cân</label>
+          <select id="lscUser" onchange="renderLichSuCan()"><option value="">Tất cả</option></select>
+        </div>
+        <input type="text" id="lscSearch" placeholder="🔍 Tìm theo tên hoặc mã nhân viên…" oninput="renderLichSuCan()" style="margin-bottom:10px;">
+        <div class="row" style="margin-bottom:10px;">
+          <button class="btn btn-outline" id="lscBtnNgo" onclick="locPhieuDangNgo()" style="color:#9B2F22;border-color:#F0C9C2;background:#FDF1EF;">⚠ Chỉ hiện phiếu đáng ngờ</button>
+          <button class="btn btn-outline" onclick="exportLichSuCanExcel()">📊 Xuất Excel</button>
+        </div>
+        <div id="lscWrap"></div>
+        <div class="muted" id="lscHint" style="font-size:11.5px;margin-top:8px;line-height:1.6;"></div>
+      </div>
+
+      <div class="card" id="logCardHt">
         <div class="card-title">📜 Lịch sử truy xuất</div>
         <div class="row">
           <div class="field"><label>Từ ngày</label><input type="date" id="logFrom" onchange="renderActivityLog()"></div>
@@ -992,6 +1023,14 @@ function saveAll(){
 }
 
 function formatNumber(n){ return (Number(n)||0).toLocaleString("en-US"); }
+// Định dạng số KG: làm tròn theo Cài đặt, có dấu phẩy phân nhóm nghìn,
+// bỏ số 0 vô nghĩa ở cuối. Tránh hiện 31.599999999999998 hay 3745.00
+function fmtKg(v){
+  const d = Number(appOptions.kgDecimals) || 1;
+  const n = Number(v);
+  if(!isFinite(n) || n === 0) return '';
+  return n.toLocaleString("en-US", { minimumFractionDigits:0, maximumFractionDigits:d });
+}
 function formatMoney(n){ return formatNumber(n) + " đ"; }
 
 let employees = loadJSON(EMP_KEY, []);
@@ -1176,6 +1215,125 @@ function filteredActivityLog(){
     return true;
   });
 }
+// ===== LỊCH SỬ CÂN =====
+// Đọc lại chính các phiếu cân đã lưu — không ghi thêm dữ liệu nào.
+let lscChiNgo = false;
+function doiTabLichSu(t){
+  const laCan = (t === 'can');
+  document.getElementById('logCardCan').style.display = laCan ? '' : 'none';
+  document.getElementById('logCardHt').style.display  = laCan ? 'none' : '';
+  document.getElementById('logTabCan').classList.toggle('on', laCan);
+  document.getElementById('logTabHt').classList.toggle('on', !laCan);
+  if(laCan){
+    const f = document.getElementById('lscFrom');
+    if(f && !f.value){ f.value = todayKey(); document.getElementById('lscTo').value = todayKey(); }
+    renderLichSuCan();
+  }else{
+    renderActivityLog();
+  }
+}
+function locPhieuDangNgo(){
+  lscChiNgo = !lscChiNgo;
+  const b = document.getElementById('lscBtnNgo');
+  b.textContent = lscChiNgo ? '⚠ Đang lọc — bấm để xem tất cả' : '⚠ Chỉ hiện phiếu đáng ngờ';
+  b.style.background = lscChiNgo ? '#9B2F22' : '#FDF1EF';
+  b.style.color      = lscChiNgo ? '#fff' : '#9B2F22';
+  renderLichSuCan();
+}
+// Phiếu đáng ngờ: nhập ngoài khung giờ làm việc, hoặc từ máy chưa được duyệt
+function vaoNgoPhieu(w){
+  const ly = [];
+  const gio = new Date(w.createdAt);
+  const toMin = t=>{ const [h,m] = String(t||'0:0').split(':').map(Number); return h*60+(m||0); };
+  const a = toMin(appOptions.workStart || '05:00'), b = toMin(appOptions.workEnd || '19:00');
+  const cur = gio.getHours()*60 + gio.getMinutes();
+  const trongGio = a <= b ? (cur>=a && cur<=b) : (cur>=a || cur<=b);
+  if(!trongGio) ly.push('Ngoài giờ');
+  if(w.deviceId && devices.length && !devices.some(d=>d.deviceId===w.deviceId)) ly.push('Máy lạ');
+  if(w.flags) ly.push(w.flags);
+  return ly;
+}
+function locLichSuCan(){
+  const f = (document.getElementById('lscFrom')?.value)||'';
+  const t = (document.getElementById('lscTo')?.value)||'';
+  const u = (document.getElementById('lscUser')?.value)||'';
+  const q = ((document.getElementById('lscSearch')?.value)||'').toLowerCase().trim();
+  return weighings.filter(w=>{
+    if(f && w.dateKey < f) return false;
+    if(t && w.dateKey > t) return false;
+    if(u && (w.byUserName||'') !== u) return false;
+    if(q){
+      const e = employees.find(x=>x.id===w.employeeId);
+      const chuoi = ((e?e.name:'') + ' ' + (e?e.code:'') + ' ' + (w.employeeCode||'')).toLowerCase();
+      if(!chuoi.includes(q)) return false;
+    }
+    if(lscChiNgo && vaoNgoPhieu(w).length === 0) return false;
+    return true;
+  }).sort((a,b)=>b.createdAt-a.createdAt);
+}
+function renderLichSuCan(){
+  const sel = document.getElementById('lscUser');
+  if(sel){
+    const cur = sel.value;
+    const ten = Array.from(new Set(weighings.map(w=>w.byUserName).filter(Boolean))).sort();
+    sel.innerHTML = '<option value="">Tất cả</option>' + ten.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+    sel.value = cur;
+  }
+  const wrap = document.getElementById('lscWrap');
+  if(!wrap) return;
+  const ds = locLichSuCan();
+  const hien = ds.slice(0, 300);
+  if(ds.length === 0){
+    wrap.innerHTML = `<div class="empty-state">${lscChiNgo ? '✅ Không có phiếu nào đáng ngờ' : 'Không có phiếu cân nào trong khoảng này'}</div>`;
+  }else{
+    wrap.innerHTML = `<div class="emp-table-scroll"><table class="emp-table">
+      <thead><tr><th>Thời gian</th><th>Nhân viên</th><th>Mã hàng</th>
+        <th style="text-align:right;">KG</th><th style="text-align:right;">Thành tiền</th>
+        <th>Người cân</th><th>Máy</th></tr></thead>
+      <tbody>${hien.map(w=>{
+        const e = employees.find(x=>x.id===w.employeeId);
+        const p = products.find(x=>x.id===w.productId);
+        const d = new Date(w.createdAt);
+        const pad = v=>String(v).padStart(2,'0');
+        const gio = `${pad(d.getDate())}/${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        const ly = vaoNgoPhieu(w);
+        return `<tr class="${ly.length?'ngo':''}">
+          <td class="c-nowrap c-time font-mono" style="font-size:12px;">${gio}${ly.length?`<span class="co-ngo">⚠ ${escapeHtml(ly.join(' · '))}</span>`:''}</td>
+          <td class="c-name">${e?escapeHtml(e.name):'(đã xoá)'} <span class="muted font-mono" style="font-size:10.5px;font-weight:400;">${e?escapeHtml(e.code):escapeHtml(w.employeeCode||'')}</span></td>
+          <td>${p?escapeHtml(p.name):'(mã đã xoá)'}</td>
+          <td class="r font-mono" style="text-align:right;font-weight:700;">${fmtKg(w.weightKg)}</td>
+          <td class="r font-mono" style="text-align:right;font-weight:700;color:var(--blue);">${formatNumber(w.amount)}</td>
+          <td>${escapeHtml(w.byUserName||'—')}</td>
+          <td class="font-mono" style="font-size:11.5px;color:var(--muted);">${escapeHtml(w.deviceId||'—')}</td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`;
+  }
+  const tongKg = ds.reduce((a,b)=>a+b.weightKg,0);
+  const tongTien = ds.reduce((a,b)=>a+b.amount,0);
+  document.getElementById('lscHint').innerHTML =
+    `<b>${ds.length} lượt cân · ${fmtKg(tongKg)||0} kg · ${formatNumber(tongTien)} đ</b>` +
+    (ds.length > 300 ? ` — đang hiện 300 dòng gần nhất` : '') +
+    `<br>Dòng nền hồng là phiếu đáng ngờ: nhập ngoài khung giờ làm việc, hoặc từ máy chưa duyệt trong Cài đặt → Khoá nhập. Cột <b>Người cân</b> là tài khoản đã bấm NHẬP, cột <b>Máy</b> là mã thiết bị.`;
+}
+function exportLichSuCanExcel(){
+  if(!requirePerm('exportExcel')) return;
+  const ds = locLichSuCan();
+  if(!ds.length){ alert("Không có dòng nào để xuất"); return; }
+  const aoa = [["Thời gian","Mã NV","Nhân viên","Mã hàng","KG","Thành tiền","Người cân","Máy","Đáng ngờ"],
+    ...ds.map(w=>{
+      const e = employees.find(x=>x.id===w.employeeId);
+      const p = products.find(x=>x.id===w.productId);
+      return [ new Date(w.createdAt).toLocaleString('vi-VN'),
+               e?e.code:(w.employeeCode||''), e?e.name:'(đã xoá)',
+               p?p.name:'(mã đã xoá)', w.weightKg, w.amount,
+               w.byUserName||'', w.deviceId||'', vaoNgoPhieu(w).join(' · ') ];
+    })];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Lich su can");
+  XLSX.writeFile(wb, `lich-su-can-${todayKey()}.xlsx`);
+}
+
 function renderActivityLog(){
   const sel = document.getElementById('logUserFilter');
   if(sel){
@@ -2809,21 +2967,17 @@ function renderWeighTab(){
   // Ô thống kê trên thanh thao tác: mỗi người lên cân tính 1, dù cân bao nhiêu lần
   const dsD = Number(appOptions.kgDecimals) || 1;
   const soNguoi = new Set(dayEntries.map(w=>w.employeeId)).size;
-  const soMa    = new Set(dayEntries.map(w=>w.productId)).size;
+  const soMa    = dayEntries.length;    // số lượt bấm NHẬP, không phải số loại mã hàng
   const soKg    = dayEntries.reduce((a,w)=>a+w.weightKg,0);
   const dsP=document.getElementById('dsPeople'), dsC=document.getElementById('dsCodes'), dsK=document.getElementById('dsKg');
   if(dsP) dsP.textContent = soNguoi;
   if(dsC) dsC.textContent = soMa;
-  if(dsK) dsK.textContent = String(Number(soKg.toFixed(dsD)));
+  if(dsK) dsK.textContent = fmtKg(soKg) || '0';
 
   if(selectedEmployeeId && !employees.some(e=>e.id===selectedEmployeeId)){
     selectedEmployeeId = null;   // người này đã bị xoá khỏi danh mục
   }
 
-  const kgTxt = v => {
-    const d = Number(appOptions.kgDecimals) || 1;
-    return String(Number(Number(v).toFixed(d)));   // 20.000000000000004 -> 20
-  };
   const wrap = document.getElementById('weighListWrap');
   const ngay = dateObj.toLocaleDateString('vi-VN');
 
@@ -2858,7 +3012,7 @@ function renderWeighTab(){
               }
               const pend = pendingDeleteKey === ('single:'+w.id);
               return `<tr class="sub"><td colspan="3">
-                ${t} · ${kgTxt(w.weightKg)} kg — ${formatMoney(w.amount)}${w.byUserName?` · 👤 ${escapeHtml(w.byUserName)}`:''}${w.flags?` · <span style="color:var(--rust);font-weight:700;">⚑ ${escapeHtml(w.flags)}</span>`:''}
+                ${t} · ${fmtKg(w.weightKg)} kg — ${formatMoney(w.amount)}${w.byUserName?` · 👤 ${escapeHtml(w.byUserName)}`:''}${w.flags?` · <span style="color:var(--rust);font-weight:700;">⚑ ${escapeHtml(w.flags)}</span>`:''}
                 <button class="icon-del" style="padding:1px;" onclick="event.stopPropagation();editSingleWeigh('${w.id}')">✏️</button>
                 ${pend
                   ? `<button class="icon-del" style="padding:1px;color:var(--rust);font-weight:700;" onclick="event.stopPropagation();deleteSingleWeigh('${w.id}')">Xoá?✓</button>`
@@ -2868,7 +3022,7 @@ function renderWeighTab(){
           return `
             <tr class="item ${trangThaiNhom(r.ids)}" onclick="toggleGroupExpand('${key}')">
               <td class="sz">${escapeHtml(r.name)} ${r.count>1?(isExp?'▲':'▼'):''}${dauTrangThai(r.ids)}</td>
-              <td class="r kg">${kgTxt(r.kg)}</td>
+              <td class="r kg">${fmtKg(r.kg)}</td>
               <td class="r mn">${formatNumber(r.amount)}</td>
             </tr>${detail}`;
         }).join('');
@@ -2883,7 +3037,7 @@ function renderWeighTab(){
           <thead><tr><th>Size</th><th class="r">KG</th><th class="r">Thành tiền</th></tr></thead>
           <tbody>
             ${body}
-            ${rows.length? `<tr class="tot"><td>CỘNG</td><td class="r kg">${kgTxt(tongKg)}</td><td class="r mn">${formatNumber(tongTien)}</td></tr>`:''}
+            ${rows.length? `<tr class="tot"><td>CỘNG</td><td class="r kg">${fmtKg(tongKg)}</td><td class="r mn">${formatNumber(tongTien)}</td></tr>`:''}
             ${bonus>0? `<tr class="tot"><td>🍚 TIỀN CƠM</td><td></td><td class="r mn">${formatNumber(bonus)}</td></tr>`:''}
           </tbody>
         </table>
@@ -2914,7 +3068,7 @@ function renderWeighTab(){
   if(list.length===0){
     wrap.innerHTML = `
       <div class="dcard">
-        <div class="dhead"><div class="n">Cả xưởng hôm nay</div><div class="c">${ngay} · 0 người · 0 mã · 0 KG</div></div>
+        <div class="dhead"><div class="n">Cả xưởng hôm nay</div><div class="c">${ngay} · 0 người · 0 mã cân · 0 KG</div></div>
         <div class="empty-state" style="padding:20px 12px;font-size:12.5px;">Chưa có phiếu cân nào</div>
       </div>`;
     return;
@@ -2924,7 +3078,7 @@ function renderWeighTab(){
     <div class="dcard">
       <div class="dhead">
         <div class="n">Cả xưởng hôm nay</div>
-        <div class="c">${ngay} · ${list.length} người · ${soMa} mã · ${kgTxt(sumKg)} KG</div>
+        <div class="c">${ngay} · ${list.length} người · ${soMa} mã cân · ${fmtKg(sumKg)} KG</div>
       </div>
       <table class="dtb">
         <thead><tr><th>Nhân viên</th><th class="r">KG</th><th class="r">Thành tiền</th></tr></thead>
@@ -2934,11 +3088,11 @@ function renderWeighTab(){
             return `<tr class="item" onclick="selectEmployee('${b.employeeId}')">
               <td class="sz">${em?escapeHtml(em.name):'(đã xoá)'}
                 <span class="muted font-mono" style="font-size:10.5px;font-weight:400;">${em?escapeHtml(em.code):''}</span></td>
-              <td class="r kg">${kgTxt(b.kg)}</td>
+              <td class="r kg">${fmtKg(b.kg)}</td>
               <td class="r mn">${formatNumber(b.amount)}</td>
             </tr>`;
           }).join('')}
-          <tr class="tot"><td>CỘNG</td><td class="r kg">${kgTxt(sumKg)}</td><td class="r mn">${formatNumber(sumTien)}</td></tr>
+          <tr class="tot"><td>CỘNG</td><td class="r kg">${fmtKg(sumKg)}</td><td class="r mn">${formatNumber(sumTien)}</td></tr>
         </tbody>
       </table>
       <div class="dfoot"><span class="lbl">Tổng ngày này</span><span class="val">${formatMoney(sumTien)}</span></div>
@@ -2959,8 +3113,6 @@ function openDaySlip(){
   const rows = daySizeRows(selectedEmployeeId, dateKey);
   if(rows.length===0){ alert(`${emp.name} chưa cân gì trong ngày ${ngay}.`); return; }
 
-  const d = Number(appOptions.kgDecimals) || 1;
-  const kgTxt = v => String(Number(Number(v).toFixed(d)));
   const tongKg   = rows.reduce((a,r)=>a+r.kg,0);
   const tongTien = rows.reduce((a,r)=>a+r.amount,0);
   const bonus    = mealBonusForDay(selectedEmployeeId, dateKey);
@@ -2984,11 +3136,11 @@ function openDaySlip(){
       ${rows.map((r,i)=>`<tr>
         <td class="c">${i+1}</td>
         <td>${escapeHtml(r.name)}</td>
-        <td class="r">${kgTxt(r.kg)}</td>
+        <td class="r">${fmtKg(r.kg)}</td>
         <td class="r">${formatNumber(r.unitPrice)}</td>
         <td class="r">${formatNumber(r.amount)}</td>
       </tr>`).join('')}
-      <tr class="sum"><td colspan="2" class="c">CỘNG</td><td class="r">${kgTxt(tongKg)}</td><td></td><td class="r">${formatNumber(tongTien)}</td></tr>
+      <tr class="sum"><td colspan="2" class="c">CỘNG</td><td class="r">${fmtKg(tongKg)}</td><td></td><td class="r">${formatNumber(tongTien)}</td></tr>
       <tr class="sum"><td colspan="2" class="c">TIỀN CƠM</td><td></td><td></td><td class="r">${bonus>0?formatNumber(bonus):''}</td></tr>
       <tr class="sum"><td colspan="2" class="c">TỔNG TIỀN</td><td></td><td></td><td class="r">${formatNumber(tongCong)}</td></tr>
     </table>
@@ -3755,7 +3907,7 @@ function renderSettlement(){
     const balance = payableBalance(empId);
     const lines = Object.entries(byProduct).map(([pid, v])=>{
       const p = products.find(x=>x.id===pid);
-      return `<div class="summary-line"><span>${p?escapeHtml(p.name):''} (${v.kg} kg)</span><span class="amount">${formatMoney(v.amount)}</span></div>`;
+      return `<div class="summary-line"><span>${p?escapeHtml(p.name):''} (${fmtKg(v.kg)} kg)</span><span class="amount">${formatMoney(v.amount)}</span></div>`;
     }).join('');
     return `
       <div class="emp-summary-card">
@@ -3795,7 +3947,7 @@ function buildReceiptHtml(empId, dateKey){
   const dateDisplay = new Date(dateKey).toLocaleDateString("vi-VN",{weekday:"long", day:"2-digit", month:"2-digit", year:"numeric"});
   const tableRows = Object.entries(byProduct).map(([pid,v])=>{
     const p = products.find(x=>x.id===pid);
-    return `<tr><td>${p?escapeHtml(p.name):''}</td><td class="num">${v.kg}</td><td class="num">${formatNumber(v.unitPrice)}</td><td class="num">${formatNumber(v.amount)}</td></tr>`;
+    return `<tr><td>${p?escapeHtml(p.name):''}</td><td class="num">${fmtKg(v.kg)}</td><td class="num">${formatNumber(v.unitPrice)}</td><td class="num">${formatNumber(v.amount)}</td></tr>`;
   }).join('');
   return `
     <div class="receipt-page">
@@ -3872,8 +4024,8 @@ function renderPivotTable(dateKey){
     return `<th>${p?escapeHtml(p.name):''}</th>`;
   }).join('');
   const bodyRows = rows.map(r=>{
-    const cells = orderedProdIds.map(pid=>`<td>${r.cellsByProduct[pid] ? r.cellsByProduct[pid] : ''}</td>`).join('');
-    return `<tr><td>${escapeHtml(r.empName)} <span class="muted" style="font-size:10px;">(${escapeHtml(r.empCode)})</span></td>${cells}<td><strong>${r.totalKg.toFixed(2)}</strong></td><td>${formatNumber(r.baseAmount)}</td><td style="color:${r.mealBonus>0?'var(--amber)':'inherit'}">${r.mealBonus>0?formatNumber(r.mealBonus):''}</td><td><strong>${formatNumber(r.grandTotal)}</strong></td><td><strong>${formatNumber(r.balance)}</strong></td></tr>`;
+    const cells = orderedProdIds.map(pid=>`<td>${fmtKg(r.cellsByProduct[pid])}</td>`).join('');
+    return `<tr><td>${escapeHtml(r.empName)} <span class="muted" style="font-size:10px;">(${escapeHtml(r.empCode)})</span></td>${cells}<td><strong>${fmtKg(r.totalKg)}</strong></td><td>${formatNumber(r.baseAmount)}</td><td style="color:${r.mealBonus>0?'var(--amber)':'inherit'}">${r.mealBonus>0?formatNumber(r.mealBonus):''}</td><td><strong>${formatNumber(r.grandTotal)}</strong></td><td><strong>${formatNumber(r.balance)}</strong></td></tr>`;
   }).join('');
   // Dòng tổng cộng theo cột
   const totalKgAll = rows.reduce((s,r)=>s+r.totalKg,0);
@@ -3881,12 +4033,12 @@ function renderPivotTable(dateKey){
   const totalMealAll = rows.reduce((s,r)=>s+r.mealBonus,0);
   const totalGrandAll = rows.reduce((s,r)=>s+r.grandTotal,0);
   const totalPerProduct = orderedProdIds.map(pid=> rows.reduce((s,r)=>s+(r.cellsByProduct[pid]||0),0) );
-  const totalCells = totalPerProduct.map(v=>`<td>${v?v.toFixed(2):''}</td>`).join('');
+  const totalCells = totalPerProduct.map(v=>`<td>${fmtKg(v)}</td>`).join('');
   wrap.innerHTML = `
     <table class="pivot-table">
       <thead><tr><th>Nhân viên</th>${prodHeaders}<th>Tổng kg</th><th>Tổng tiền</th><th>🍚 Tiền cơm</th><th>Tổng cộng</th><th>Còn phải trả</th></tr></thead>
       <tbody>${bodyRows}
-        <tr class="total-row"><td>TỔNG CỘNG</td>${totalCells}<td>${totalKgAll.toFixed(2)}</td><td>${formatNumber(totalBaseAll)}</td><td>${formatNumber(totalMealAll)}</td><td>${formatNumber(totalGrandAll)}</td><td></td></tr>
+        <tr class="total-row"><td>TỔNG CỘNG</td>${totalCells}<td>${fmtKg(totalKgAll)}</td><td>${formatNumber(totalBaseAll)}</td><td>${formatNumber(totalMealAll)}</td><td>${formatNumber(totalGrandAll)}</td><td></td></tr>
       </tbody>
     </table>
   `;
@@ -3929,14 +4081,14 @@ function printPivotA4(){
   const prodHeaders = orderedProdIds.map(pid=>{ const p = products.find(x=>x.id===pid); return `<th>${p?escapeHtml(p.name):''}</th>`; }).join('');
   const bodyRows = rows.map(r=>{
     const cells = orderedProdIds.map(pid=>`<td>${r.cellsByProduct[pid] ? r.cellsByProduct[pid] : ''}</td>`).join('');
-    return `<tr><td>${escapeHtml(r.empName)} (${escapeHtml(r.empCode)})</td>${cells}<td>${r.totalKg.toFixed(2)}</td><td>${formatNumber(r.baseAmount)}</td><td>${r.mealBonus?formatNumber(r.mealBonus):''}</td><td>${formatNumber(r.grandTotal)}</td><td>${formatNumber(r.balance)}</td></tr>`;
+    return `<tr><td>${escapeHtml(r.empName)} (${escapeHtml(r.empCode)})</td>${cells}<td>${fmtKg(r.totalKg)}</td><td>${formatNumber(r.baseAmount)}</td><td>${r.mealBonus?formatNumber(r.mealBonus):''}</td><td>${formatNumber(r.grandTotal)}</td><td>${formatNumber(r.balance)}</td></tr>`;
   }).join('');
   const totalKgAll = rows.reduce((s,r)=>s+r.totalKg,0);
   const totalBaseAll = rows.reduce((s,r)=>s+r.baseAmount,0);
   const totalMealAll = rows.reduce((s,r)=>s+r.mealBonus,0);
   const totalGrandAll = rows.reduce((s,r)=>s+r.grandTotal,0);
   const totalPerProduct = orderedProdIds.map(pid=> rows.reduce((s,r)=>s+(r.cellsByProduct[pid]||0),0));
-  const totalCells = totalPerProduct.map(v=>`<td>${v?v.toFixed(2):''}</td>`).join('');
+  const totalCells = totalPerProduct.map(v=>`<td>${fmtKg(v)}</td>`).join('');
   const dateDisplay = new Date(dateKey+"T00:00:00").toLocaleDateString("vi-VN",{weekday:"long", day:"2-digit", month:"2-digit", year:"numeric"});
   document.getElementById('printArea').innerHTML = `
     <div class="report-print-page">
@@ -3944,7 +4096,7 @@ function printPivotA4(){
       <table class="report-print-table">
         <thead><tr><th>Nhân viên</th>${prodHeaders}<th>Tổng kg</th><th>Tổng tiền</th><th>Tiền cơm</th><th>Tổng cộng</th><th>Còn phải trả</th></tr></thead>
         <tbody>${bodyRows}
-          <tr class="total-row"><td>TỔNG CỘNG</td>${totalCells}<td>${totalKgAll.toFixed(2)}</td><td>${formatNumber(totalBaseAll)}</td><td>${formatNumber(totalMealAll)}</td><td>${formatNumber(totalGrandAll)}</td><td></td></tr>
+          <tr class="total-row"><td>TỔNG CỘNG</td>${totalCells}<td>${fmtKg(totalKgAll)}</td><td>${formatNumber(totalBaseAll)}</td><td>${formatNumber(totalMealAll)}</td><td>${formatNumber(totalGrandAll)}</td><td></td></tr>
         </tbody>
       </table>
       <div class="report-print-footer">
@@ -3993,7 +4145,7 @@ function renderProductReport(){
       <td style="text-align:left;">${escapeHtml(r.code)}</td>
       <td style="text-align:left;${r.isMeal?'color:var(--amber);font-weight:600;':''}">${escapeHtml(r.name)}</td>
       <td>${r.isMeal?'':'kg'}</td>
-      <td>${r.qty!==''?r.qty.toFixed(2):''}</td>
+      <td>${r.qty!==''?fmtKg(r.qty):''}</td>
       <td>${r.unitPrice!==''?formatNumber(r.unitPrice):''}</td>
       <td>${formatNumber(r.amount)}</td>
     </tr>
@@ -4002,7 +4154,7 @@ function renderProductReport(){
     <table class="debt-report-table">
       <thead><tr><th>STT</th><th style="text-align:left;">Mã hàng</th><th style="text-align:left;">Tên hàng</th><th>Đvt</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
       <tbody>${bodyRows}
-        <tr class="total-row"><td colspan="4">TỔNG CỘNG</td><td>${totalQty.toFixed(2)}</td><td></td><td>${formatNumber(totalAmount)}</td></tr>
+        <tr class="total-row"><td colspan="4">TỔNG CỘNG</td><td>${fmtKg(totalQty)}</td><td></td><td>${formatNumber(totalAmount)}</td></tr>
       </tbody>
     </table>
   `;
@@ -4033,7 +4185,7 @@ function printProductReportA4(){
       <td>${escapeHtml(r.code)}</td>
       <td>${escapeHtml(r.name)}</td>
       <td style="text-align:center;">${r.isMeal?'':'kg'}</td>
-      <td>${r.qty!==''?r.qty.toFixed(2):''}</td>
+      <td>${r.qty!==''?fmtKg(r.qty):''}</td>
       <td>${r.unitPrice!==''?formatNumber(r.unitPrice):''}</td>
       <td>${formatNumber(r.amount)}</td>
     </tr>
@@ -4046,7 +4198,7 @@ function printProductReportA4(){
       <table class="report-print-table">
         <thead><tr><th style="text-align:center;">STT</th><th>Mã hàng</th><th>Tên hàng</th><th style="text-align:center;">Đvt</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
         <tbody>${bodyRows}
-          <tr class="total-row"><td colspan="4">TỔNG CỘNG</td><td>${totalQty.toFixed(2)}</td><td></td><td>${formatNumber(totalAmount)}</td></tr>
+          <tr class="total-row"><td colspan="4">TỔNG CỘNG</td><td>${fmtKg(totalQty)}</td><td></td><td>${formatNumber(totalAmount)}</td></tr>
         </tbody>
       </table>
       <div class="report-print-footer">
