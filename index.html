@@ -233,6 +233,11 @@
   }
   #weighDate:disabled{background:#EDF0F5;color:#8794A8;cursor:not-allowed;border-color:var(--line);}
   #weighDateNote{font-size:11.5px;color:var(--muted);padding:2px 2px 6px;}
+  .wrap-full{width:100%;padding:0 10px;}
+  .seg-bc{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .seg-bc button{flex:1;min-width:230px;padding:11px 14px;border:1px solid var(--line);background:#fff;border-radius:10px;
+    font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--muted);}
+  .seg-bc button.on{background:var(--blue);color:#fff;border-color:var(--blue);}
   .seg-log{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
   .seg-log button{flex:1;min-width:150px;padding:10px 12px;border:1px solid var(--line);background:#fff;border-radius:10px;
     font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--muted);}
@@ -398,14 +403,14 @@
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.9.0</span>
+      <span class="ver">V1.9.3</span>
     </div>
   </div>
   <div class="tabs-row">
     <button class="tab-btn active" id="tabBtnWeigh" onclick="switchTab('weigh')">⚖️ Cân tôm</button>
     <button class="tab-btn" id="tabBtnCatalog" onclick="switchTab('catalog')">📋 Danh mục</button>
     <button class="tab-btn" id="tabBtnDebt" onclick="switchTab('debt')">💰 Công nợ</button>
-    <button class="tab-btn" id="tabBtnSettle" onclick="switchTab('settle')">🧾 Chốt & In</button>
+    <button class="tab-btn hidden" id="tabBtnSettle" onclick="switchTab('settle')">🧾 Chốt &amp; In</button>
     <button class="tab-btn" id="tabBtnReport" onclick="switchTab('report')">📊 Báo cáo</button>
     <button class="tab-btn" id="tabBtnConfig" onclick="switchTab('config')">⚙️ Cài đặt</button>
   </div>
@@ -482,11 +487,11 @@
 
 <!-- ============ TAB: DANH MỤC ============ -->
 <div id="catalogTab" class="hidden">
-  <div class="wrap app-header">
+  <div class="wrap-full app-header">
     <div class="app-title">📋 Danh mục</div>
     <div class="app-sub">Nhân viên &amp; Mã hàng / Size</div>
   </div>
-  <div class="wrap">
+  <div class="wrap-full">
     <div class="section-tab">
       <button class="active" id="catBtnEmp" onclick="setCatalogSection('emp')">Nhân viên</button>
       <button id="catBtnProd" onclick="setCatalogSection('prod')">Mã hàng / Size</button>
@@ -576,11 +581,11 @@
 <!-- ============ TAB: CHỐT & IN ============ -->
 <!-- ============ TAB: CÔNG NỢ ============ -->
 <div id="debtTab" class="hidden">
-  <div class="wrap app-header">
+  <div class="wrap-full app-header">
     <div class="app-title">💰 Công nợ</div>
     <div class="app-sub">Phải trả cho công nhân</div>
   </div>
-  <div class="wrap">
+  <div class="wrap-full">
     <div class="section-tab">
       <button id="debtBtnPay" onclick="setDebtSection('pay')">Phiếu chi</button>
       <button class="active" id="debtBtnReport" onclick="setDebtSection('report')">Tổng hợp</button>
@@ -697,32 +702,44 @@
   <div class="wrap app-header">
     <div class="app-title">📊 Báo cáo</div>
   </div>
-  <div class="wrap">
-    <div class="card-title">Bảng tổng hợp cân theo ngày</div>
-    <div class="card">
-      <div class="field"><label>Chọn ngày</label><input type="date" id="pivotDate" onchange="renderPivotTable(document.getElementById('pivotDate').value)"></div>
-    </div>
-    <div style="overflow-x:auto;">
-      <div id="pivotTableWrap"></div>
-    </div>
-    <div class="row" style="margin-top:8px;">
-      <button class="btn btn-primary" onclick="exportPivotExcel()">📊 Xuất Excel</button>
-      <button class="btn btn-outline" onclick="printPivotA4()">🖨 In A4</button>
+  <div class="wrap-full">
+    <div class="seg-bc">
+      <button id="bcTab1" class="on" onclick="doiMucBaoCao(1)">📋 Bảng tổng hợp chi tiết cân theo ngày</button>
+      <button id="bcTab2" onclick="doiMucBaoCao(2)">🏭 Báo cáo tổng hợp thành phẩm chế biến</button>
     </div>
 
-    <div class="card-title" style="margin-top:20px;">Báo cáo tổng hợp thành phẩm chế biến</div>
-    <div class="card">
-      <div class="row">
-        <div class="field"><label>Từ ngày</label><input type="date" id="prodReportFrom" onchange="renderProductReport()"></div>
-        <div class="field"><label>Đến ngày</label><input type="date" id="prodReportTo" onchange="renderProductReport()"></div>
+    <div id="bcMuc1">
+      <div class="card-title">📋 Bảng tổng hợp chi tiết cân theo ngày</div>
+      <div class="card">
+        <div class="field"><label>Chọn ngày</label><input type="date" id="pivotDate" onchange="renderPivotTable(document.getElementById('pivotDate').value)"></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <div id="pivotTableWrap"></div>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <button class="btn btn-primary" onclick="exportPivotExcel()">📊 Xuất Excel</button>
+        <button class="btn btn-outline" onclick="printPivotA4()">🖨 In A4</button>
+      </div>
+      <div class="muted" style="font-size:11.5px;margin-top:10px;line-height:1.6;">
+        Cột <b>Tổng cộng</b> đã làm tròn về hàng nghìn: từ 500đ trở lên làm tròn lên 1.000đ, dưới 500đ bỏ về 0đ.
       </div>
     </div>
-    <div style="overflow-x:auto;">
-      <div id="productReportWrap"></div>
-    </div>
-    <div class="row" style="margin-top:8px;">
-      <button class="btn btn-primary" onclick="exportProductReportExcel()">📊 Xuất Excel</button>
-      <button class="btn btn-outline" onclick="printProductReportA4()">🖨 In A4</button>
+
+    <div id="bcMuc2" style="display:none;">
+      <div class="card-title">🏭 Báo cáo tổng hợp thành phẩm chế biến</div>
+      <div class="card">
+        <div class="row">
+          <div class="field"><label>Từ ngày</label><input type="date" id="prodReportFrom" onchange="renderProductReport()"></div>
+          <div class="field"><label>Đến ngày</label><input type="date" id="prodReportTo" onchange="renderProductReport()"></div>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <div id="productReportWrap"></div>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <button class="btn btn-primary" onclick="exportProductReportExcel()">📊 Xuất Excel</button>
+        <button class="btn btn-outline" onclick="printProductReportA4()">🖨 In A4</button>
+      </div>
     </div>
   </div>
   <div style="height:40px;"></div>
@@ -1721,7 +1738,9 @@ function requirePerm(action){
   return false;
 }
 
-const ALL_TABS = ['weigh','catalog','debt','settle','report','config'];
+// Tab 'settle' (Chốt & In) tạm ẩn — code vẫn giữ nguyên, thêm lại vào mảng này là hiện lại.
+// Tab đó chỉ đọc và hiển thị, không ghi dữ liệu, nên ẩn đi không mất gì.
+const ALL_TABS = ['weigh','catalog','debt','report','config'];
 const TAB_BTN_ID = { weigh:'tabBtnWeigh', catalog:'tabBtnCatalog', debt:'tabBtnDebt', settle:'tabBtnSettle', report:'tabBtnReport', config:'tabBtnConfig' };
 
 function nextUserCode(){
@@ -2818,6 +2837,36 @@ function toggleOvertimeDay(employeeId, dateKey){
 function dayEarnedRaw(employeeId, dateKey){
   return weighings.filter(w=>w.employeeId===employeeId && w.dateKey===dateKey).reduce((s,w)=>s+w.amount,0);
 }
+// ===== TIỀN CÔNG CHUẨN =====
+// Con số DUY NHẤT dùng cho: bảng tổng hợp, chi tiền, và toàn bộ công nợ.
+// Làm tròn TỪNG NGƯỜI TỪNG NGÀY rồi mới cộng — đúng bằng số thực trả.
+function tienCongNgay(employeeId, dateKey){
+  const base = dayEarnedRaw(employeeId, dateKey);
+  if(base === 0) return 0;
+  return tronNghin(base + mealBonusForDay(employeeId, dateKey));
+}
+// Gom theo ngày một lần rồi tính — không quét lại toàn bộ phiếu cân cho mỗi ngày
+function tienCongTheoNgay(locPhieu){
+  const theoNguoiNgay = {};
+  weighings.forEach(w=>{
+    if(!locPhieu(w)) return;
+    const k = w.employeeId + '|' + w.dateKey;
+    theoNguoiNgay[k] = (theoNguoiNgay[k] || 0) + w.amount;
+  });
+  const ketQua = {};   // { dateKey: tổng tiền công đã làm tròn }
+  Object.keys(theoNguoiNgay).forEach(k=>{
+    const [empId, dk] = k.split('|');
+    const base = theoNguoiNgay[k];
+    const bonus = isOvertimeDay(empId, dk) ? Math.round(base * 0.1) : 0;
+    ketQua[dk] = (ketQua[dk] || 0) + tronNghin(base + bonus);
+  });
+  return ketQua;
+}
+function tongTienCong(locPhieu){
+  const theoNgay = tienCongTheoNgay(locPhieu);
+  return Object.keys(theoNgay).reduce((s,dk)=>s+theoNgay[dk], 0);
+}
+
 function mealBonusForDay(employeeId, dateKey){
   if(!isOvertimeDay(employeeId, dateKey)) return 0;
   return Math.round(dayEarnedRaw(employeeId, dateKey) * 0.1);
@@ -2974,8 +3023,12 @@ function renderWeighTab(){
   if(dsC) dsC.textContent = soMa;
   if(dsK) dsK.textContent = fmtKg(soKg) || '0';
 
-  if(selectedEmployeeId && !employees.some(e=>e.id===selectedEmployeeId)){
-    selectedEmployeeId = null;   // người này đã bị xoá khỏi danh mục
+  // Chỉ bỏ chọn khi người này vừa không còn trong danh mục, vừa không còn phiếu cân nào.
+  // Nếu còn phiếu (phiếu mồ côi) thì vẫn cho mở ra để xoá được.
+  if(selectedEmployeeId
+     && !employees.some(e=>e.id===selectedEmployeeId)
+     && !weighings.some(w=>w.employeeId===selectedEmployeeId)){
+    selectedEmployeeId = null;
   }
 
   const wrap = document.getElementById('weighListWrap');
@@ -3397,9 +3450,7 @@ function employeeDailyEarnings(employeeId){
   const today = todayKey();
   const dateKeys = [...new Set(weighings.filter(w=>w.employeeId===employeeId).map(w=>w.dateKey))].filter(dk=>dk<today);
   return dateKeys.map(dk=>{
-    const base = weighings.filter(w=>w.employeeId===employeeId && w.dateKey===dk).reduce((s,w)=>s+w.amount,0);
-    const bonus = mealBonusForDay(employeeId, dk);
-    return { dateKey: dk, amount: base + bonus };
+    return { dateKey: dk, amount: tienCongNgay(employeeId, dk) };
   }).sort((a,b)=> b.dateKey.localeCompare(a.dateKey));
 }
 function renderPayableDays(){
@@ -3629,7 +3680,7 @@ function renderPaymentList(){
 
 // ===== CÔNG NỢ: TÍNH TOÁN & TỔNG HỢP =====
 function totalEarnedAllTime(employeeId){
-  return weighings.filter(w=>w.employeeId===employeeId).reduce((s,w)=>s+w.amount,0) + totalMealBonusAllTime(employeeId);
+  return tongTienCong(w => w.employeeId === employeeId);
 }
 function totalOpeningBalance(employeeId){
   return openingBalances.filter(o=>o.employeeId===employeeId).reduce((s,o)=>s+o.amount,0);
@@ -3659,11 +3710,7 @@ function buildDebtReportRows(){
   const toKey = document.getElementById('reportTo')?.value;
   return employees.map(e=>{
     const dauKy = fromKey ? balanceAsOf(e.id, prevDateKey(fromKey)) : totalOpeningBalance(e.id);
-    const weighInPeriod = weighings.filter(w=> w.employeeId===e.id && (!fromKey||w.dateKey>=fromKey) && (!toKey||w.dateKey<=toKey));
-    const baseEarn = weighInPeriod.reduce((s,w)=>s+w.amount,0);
-    const otDays = [...new Set(weighInPeriod.map(w=>w.dateKey))];
-    const mealBonus = otDays.reduce((s,dk)=> s + mealBonusForDay(e.id,dk), 0);
-    const no = baseEarn + mealBonus;
+    const no = tongTienCong(w => w.employeeId===e.id && (!fromKey||w.dateKey>=fromKey) && (!toKey||w.dateKey<=toKey));
     const traInPeriod = payments.filter(p=> p.employeeId===e.id && (!fromKey||p.dateKey>=fromKey) && (!toKey||p.dateKey<=toKey));
     const tra = traInPeriod.reduce((s,p)=>s+p.amount,0);
     const con = dauKy + no - tra;
@@ -3761,13 +3808,14 @@ function buildDebtDetailData(){
 
   // Đầu kỳ = số dư đầu kỳ (nếu không lọc NV thì cộng tất cả) + tổng tiền công trước fromKey - tổng đã chi trước fromKey
   const openingSum = empFilter ? totalOpeningBalance(empFilter) : openingBalances.reduce((s,o)=>s+o.amount,0);
-  const earnedBefore = weighings.filter(w=>wFilter(w) && w.dateKey < fromKey).reduce((s,w)=>s+w.amount,0);
+  const earnedBefore = tongTienCong(w => wFilter(w) && w.dateKey < fromKey);
   const paidBefore = payments.filter(p=>pFilter(p) && p.dateKey < fromKey).reduce((s,p)=>s+p.amount,0);
   const periodOpening = openingSum + earnedBefore - paidBefore;
 
   const days = dateKeysBetween(fromKey, toKey);
+  const tangTheoNgay = tienCongTheoNgay(w => wFilter(w) && w.dateKey>=fromKey && w.dateKey<=toKey);
   const dayRows = days.map(dk=>{
-    const tang = weighings.filter(w=>wFilter(w) && w.dateKey===dk).reduce((s,w)=>s+w.amount,0);
+    const tang = tangTheoNgay[dk] || 0;
     const giam = payments.filter(p=>pFilter(p) && p.dateKey===dk).reduce((s,p)=>s+p.amount,0);
     return { dateKey: dk, tang, giam };
   }).filter(r=>r.tang>0 || r.giam>0);
@@ -3829,11 +3877,9 @@ function exportDebtDetailExcel(){
 // ===== BÁO CÁO SỐ DƯ CÔNG NỢ PHẢI CHI (theo từng nhân viên, tính đến 1 mốc ngày) =====
 function balanceAsOf(employeeId, toKey){
   const opening = totalOpeningBalance(employeeId);
-  const earned = weighings.filter(w=>w.employeeId===employeeId && w.dateKey<=toKey).reduce((s,w)=>s+w.amount,0);
-  const otDays = [...new Set(weighings.filter(w=>w.employeeId===employeeId && w.dateKey<=toKey).map(w=>w.dateKey))];
-  const mealBonus = otDays.reduce((s,dk)=> s + mealBonusForDay(employeeId,dk), 0);
+  const earned = tongTienCong(w => w.employeeId===employeeId && w.dateKey<=toKey);
   const paid = payments.filter(p=>p.employeeId===employeeId && p.dateKey<=toKey).reduce((s,p)=>s+p.amount,0);
-  return opening + earned + mealBonus - paid;
+  return opening + earned - paid;
 }
 function buildDebtBalanceData(){
   const fromKey = document.getElementById('balFrom').value || todayKey();
@@ -3991,6 +4037,17 @@ function printAllReceipts(){
   window.print();
 }
 
+function doiMucBaoCao(i){
+  document.getElementById('bcMuc1').style.display = i===1 ? '' : 'none';
+  document.getElementById('bcMuc2').style.display = i===2 ? '' : 'none';
+  document.getElementById('bcTab1').classList.toggle('on', i===1);
+  document.getElementById('bcTab2').classList.toggle('on', i===2);
+  if(i===1) renderPivotTable(document.getElementById('pivotDate').value);
+  else renderProductReport();
+}
+// Làm tròn tiền về hàng nghìn: từ 500đ trở lên lên 1.000đ, dưới 500đ về 0đ
+function tronNghin(v){ return Math.round((Number(v)||0)/1000)*1000; }
+
 // ===== BẢNG TỔNG HỢP CÂN THEO NGÀY (dạng lưới, mỗi cột 1 mã hàng) =====
 function buildPivotData(dateKey){
   const dayWeighings = weighings.filter(w=>w.dateKey===dateKey);
@@ -4009,9 +4066,8 @@ function buildPivotData(dateKey){
     });
     const baseAmount = dayWeighings.filter(w=>w.employeeId===empId).reduce((s,w)=>s+w.amount,0);
     const mealBonus = mealBonusForDay(empId, dateKey);
-    const grandTotal = Math.round(baseAmount + mealBonus);
-    const balance = payableBalance(empId);
-    return { empId, empCode: emp?emp.code:'', empName: emp?emp.name:'(đã xoá)', cellsByProduct, totalKg, baseAmount, mealBonus, grandTotal, balance };
+    const grandTotal = tronNghin(baseAmount + mealBonus);   // làm tròn về hàng nghìn
+    return { empId, empCode: emp?emp.code:'', empName: emp?emp.name:'(đã xoá)', cellsByProduct, totalKg, baseAmount, mealBonus, grandTotal };
   });
   return { orderedProdIds, rows };
 }
@@ -4025,7 +4081,7 @@ function renderPivotTable(dateKey){
   }).join('');
   const bodyRows = rows.map(r=>{
     const cells = orderedProdIds.map(pid=>`<td>${fmtKg(r.cellsByProduct[pid])}</td>`).join('');
-    return `<tr><td>${escapeHtml(r.empName)} <span class="muted" style="font-size:10px;">(${escapeHtml(r.empCode)})</span></td>${cells}<td><strong>${fmtKg(r.totalKg)}</strong></td><td>${formatNumber(r.baseAmount)}</td><td style="color:${r.mealBonus>0?'var(--amber)':'inherit'}">${r.mealBonus>0?formatNumber(r.mealBonus):''}</td><td><strong>${formatNumber(r.grandTotal)}</strong></td><td><strong>${formatNumber(r.balance)}</strong></td></tr>`;
+    return `<tr><td>${escapeHtml(r.empName)} <span class="muted" style="font-size:10px;">(${escapeHtml(r.empCode)})</span></td>${cells}<td><strong>${fmtKg(r.totalKg)}</strong></td><td>${formatNumber(r.baseAmount)}</td><td style="color:${r.mealBonus>0?'var(--amber)':'inherit'}">${r.mealBonus>0?formatNumber(r.mealBonus):''}</td><td><strong>${formatNumber(r.grandTotal)}</strong></td></tr>`;
   }).join('');
   // Dòng tổng cộng theo cột
   const totalKgAll = rows.reduce((s,r)=>s+r.totalKg,0);
@@ -4036,9 +4092,9 @@ function renderPivotTable(dateKey){
   const totalCells = totalPerProduct.map(v=>`<td>${fmtKg(v)}</td>`).join('');
   wrap.innerHTML = `
     <table class="pivot-table">
-      <thead><tr><th>Nhân viên</th>${prodHeaders}<th>Tổng kg</th><th>Tổng tiền</th><th>🍚 Tiền cơm</th><th>Tổng cộng</th><th>Còn phải trả</th></tr></thead>
+      <thead><tr><th>Nhân viên</th>${prodHeaders}<th>Tổng kg</th><th>Tổng tiền</th><th>🍚 Tiền cơm</th><th>Tổng cộng</th></tr></thead>
       <tbody>${bodyRows}
-        <tr class="total-row"><td>TỔNG CỘNG</td>${totalCells}<td>${fmtKg(totalKgAll)}</td><td>${formatNumber(totalBaseAll)}</td><td>${formatNumber(totalMealAll)}</td><td>${formatNumber(totalGrandAll)}</td><td></td></tr>
+        <tr class="total-row"><td>TỔNG CỘNG</td>${totalCells}<td>${fmtKg(totalKgAll)}</td><td>${formatNumber(totalBaseAll)}</td><td>${formatNumber(totalMealAll)}</td><td>${formatNumber(totalGrandAll)}</td></tr>
       </tbody>
     </table>
   `;
@@ -4049,13 +4105,13 @@ function exportPivotExcel(){
   const { orderedProdIds, rows } = buildPivotData(dateKey);
   if(rows.length===0){ alert("Không có dữ liệu để xuất"); return; }
   const prodNames = orderedProdIds.map(pid=>{ const p = products.find(x=>x.id===pid); return p?p.name:''; });
-  const header = ["Mã NV", "Nhân viên", ...prodNames, "Tổng kg", "Tổng tiền", "Tiền cơm", "Tổng cộng", "Còn phải trả"];
+  const header = ["Mã NV", "Nhân viên", ...prodNames, "Tổng kg", "Tổng tiền", "Tiền cơm", "Tổng cộng"];
   const aoa = [header];
   rows.forEach(r=>{
-    const line = [r.empCode, r.empName, ...orderedProdIds.map(pid=> r.cellsByProduct[pid] || 0), r.totalKg, r.baseAmount, r.mealBonus, r.grandTotal, r.balance];
+    const line = [r.empCode, r.empName, ...orderedProdIds.map(pid=> r.cellsByProduct[pid] || 0), r.totalKg, r.baseAmount, r.mealBonus, r.grandTotal];
     aoa.push(line);
   });
-  const totalRow = ["", "TỔNG CỘNG", ...orderedProdIds.map(pid=> rows.reduce((s,r)=>s+(r.cellsByProduct[pid]||0),0)), rows.reduce((s,r)=>s+r.totalKg,0), rows.reduce((s,r)=>s+r.baseAmount,0), rows.reduce((s,r)=>s+r.mealBonus,0), rows.reduce((s,r)=>s+r.grandTotal,0), ""];
+  const totalRow = ["", "TỔNG CỘNG", ...orderedProdIds.map(pid=> rows.reduce((s,r)=>s+(r.cellsByProduct[pid]||0),0)), rows.reduce((s,r)=>s+r.totalKg,0), rows.reduce((s,r)=>s+r.baseAmount,0), rows.reduce((s,r)=>s+r.mealBonus,0), rows.reduce((s,r)=>s+r.grandTotal,0)];
   aoa.push(totalRow);
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   const wb = XLSX.utils.book_new();
@@ -4092,11 +4148,11 @@ function printPivotA4(){
   const dateDisplay = new Date(dateKey+"T00:00:00").toLocaleDateString("vi-VN",{weekday:"long", day:"2-digit", month:"2-digit", year:"numeric"});
   document.getElementById('printArea').innerHTML = `
     <div class="report-print-page">
-      ${reportPrintHeader("BẢNG TỔNG HỢP CÂN THEO NGÀY", `Ngày: ${dateDisplay}`)}
+      ${reportPrintHeader("BẢNG TỔNG HỢP CHI TIẾT CÂN THEO NGÀY", `Ngày: ${dateDisplay}`)}
       <table class="report-print-table">
-        <thead><tr><th>Nhân viên</th>${prodHeaders}<th>Tổng kg</th><th>Tổng tiền</th><th>Tiền cơm</th><th>Tổng cộng</th><th>Còn phải trả</th></tr></thead>
+        <thead><tr><th>Nhân viên</th>${prodHeaders}<th>Tổng kg</th><th>Tổng tiền</th><th>Tiền cơm</th><th>Tổng cộng</th></tr></thead>
         <tbody>${bodyRows}
-          <tr class="total-row"><td>TỔNG CỘNG</td>${totalCells}<td>${fmtKg(totalKgAll)}</td><td>${formatNumber(totalBaseAll)}</td><td>${formatNumber(totalMealAll)}</td><td>${formatNumber(totalGrandAll)}</td><td></td></tr>
+          <tr class="total-row"><td>TỔNG CỘNG</td>${totalCells}<td>${fmtKg(totalKgAll)}</td><td>${formatNumber(totalBaseAll)}</td><td>${formatNumber(totalMealAll)}</td><td>${formatNumber(totalGrandAll)}</td></tr>
         </tbody>
       </table>
       <div class="report-print-footer">
