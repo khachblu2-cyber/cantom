@@ -16,6 +16,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-check-compat.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
   :root{
@@ -403,7 +404,7 @@
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.9.3</span>
+      <span class="ver">V1.10.5</span>
     </div>
   </div>
   <div class="tabs-row">
@@ -619,6 +620,7 @@
 
     <!-- PHIẾU CHI -->
     <div id="paySection" class="hidden">
+
       <div class="card" style="border-color:#C9DDF5;">
         <div class="card-title">📷 Quét mã vạch nhân viên</div>
         <input type="text" id="payBarcodeInput" placeholder="Đưa con trỏ vào đây rồi quét thẻ…" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();handlePayBarcodeScan();}">
@@ -818,6 +820,26 @@
 
     <!-- DỮ LIỆU -->
     <div id="cfgDataSection" class="hidden">
+            <div class="card">
+        <div class="card-title">🧹 Dọn nhân viên chưa dùng</div>
+        <div class="muted" style="font-size:12.5px;line-height:1.7;margin-bottom:10px;">
+          Tìm các nhân viên <b>chưa có tên</b> và <b>chưa từng phát sinh dữ liệu</b>, để xoá bớt cho hệ thống nhẹ.
+          Bấm nút chỉ để tìm và xem, chưa xoá gì.
+        </div>
+        <div style="background:#F7F9FC;border-radius:9px;padding:11px 13px;font-size:12.5px;line-height:1.9;margin-bottom:11px;">
+          Sẽ xoá nếu thoả <b>cả bốn</b> điều kiện:<br>
+          ① Tên để trống, là "-", hoặc chỉ có dấu gạch<br>
+          ② Chưa từng có phiếu cân nào<br>
+          ③ Chưa từng có phiếu chi nào<br>
+          ④ Chưa từng có số dư đầu kỳ hay tiền cơm
+        </div>
+        <div style="background:#FDF1EF;border:1px solid #F0C9C2;border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.6;color:#8E2018;margin-bottom:11px;">
+          <b>Sao lưu trước khi chạy.</b> Và nên đóng app trên các máy khác, chỉ để một máy làm việc này.
+        </div>
+        <button class="btn btn-primary btn-block" onclick="quetNhanVienChuaDung()">🔍 Quét tìm nhân viên chưa dùng</button>
+        <div id="donNvWrap" style="margin-top:12px;"></div>
+      </div>
+
       <div class="card">
         <div class="card-title">💾 Sao lưu dữ liệu</div>
         <div class="muted" style="font-size:12.5px;margin-bottom:10px;">Tải toàn bộ dữ liệu (nhân viên, mã hàng, phiếu cân, công nợ...) về máy thành 1 file.</div>
@@ -1016,6 +1038,11 @@ window.firebaseConfig = {
   messagingSenderId: "588993717848",
   appId: "1:588993717848:web:d8ea39af3d940d53950c2d",
 };
+
+// Khoá trang web reCAPTCHA Enterprise cho App Check.
+// Đây là khoá CÔNG KHAI, nằm sẵn trong mã nguồn trang — lộ cũng không sao.
+// Để trống chuỗi này là tắt App Check.
+window.APPCHECK_SITE_KEY = "6LexjnMtAAAAAGDjVlIge-xnBmOFRUqIxEap6hxl";
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 function todayKey(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -1566,6 +1593,151 @@ function tryPinUnlock(){
 }
 
 // ===== DỮ LIỆU: SAO LƯU / PHỤC HỒI / XOÁ =====
+// ===== DỌN NHÂN VIÊN CHƯA DÙNG =====
+let dsChoXoa = [];
+// Tên coi như "chưa có": trống, chỉ dấu gạch, chấm, khoảng trắng
+function tenTrong(ten){
+  const t = (ten || '').trim();
+  if(!t) return true;
+  return /^[-–—._\s]+$/.test(t);
+}
+function quetNhanVienChuaDung(){
+  if(!requirePerm('catalogDelete')) return;
+  const wrap = document.getElementById('donNvWrap');
+  wrap.innerHTML = '<div class="muted" style="font-size:12.5px;">Đang quét…</div>';
+
+  // Dựng bảng tra một lượt — không quét lại toàn bộ dữ liệu cho từng người
+  const coCan = new Set(weighings.map(w=>w.employeeId));
+  const coChi = new Set(payments.map(p=>p.employeeId));
+  const coDau = new Set(openingBalances.map(o=>o.employeeId));
+  const coCom = new Set(overtimeDays.map(o=>o.employeeId));
+
+  const xoa = [], giu = [];
+  employees.forEach(e=>{
+    if(!tenTrong(e.name)) return;                  // có tên thật -> bỏ qua hẳn
+    const lyDo = [];
+    if(coCan.has(e.id)) lyDo.push('có phiếu cân');
+    if(coChi.has(e.id)) lyDo.push('có phiếu chi');
+    if(coDau.has(e.id)) lyDo.push('có số dư đầu kỳ');
+    if(coCom.has(e.id)) lyDo.push('có tiền cơm');
+    if(lyDo.length) giu.push({ e, lyDo: lyDo.join(', ') });
+    else xoa.push(e);
+  });
+  dsChoXoa = xoa;
+
+  if(xoa.length === 0 && giu.length === 0){
+    wrap.innerHTML = '<div class="empty-state">✅ Không có nhân viên nào chưa dùng — danh sách đã sạch</div>';
+    return;
+  }
+
+  const conLai = employees.length - xoa.length;
+  const xemTruoc = xoa.slice(0,6).map(e=>({e, lyDo:null}))
+    .concat(giu.slice(0,4).map(g=>({e:g.e, lyDo:g.lyDo})));
+
+  wrap.innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:130px;background:#FDF1EF;border:1px solid #F0C9C2;border-radius:10px;padding:11px 13px;">
+        <div class="font-mono" style="font-size:23px;font-weight:700;color:#8E2018;line-height:1.1;">${formatNumber(xoa.length)}</div>
+        <div class="muted" style="font-size:11.5px;margin-top:3px;line-height:1.4;">sẽ xoá<br>chưa có tên, chưa có dữ liệu</div>
+      </div>
+      <div style="flex:1;min-width:130px;background:#EAF6EE;border:1px solid #BFE3CD;border-radius:10px;padding:11px 13px;">
+        <div class="font-mono" style="font-size:23px;font-weight:700;color:#1E5E3E;line-height:1.1;">${formatNumber(giu.length)}</div>
+        <div class="muted" style="font-size:11.5px;margin-top:3px;line-height:1.4;">giữ lại<br>đã phát sinh dữ liệu</div>
+      </div>
+    </div>
+    <div style="background:#EAF6EE;border:1px solid #BFE3CD;border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.6;color:#1E5E3E;margin-bottom:12px;">
+      Sau khi xoá, danh sách còn <b>${formatNumber(conLai)}</b> nhân viên.
+      Mỗi lần tải đầy bớt <b>${formatNumber(xoa.length)}</b> lượt đọc.
+    </div>
+    ${xemTruoc.length ? `
+      <div class="card-title">Xem trước</div>
+      <div class="emp-table-scroll"><table class="emp-table">
+        <thead><tr><th>Mã</th><th>Tên</th><th>Ghi chú</th></tr></thead>
+        <tbody>${xemTruoc.map(x=>`
+          <tr${x.lyDo?' style="background:#EAF6EE;"':''}>
+            <td class="font-mono">${escapeHtml(x.e.code||'')}</td>
+            <td>${escapeHtml((x.e.name||'').trim() || '(trống)')}</td>
+            <td>${x.lyDo
+              ? escapeHtml(x.lyDo) + ' <span style="display:inline-block;font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:5px;background:#1E5E3E;color:#fff;">GIỮ LẠI</span>'
+              : '<span class="muted">chưa có dữ liệu</span>'}</td>
+          </tr>`).join('')}</tbody>
+      </table></div>
+      <div class="muted" style="font-size:11.5px;margin:8px 0 12px;">
+        Dòng nền xanh là dòng được giữ lại.${xoa.length>6?' … và '+formatNumber(xoa.length-6)+' dòng nữa sẽ bị xoá.':''}
+      </div>` : ''}
+    ${xoa.length ? `<button class="btn btn-block" style="background:#8E2018;color:#fff;border-color:#8E2018;"
+        onclick="xacNhanDonNhanVien()">🗑 Xoá ${formatNumber(xoa.length)} nhân viên chưa dùng</button>`
+      : '<div class="empty-state">Không có dòng nào đủ điều kiện xoá</div>'}`;
+}
+function xacNhanDonNhanVien(){
+  if(!dsChoXoa.length) return;
+  const wrap = document.getElementById('donNvWrap');
+  wrap.innerHTML = `
+    <div style="background:#FDF1EF;border:1px solid #F0C9C2;border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.6;color:#8E2018;margin-bottom:12px;">
+      <b>Sắp xoá vĩnh viễn ${formatNumber(dsChoXoa.length)} nhân viên khỏi server.</b><br>
+      Thao tác này không hoàn tác được trong app. Nếu cần khôi phục, phải dùng file sao lưu .json.
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" style="flex:1;background:#8E2018;color:#fff;border-color:#8E2018;" onclick="chayDonNhanVien()">Tôi đã sao lưu — Xoá ngay</button>
+      <button class="btn" style="flex:1;" onclick="quetNhanVienChuaDung()">Huỷ</button>
+    </div>`;
+}
+async function chayDonNhanVien(){
+  const ds = dsChoXoa.slice();
+  if(!ds.length) return;
+  const wrap = document.getElementById('donNvWrap');
+  const ids = new Set(ds.map(e=>e.id));
+
+  // Xoá khỏi máy trước để giao diện phản hồi ngay
+  employees = employees.filter(e=>!ids.has(e.id));
+  saveAll();
+  renderCatalog();
+
+  let daXoa = 0;
+  const ve = ()=>{
+    const pct = Math.round(daXoa/ds.length*100);
+    wrap.innerHTML = `
+      <div class="card-title">🧹 Đang xoá…</div>
+      <div style="height:9px;background:#E4E9F0;border-radius:5px;overflow:hidden;margin:10px 0 6px;">
+        <div style="height:100%;background:var(--blue);width:${pct}%;"></div>
+      </div>
+      <div style="font-size:13px;">Đã xoá <b>${formatNumber(daXoa)}</b> / ${formatNumber(ds.length)}</div>
+      <div class="muted" style="font-size:11.5px;margin-top:8px;">Đừng đóng trình duyệt cho tới khi xong.</div>`;
+  };
+  ve();
+
+  let loi = 0;
+  try{
+    for(let i=0; i<ds.length; i+=400){
+      const lo = ds.slice(i, i+400);
+      if(fsReady && fsDb){
+        const batch = fsDb.batch();
+        lo.forEach(e=> batch.delete(fsDb.collection('employees').doc(String(e.id))) );
+        try{ await batch.commit(); }
+        catch(err){ loi += lo.length; console.error('Không xoá được lô nhân viên:', err && (err.code||err.message)); }
+      }
+      daXoa += lo.length;
+      ve();
+    }
+  }catch(e){ console.error('Lỗi khi dọn nhân viên', e); }
+
+  lastSynced.employees = deepCopy(employees);
+  logActivity('Dọn nhân viên chưa dùng', 'Đã xoá ' + ds.length + ' nhân viên');
+  dsChoXoa = [];
+
+  wrap.innerHTML = `
+    <div style="background:#EAF6EE;border:1px solid #BFE3CD;border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.6;color:#1E5E3E;">
+      <b>Đã xoá ${formatNumber(ds.length)} nhân viên chưa dùng.</b><br>
+      Danh sách còn <b>${formatNumber(employees.length)}</b> nhân viên.
+      ${loi ? '<br><b style="color:#8E2018;">Có ' + formatNumber(loi) + ' bản ghi server chưa nhận — xem thanh trạng thái.</b>' : ''}
+      <div style="margin-top:8px;">Đã ghi vào Lịch sử truy xuất.</div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:12px;line-height:1.7;">
+      <b>Việc tiếp theo:</b> mở lại app trên các máy khác, kiểm tra số nhân viên cũng hiện
+      ${formatNumber(employees.length)} là đồng bộ đúng.
+    </div>`;
+}
+
 function fullBackupExport(){
   const payload = { employees, products, weighings, openingBalances, payments, overtimeDays, companyInfo, appOptions, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -2867,6 +3039,52 @@ function tongTienCong(locPhieu){
   return Object.keys(theoNgay).reduce((s,dk)=>s+theoNgay[dk], 0);
 }
 
+// ===== BẢNG TRA CỨU DÙNG CHUNG =====
+// Quét toàn bộ phiếu cân / phiếu chi / số dư ĐÚNG MỘT LƯỢT rồi dựng bảng tra.
+// Trước đây mỗi nhân viên lại quét lại toàn bộ dữ liệu -> 3.865 lần quét, rất chậm.
+function dungBangTraCuu(){
+  const ngayTangCa = new Set(overtimeDays.map(o=>o.employeeId + '|' + o.dateKey));
+
+  // { employeeId: { dateKey: tiền công ĐÃ làm tròn } }
+  const thoTheoNgay = {};
+  const cong = {};
+  weighings.forEach(w=>{
+    if(!cong[w.employeeId]) cong[w.employeeId] = {};
+    cong[w.employeeId][w.dateKey] = (cong[w.employeeId][w.dateKey] || 0) + w.amount;
+  });
+  Object.keys(cong).forEach(eid=>{
+    thoTheoNgay[eid] = {};
+    Object.keys(cong[eid]).forEach(dk=>{
+      const base = cong[eid][dk];
+      const bonus = ngayTangCa.has(eid + '|' + dk) ? Math.round(base * 0.1) : 0;
+      thoTheoNgay[eid][dk] = tronNghin(base + bonus);
+    });
+  });
+
+  const chiTheoNgay = {};
+  payments.forEach(p=>{
+    if(!chiTheoNgay[p.employeeId]) chiTheoNgay[p.employeeId] = {};
+    chiTheoNgay[p.employeeId][p.dateKey] = (chiTheoNgay[p.employeeId][p.dateKey] || 0) + p.amount;
+  });
+
+  const dauKy = {};
+  openingBalances.forEach(o=>{ dauKy[o.employeeId] = (dauKy[o.employeeId] || 0) + o.amount; });
+
+  return { thoTheoNgay, chiTheoNgay, dauKy };
+}
+// Cộng các ngày thoả điều kiện trong một bảng tra
+function congTheoNgay(bang, empId, tuNgay, denNgay){
+  const m = bang[empId];
+  if(!m) return 0;
+  let t = 0;
+  for(const dk in m){
+    if(tuNgay && dk < tuNgay) continue;
+    if(denNgay && dk > denNgay) continue;
+    t += m[dk];
+  }
+  return t;
+}
+
 function mealBonusForDay(employeeId, dateKey){
   if(!isOvertimeDay(employeeId, dateKey)) return 0;
   return Math.round(dayEarnedRaw(employeeId, dateKey) * 0.1);
@@ -2968,6 +3186,10 @@ function checkWeighAllowed(){
   return { ok:true, flags };
 }
 
+// Chặn một lần bấm sinh ra hai phiếu.
+// Chrome trên MacBook có thể phát sinh hai sự kiện cho một thao tác,
+// cả khi bấm nút lẫn khi nhấn Enter. Safari không bị.
+let lanCanCuoi = { dauVet:'', luc:0 };
 function addWeighing(){
   const dateKey = document.getElementById('weighDate').value || todayKey();
   const kg = Number(document.getElementById('wKgBig').value);
@@ -2976,6 +3198,18 @@ function addWeighing(){
   if(!kg || kg<=0){ alert("Nhập số kg hợp lệ"); return; }
   const gate = checkWeighAllowed();
   if(!gate.ok){ alert(gate.msg); return; }
+  // Cùng nhân viên + cùng mã hàng + cùng số kg trong vòng 0,6 giây -> bỏ qua lần sau.
+  // Không cản trở cân thật: không ai cân xong rồi trong 0,6 giây lại cân đúng số kg đó.
+  const dauVetCan = selectedEmployeeId + '|' + selectedProductId + '|' + kg + '|' + dateKey;
+  if(dauVetCan === lanCanCuoi.dauVet && (Date.now() - lanCanCuoi.luc) < 600){
+    console.warn('Bỏ qua lần bấm NHẬP lặp lại trong 0,6 giây');
+    document.getElementById('wKgBig').value='';
+    updateWeighPricePreview();
+    document.getElementById('wKgBig').focus();
+    return;
+  }
+  lanCanCuoi = { dauVet: dauVetCan, luc: Date.now() };
+
   const p = products.find(x=>x.id===selectedProductId);
   const amount = kg * p.unitPrice;
   const emp = employees.find(x=>x.id===selectedEmployeeId);
@@ -3600,7 +3834,15 @@ function printBill80(emp, type, amount, checkedDays){
   window.print();
 }
 
+let dauVetDsNV = '';
 function populateDebtSelects(){
+  // 3.865 dòng chọn — chỉ dựng lại khi danh sách nhân viên thực sự đổi
+  const dauVet = employees.length + '|' + (employees[0]?employees[0].id:'') + '|' + (employees[employees.length-1]?employees[employees.length-1].id:'');
+  if(dauVet === dauVetDsNV && document.getElementById('openEmployee').options.length > 1){
+    if(document.getElementById('payableDaysWrap')) renderPayableDays();
+    return;
+  }
+  dauVetDsNV = dauVet;
   const opts = employees.length ? employees.map(e=>`<option value="${e.id}">${escapeHtml(e.code)} - ${escapeHtml(e.name)}</option>`).join('') : `<option value="">-- Chưa có nhân viên --</option>`;
   document.getElementById('openEmployee').innerHTML = opts;
   if(document.getElementById('detailEmployee')) populateDetailEmployeeSelect();
@@ -3708,13 +3950,16 @@ function clearDebtReportFilter(){
 function buildDebtReportRows(){
   const fromKey = document.getElementById('reportFrom')?.value;
   const toKey = document.getElementById('reportTo')?.value;
+  const B = dungBangTraCuu();
+  const truocKy = fromKey ? prevDateKey(fromKey) : null;
   return employees.map(e=>{
-    const dauKy = fromKey ? balanceAsOf(e.id, prevDateKey(fromKey)) : totalOpeningBalance(e.id);
-    const no = tongTienCong(w => w.employeeId===e.id && (!fromKey||w.dateKey>=fromKey) && (!toKey||w.dateKey<=toKey));
-    const traInPeriod = payments.filter(p=> p.employeeId===e.id && (!fromKey||p.dateKey>=fromKey) && (!toKey||p.dateKey<=toKey));
-    const tra = traInPeriod.reduce((s,p)=>s+p.amount,0);
-    const con = dauKy + no - tra;
-    return { code: e.code, name: e.name, dauKy, no, tra, con };
+    const soDuDau = B.dauKy[e.id] || 0;
+    const dauKy = truocKy
+      ? soDuDau + congTheoNgay(B.thoTheoNgay, e.id, null, truocKy) - congTheoNgay(B.chiTheoNgay, e.id, null, truocKy)
+      : soDuDau;
+    const no  = congTheoNgay(B.thoTheoNgay, e.id, fromKey, toKey);
+    const tra = congTheoNgay(B.chiTheoNgay, e.id, fromKey, toKey);
+    return { code: e.code, name: e.name, dauKy, no, tra, con: dauKy + no - tra };
   });
 }
 let debtReportShowAll = false;
@@ -3884,8 +4129,13 @@ function balanceAsOf(employeeId, toKey){
 function buildDebtBalanceData(){
   const fromKey = document.getElementById('balFrom').value || todayKey();
   const toKey = document.getElementById('balTo').value || todayKey();
-  const rows = employees.map(e=>({ code: e.code, name: e.name, balance: balanceAsOf(e.id, toKey) }))
-    .filter(r=>r.balance!==0);
+  const B = dungBangTraCuu();
+  const rows = employees.map(e=>({
+      code: e.code, name: e.name,
+      balance: (B.dauKy[e.id] || 0)
+               + congTheoNgay(B.thoTheoNgay, e.id, null, toKey)
+               - congTheoNgay(B.chiTheoNgay, e.id, null, toKey)
+    })).filter(r=>r.balance!==0);
   return { fromKey, toKey, rows };
 }
 function renderDebtBalance(){
@@ -4430,6 +4680,34 @@ function attachRealtimeListeners(){
   firestoreListeners.push(settingsUnsub);
 }
 
+// ===== APP CHECK =====
+// Xác nhận với Google rằng yêu cầu phát ra từ đúng trang web của mình.
+// Giai đoạn này Firebase CHƯA bắt buộc — bật cưỡng chế trong Console mới có hiệu lực.
+let appCheckDaBat = false;
+function batAppCheck(){
+  if(appCheckDaBat) return;
+  const key = window.APPCHECK_SITE_KEY || '';
+  if(!key || key.indexOf('DÁN_') === 0){ console.warn('App Check: chưa có khoá trang web — bỏ qua'); return; }
+  if(!firebase.appCheck){ console.warn('App Check: chưa nạp được thư viện — bỏ qua'); return; }
+  try{
+    // Mở file trực tiếp trên máy thì dùng chế độ gỡ lỗi,
+    // console sẽ in ra một mã để đăng ký trong Firebase Console.
+    if(location.protocol === 'file:' || location.hostname === 'localhost'){
+      self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+    }
+    // Khoá tạo từ reCAPTCHA admin nay luôn gắn với dự án Google Cloud,
+    // nên là loại Enterprise — phải dùng đúng lớp này, không truyền chuỗi như v3 thường.
+    firebase.appCheck().activate(
+      new firebase.appCheck.ReCaptchaEnterpriseProvider(key),
+      true   // tự động gia hạn giấy thông hành
+    );
+    appCheckDaBat = true;
+    console.log('App Check: đã bật');
+  }catch(e){
+    console.warn('App Check: không bật được —', (e && (e.code || e.message)) || e);
+  }
+}
+
 async function cloudInit(){
   if(!window.firebaseConfig){ updateCloudStatus("off"); finalizeUserGate(); return; }
   if(cloudInitRunning) return;
@@ -4437,6 +4715,7 @@ async function cloudInit(){
   updateCloudStatus("connecting");
   try{
     if(!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
+    batAppCheck();
     if(!fsDb){
       fsDb = firebase.firestore();
       // Bộ nhớ đệm: lần mở sau chỉ tải phần THAY ĐỔI thay vì cả 4.100 bản ghi.
