@@ -350,22 +350,22 @@
   .id-card-line{font-size:2.2mm;color:#555;margin-top:0.8mm;line-height:1.3;}
   #idcard-barcode,#previewBarcode{display:block;width:100%;height:9mm;padding:0 4mm 2mm;flex-shrink:0;}
   /* ===== PHIEU CHI - kieu bill 80mm dat trong trang A4 (giong phan mem cu) ===== */
-  .bill80-page{width:72mm;box-sizing:border-box;padding:2mm 1.5mm 4mm;margin:0;font-family:'Times New Roman',Times,serif;font-size:3.1mm;line-height:1.35;color:#000;background:#fff;}
+  .bill80-page{width:72mm;box-sizing:border-box;padding:2mm 1.5mm 4mm;margin:0;font-family:'Times New Roman',Times,serif;font-size:4.5mm;line-height:1.35;color:#000;background:#fff;}
   .bill80-page .b-center{text-align:center;}
   .bill80-page .b-bold{font-weight:700;}
   .bill80-page .b-r{text-align:right;}
-  .bill80-page .b-co{font-size:4.4mm;font-weight:700;text-align:center;line-height:1.2;}
-  .bill80-page .b-sub{font-size:3.0mm;text-align:center;margin-top:1.6mm;}
-  .bill80-page .b-title{font-size:5.0mm;font-weight:700;text-align:center;margin:2.4mm 0 1.6mm;}
-  .bill80-page .b-info{font-size:3.1mm;margin-bottom:0.6mm;}
-  .bill80-page table.b-tbl{width:100%;border-collapse:collapse;font-size:3.1mm;margin-top:1.2mm;}
-  .bill80-page table.b-tbl th,.bill80-page table.b-tbl td{border:0.3mm solid #000;padding:0.7mm 1mm;}
+  .bill80-page .b-co{font-size:5.6mm;font-weight:700;text-align:center;line-height:1.2;}
+  .bill80-page .b-sub{font-size:4.0mm;text-align:center;margin-top:1.6mm;}
+  .bill80-page .b-title{font-size:6.6mm;font-weight:700;text-align:center;margin:2.4mm 0 1.6mm;}
+  .bill80-page .b-info{font-size:4.5mm;margin-bottom:1.1mm;}
+  .bill80-page table.b-tbl{width:100%;border-collapse:collapse;font-size:4.6mm;margin-top:1.2mm;}
+  .bill80-page table.b-tbl th,.bill80-page table.b-tbl td{border:0.3mm solid #000;padding:1.3mm 0.8mm;}
   .bill80-page table.b-tbl th{font-weight:700;text-align:center;}
-  .bill80-page table.b-tbl td.b-stt{text-align:center;width:9mm;}
+  .bill80-page table.b-tbl td.b-stt{text-align:center;width:7mm;}
   .bill80-page table.b-tbl td.b-date{text-align:center;}
   .bill80-page table.b-tbl td.b-amt{text-align:right;}
-  .bill80-page .b-words{font-size:3.1mm;margin-top:1mm;}
-  .bill80-page .b-sign{text-align:center;font-size:3.1mm;margin-top:9mm;}
+  .bill80-page .b-words{font-size:4.5mm;margin-top:1.6mm;}
+  .bill80-page .b-sign{text-align:center;font-size:4.5mm;margin-top:9mm;}
   .receipt-page{background:#fff;padding:20px;border:1px solid #ccc;border-radius:8px;margin-bottom:16px;font-family:'Inter',sans-serif;}
   .receipt-header{text-align:center;margin-bottom:14px;border-bottom:2px solid var(--ink);padding-bottom:10px;}
   .receipt-header h2{margin:0;font-size:18px;}
@@ -404,7 +404,7 @@
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.10.5</span>
+      <span class="ver">V1.10.7</span>
     </div>
   </div>
   <div class="tabs-row">
@@ -4300,24 +4300,33 @@ function tronNghin(v){ return Math.round((Number(v)||0)/1000)*1000; }
 
 // ===== BẢNG TỔNG HỢP CÂN THEO NGÀY (dạng lưới, mỗi cột 1 mã hàng) =====
 function buildPivotData(dateKey){
-  const dayWeighings = weighings.filter(w=>w.dateKey===dateKey);
-  const empIds = [...new Set(dayWeighings.map(w=>w.employeeId))];
-  const prodIds = [...new Set(dayWeighings.map(w=>w.productId))];
-  // Sắp xếp cột mã hàng theo thứ tự trong danh mục
-  const orderedProdIds = products.map(p=>p.id).filter(id=>prodIds.includes(id));
-  const rows = empIds.map(empId=>{
-    const emp = employees.find(e=>e.id===empId);
-    const cellsByProduct = {};
-    let totalKg = 0;
-    orderedProdIds.forEach(pid=>{
-      const kg = dayWeighings.filter(w=>w.employeeId===empId && w.productId===pid).reduce((s,w)=>s+w.weightKg,0);
-      cellsByProduct[pid] = kg;
-      totalKg += kg;
-    });
-    const baseAmount = dayWeighings.filter(w=>w.employeeId===empId).reduce((s,w)=>s+w.amount,0);
-    const mealBonus = mealBonusForDay(empId, dateKey);
-    const grandTotal = tronNghin(baseAmount + mealBonus);   // làm tròn về hàng nghìn
-    return { empId, empCode: emp?emp.code:'', empName: emp?emp.name:'(đã xoá)', cellsByProduct, totalKg, baseAmount, mealBonus, grandTotal };
+  // Gom TOÀN BỘ phiếu trong ngày đúng MỘT LƯỢT.
+  // Trước đây mỗi nhân viên lại quét lại cả ngày cho từng mã hàng -> rất chậm.
+  const gom = {};        // employeeId -> { theoMa, totalKg, baseAmount }
+  const thuTuNV = [];    // giữ đúng thứ tự xuất hiện như trước
+  const coMa = new Set();
+  weighings.forEach(w=>{
+    if(w.dateKey !== dateKey) return;
+    coMa.add(w.productId);
+    let g = gom[w.employeeId];
+    if(!g){ g = gom[w.employeeId] = { theoMa:{}, totalKg:0, baseAmount:0 }; thuTuNV.push(w.employeeId); }
+    g.theoMa[w.productId] = (g.theoMa[w.productId] || 0) + w.weightKg;
+    g.totalKg    += w.weightKg;
+    g.baseAmount += w.amount;
+  });
+
+  const orderedProdIds = products.map(p=>p.id).filter(id=>coMa.has(id));
+  const empMap = new Map(employees.map(e=>[e.id, e]));
+  const ngayTangCa = new Set(overtimeDays.map(o=>o.employeeId + '|' + o.dateKey));
+
+  const rows = thuTuNV.map(empId=>{
+    const g = gom[empId];
+    const emp = empMap.get(empId);
+    const mealBonus = (g.baseAmount > 0 && ngayTangCa.has(empId + '|' + dateKey))
+      ? Math.round(g.baseAmount * 0.1) : 0;
+    return { empId, empCode: emp?emp.code:'', empName: emp?emp.name:'(đã xoá)',
+             cellsByProduct: g.theoMa, totalKg: g.totalKg, baseAmount: g.baseAmount,
+             mealBonus, grandTotal: tronNghin(g.baseAmount + mealBonus) };
   });
   return { orderedProdIds, rows };
 }
@@ -4417,23 +4426,34 @@ function printPivotA4(){
 function buildProductReportData(){
   const fromKey = document.getElementById('prodReportFrom').value || todayKey();
   const toKey = document.getElementById('prodReportTo').value || todayKey();
-  const inRange = weighings.filter(w=> w.dateKey>=fromKey && w.dateKey<=toKey);
-  const prodIds = [...new Set(inRange.map(w=>w.productId))];
-  const orderedProdIds = products.map(p=>p.id).filter(id=>prodIds.includes(id));
+  // Gom một lượt: vừa tổng theo mã hàng, vừa tổng theo cặp người-ngày để tính tiền cơm
+  const theoMa = {};      // productId -> { qty, amount }
+  const congNgay = {};    // employeeId|dateKey -> tổng tiền trong ngày
+  weighings.forEach(w=>{
+    if(w.dateKey < fromKey || w.dateKey > toKey) return;
+    let m = theoMa[w.productId];
+    if(!m) m = theoMa[w.productId] = { qty:0, amount:0 };
+    m.qty    += w.weightKg;
+    m.amount += w.amount;
+    const k = w.employeeId + '|' + w.dateKey;
+    congNgay[k] = (congNgay[k] || 0) + w.amount;
+  });
+
+  const prodMap = new Map(products.map(p=>[p.id, p]));
+  const orderedProdIds = products.map(p=>p.id).filter(id=>theoMa[id]);
   const rows = orderedProdIds.map(pid=>{
-    const p = products.find(x=>x.id===pid);
-    const rowsForProd = inRange.filter(w=>w.productId===pid);
-    const qty = rowsForProd.reduce((s,w)=>s+w.weightKg,0);
-    const amount = rowsForProd.reduce((s,w)=>s+w.amount,0);
+    const p = prodMap.get(pid);
+    const { qty, amount } = theoMa[pid];
     const unitPrice = qty>0 ? Math.round(amount/qty) : (p?p.unitPrice:0);
     return { code: p?p.code:'', name: p?p.name:'(đã xoá)', qty, unitPrice, amount };
   });
-  // Cộng thêm 1 dòng Tiền cơm tăng ca (không thuộc mã hàng nào) nếu có phát sinh trong khoảng
-  const mealPairs = [...new Set(inRange.map(w=>w.employeeId+'|'+w.dateKey))];
-  const mealTotal = mealPairs.reduce((s,pair)=>{
-    const [empId, dk] = pair.split('|');
-    return s + mealBonusForDay(empId, dk);
-  }, 0);
+
+  // Tiền cơm tăng ca: dùng bảng đã gom, không quét lại phiếu cho từng cặp
+  const ngayTangCa = new Set(overtimeDays.map(o=>o.employeeId + '|' + o.dateKey));
+  let mealTotal = 0;
+  Object.keys(congNgay).forEach(k=>{
+    if(ngayTangCa.has(k)) mealTotal += Math.round(congNgay[k] * 0.1);
+  });
   if(mealTotal > 0){
     rows.push({ code: '', name: 'Tiền cơm tăng ca (+10%)', qty: '', unitPrice: '', amount: mealTotal, isMeal:true });
   }
