@@ -404,7 +404,7 @@
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.10.7</span>
+      <span class="ver">V1.11.0</span>
     </div>
   </div>
   <div class="tabs-row">
@@ -596,6 +596,10 @@
 
     <!-- SỐ DƯ ĐẦU KỲ -->
     <div id="openSection">
+      <button class="btn btn-outline btn-block" onclick="moGonSoDuDauKy()" style="margin-bottom:12px;text-align:left;">
+        <span id="openToggleIcon">▸</span> Số dư đầu kỳ <span class="muted" style="font-weight:400;font-size:12px;">— ít dùng, bấm để mở</span>
+      </button>
+      <div id="openBody" class="hidden">
       <div class="card">
         <div class="card-title">Thêm số dư đầu kỳ</div>
         <div class="field">
@@ -631,6 +635,7 @@
         <div class="card-title">Bảng kê phiếu chi</div>
         <div id="payListWrap"></div>
       </div>
+      </div>
     </div>
 
     <!-- TỔNG HỢP CÔNG NỢ -->
@@ -658,6 +663,7 @@
         </div>
         <div class="field">
           <label>Nhân viên</label>
+          <input type="text" id="detailEmpSearch" placeholder="🔍 Gõ mã hoặc tên để lọc danh sách bên dưới…" oninput="populateDetailEmployeeSelect()" style="margin-bottom:7px;">
           <select id="detailEmployee" onchange="renderDebtDetail()"><option value="">-- Tất cả nhân viên --</option></select>
         </div>
       </div>
@@ -3741,7 +3747,12 @@ function confirmPaymentAndPrintBill(){
   const note = "Chi cho các ngày: " + checkedDays.map(d=>new Date(d.dateKey+"T00:00:00").toLocaleDateString("vi-VN")).join(", ");
   if(!can('pay')){ alert("Tài khoản của bạn không có quyền chi tiền"); return; }
   billPrintLockUntil = Date.now() + 2000;
-  const phieuChi = { id: uid(), employeeId, dateKey, type, amount, note, paidDates: checkedDays.map(d=>d.dateKey), createdAt: Date.now(),
+  const phieuChi = { id: uid(), employeeId, dateKey, type, amount, note,
+    paidDates: checkedDays.map(d=>d.dateKey),
+    // Lưu luôn số tiền TỪNG NGÀY để in lại về sau chính xác tuyệt đối,
+    // kể cả khi phiếu cân của những ngày đó bị sửa hay xoá.
+    chiTietNgay: checkedDays.map(d=>({ dateKey: d.dateKey, amount: d.amount })),
+    createdAt: Date.now(),
     byUserId: currentUser?currentUser.id:'', byUserName: currentUser?currentUser.name:'', deviceId: thisDeviceId() };
   payments.push(phieuChi);
   ghiNgay('payments', phieuChi);
@@ -3785,7 +3796,32 @@ function docSoThanhChu(n){
   return out.charAt(0).toUpperCase() + out.slice(1);
 }
 
-function printBill80(emp, type, amount, checkedDays){
+// In lại một phiếu chi đã lập — dùng khi hết giấy, kẹt giấy, hoặc in hỏng.
+function inLaiPhieuChi(id){
+  const p = payments.find(x=>x.id===id);
+  if(!p){ alert("Không tìm thấy phiếu chi này."); return; }
+  const emp = employees.find(e=>e.id===p.employeeId);
+  if(!emp){ alert("Nhân viên của phiếu này đã bị xoá khỏi danh mục."); return; }
+
+  let cacNgay;
+  if(Array.isArray(p.chiTietNgay) && p.chiTietNgay.length){
+    // Phiếu lập từ bản này trở đi: có sẵn số tiền từng ngày, in lại chính xác tuyệt đối
+    cacNgay = p.chiTietNgay;
+  }else{
+    // Phiếu cũ: chỉ lưu danh sách ngày, phải tính lại tiền từng ngày từ phiếu cân
+    cacNgay = (p.paidDates || []).map(dk=>({ dateKey: dk, amount: tienCongNgay(p.employeeId, dk) }));
+    const tinhLai = cacNgay.reduce((s,d)=>s+d.amount, 0);
+    if(tinhLai !== p.amount){
+      alert("Lưu ý: phiếu cân của những ngày này đã thay đổi sau khi lập phiếu.\n\n"
+        + "Tổng đã trả thật: " + formatMoney(p.amount) + "\n"
+        + "Tính lại theo dữ liệu hiện tại: " + formatMoney(tinhLai) + "\n\n"
+        + "Phiếu in ra sẽ ghi tổng đã trả thật.");
+    }
+  }
+  printBill80(emp, p.type, p.amount, cacNgay, true);
+}
+
+function printBill80(emp, type, amount, checkedDays, laInLai){
   const now = new Date();
   const pad = v => String(v).padStart(2,'0');
   const h24 = now.getHours();
@@ -3807,6 +3843,7 @@ function printBill80(emp, type, amount, checkedDays){
       <div class="b-info">Tên : ${escapeHtml(emp.name||'')}</div>
       <div class="b-info">Ngày : ${now.toLocaleDateString('vi-VN')}</div>
       <div class="b-info">Ngày in: ${printStamp}</div>
+      ${laInLai ? '<div class="b-center b-bold" style="margin:1.4mm 0;border:0.4mm solid #000;padding:1mm;">*** IN LẠI ***</div>' : ''}
       <table class="b-tbl">
         <tr><th style="width:9mm;">STT</th><th>Ngày tháng</th><th>Số tiền</th></tr>
         ${rows}
@@ -3913,6 +3950,7 @@ function renderPaymentList(){
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
           <div class="amount">${formatMoney(p.amount)}</div>
+          <button class="icon-del" title="In lại phiếu này" onclick="inLaiPhieuChi('${p.id}')">🖨</button>
           <button class="icon-del" onclick="deletePayment('${p.id}')">🗑</button>
         </div>
       </div>
@@ -3967,7 +4005,8 @@ function toggleDebtReportShowAll(){ debtReportShowAll = !debtReportShowAll; rend
 function renderDebtReport(){
   const wrap = document.getElementById('debtReportWrap');
   if(employees.length===0){ wrap.innerHTML = `<div class="empty-state">Chưa có nhân viên nào</div>`; return; }
-  const allRows = buildDebtReportRows();
+  const allRows = buildDebtReportRows()
+    .sort((a,b)=> String(a.code).localeCompare(String(b.code), 'vi', {numeric:true}));
   const hiddenCount = allRows.filter(r=>r.con===0).length;
   const rows = debtReportShowAll ? allRows : allRows.filter(r=>r.con!==0);
   const tongDauKy = rows.reduce((s,r)=>s+r.dauKy,0);
@@ -4027,11 +4066,36 @@ function exportDebtReportExcel(){
 }
 
 // ===== CHI TIẾT CÔNG NỢ THEO KỲ (Đầu kỳ / Tăng / Giảm / Cuối kỳ) =====
+function moGonSoDuDauKy(){
+  const body = document.getElementById('openBody');
+  const icon = document.getElementById('openToggleIcon');
+  const dangDong = body.classList.contains('hidden');
+  body.classList.toggle('hidden', !dangDong);
+  icon.textContent = dangDong ? '▾' : '▸';
+}
+
+// Bỏ dấu tiếng Việt để gõ không dấu vẫn tìm được: "thuy" ra cả Thủy lẫn Thúy
+function boDau(str){
+  return String(str||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();
+}
+
 function populateDetailEmployeeSelect(){
   const sel = document.getElementById('detailEmployee');
+  if(!sel) return;
   const current = sel.value;
-  sel.innerHTML = `<option value="">-- Tất cả nhân viên --</option>` + employees.map(e=>`<option value="${e.id}">${escapeHtml(e.code)} - ${escapeHtml(e.name)}</option>`).join('');
-  sel.value = current;
+  const q = boDau(((document.getElementById('detailEmpSearch')||{}).value || '').trim());
+  // Sắp theo mã nhân viên tăng dần, và lọc theo ô tìm nếu có gõ (gõ không dấu vẫn ra)
+  const ds = employees
+    .filter(e=> !q || boDau(e.code+' '+e.name).includes(q))
+    .sort((a,b)=> String(a.code).localeCompare(String(b.code), 'vi', {numeric:true}));
+  const nhan = q ? `-- ${ds.length} người khớp --` : '-- Tất cả nhân viên --';
+  sel.innerHTML = `<option value="">${nhan}</option>`
+    + ds.map(e=>`<option value="${e.id}">${escapeHtml(e.code)} - ${escapeHtml(e.name)}</option>`).join('');
+  // giữ lại người đang chọn nếu vẫn nằm trong danh sách đã lọc
+  if(current && ds.some(e=>e.id===current)) sel.value = current;
+  else if(current && !q) sel.value = current;
+  else { sel.value = ''; renderDebtDetail(); }
 }
 function dateKeysBetween(fromKey, toKey){
   const out = [];
