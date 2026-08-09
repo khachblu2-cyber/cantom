@@ -45,6 +45,7 @@
   .brand-user .ver{font-size:9.5px;color:#9FC2E8;}
   /* ===== HÀNG THAO TÁC TRÊN CÙNG ===== */
   /* Cảnh báo server từ chối ghi */
+  .ver-badge{color:#FFD98A;font-weight:700;font-size:10.5px;}
   .err-bar{display:none;background:#8E2018;color:#fff;padding:10px 13px;font-size:13px;line-height:1.5;}
   .err-bar.show{display:block;}
   .err-bar b{display:block;font-size:14px;margin-bottom:2px;}
@@ -399,12 +400,12 @@
   <div class="brand-row">
     <div class="brand">
       <div class="brand-title">⚖️ Cân Tôm</div>
-      <div class="brand-status">✓ Lưu trên máy · <span id="cloudStatus"></span></div>
+      <div class="brand-status"><span class="ver-badge">V1.11.2</span> · <span id="cloudStatus"></span></div>
     </div>
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
       <button onclick="switchUser()">Đổi</button>
-      <span class="ver">V1.11.0</span>
+      
     </div>
   </div>
   <div class="tabs-row">
@@ -422,6 +423,14 @@
       <button onclick="thuGuiLai()">Thử gửi lại</button>
       <button class="ghost" onclick="luuPhieuLoiRaFile()">Lưu ra file</button>
       <button class="ghost" onclick="anCanhBaoLoi()">Ẩn</button>
+    </div>
+  </div>
+  <div class="err-bar" id="ketBar">
+    <b id="ketBarTitle"></b>
+    <div class="why" id="ketBarWhy"></div>
+    <div class="acts">
+      <button onclick="thuGuiLaiKet()">Thử gửi lại</button>
+      <button class="ghost" onclick="xuatFileChiTiet()">Xuất file chi tiết</button>
     </div>
   </div>
   <!-- Hàng tìm kiếm dính theo, chỉ hiện ở tab Cân tôm -->
@@ -755,10 +764,10 @@
 
 <!-- ============ TAB: CÀI ĐẶT ============ -->
 <div id="configTab" class="hidden">
-  <div class="wrap app-header">
+  <div class="wrap-full app-header">
     <div class="app-title">⚙️ Cài đặt</div>
   </div>
-  <div class="wrap">
+  <div class="wrap-full">
     <div class="section-tab">
       <button class="active" id="cfgBtnCompany" onclick="setConfigSection('company')">Công ty</button>
       <button id="cfgBtnOptions" onclick="setConfigSection('options')">Tuỳ chọn</button>
@@ -844,6 +853,34 @@
         </div>
         <button class="btn btn-primary btn-block" onclick="quetNhanVienChuaDung()">🔍 Quét tìm nhân viên chưa dùng</button>
         <div id="donNvWrap" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="border-color:#C9DDF5;">
+        <div class="card-title" style="color:var(--blue-dk);">📄 File chi tiết phiếu cân</div>
+        <div class="muted" style="font-size:12.5px;line-height:1.7;margin-bottom:10px;">
+          Ghi lại phiếu cân trong ngày ra file Excel: Mã cân · Thời gian · Mã NV · Nhân viên · Mã hàng · KG · Người cân.
+        </div>
+        <div class="field"><label>Ngày cần xuất</label><input type="date" id="xuatFileNgay"></div>
+        <button class="btn btn-primary btn-block" onclick="xuatFileChiTiet(document.getElementById('xuatFileNgay').value)">📄 Xuất file Excel</button>
+        <hr style="border:none;border-top:1px solid var(--line);margin:13px 0;">
+        <div class="card-title" style="font-size:13px;">🔄 Tự lưu vào thư mục</div>
+        <div class="muted" style="font-size:12.5px;line-height:1.7;margin-bottom:9px;">
+          Chọn thư mục <b>một lần duy nhất</b>, sau đó app tự ghi đè file mỗi 2 phút, không cần bấm gì thêm.
+          Chỉ chạy trên Chrome/Edge máy tính.
+        </div>
+        <div id="tuLuuTrangThai" style="font-size:12.5px;margin-bottom:9px;">—</div>
+        <button class="btn btn-outline btn-block" onclick="chonThuMucLuu()">📁 Chọn thư mục tự lưu</button>
+      </div>
+
+      <div class="card" style="border-color:#C9DDF5;">
+        <div class="card-title" style="color:var(--blue-dk);">🔍 Đối chiếu sổ máy với server</div>
+        <div class="muted" style="font-size:12.5px;line-height:1.7;margin-bottom:10px;">
+          Sổ máy tự ghi mỗi phiếu vào kho riêng, server không đụng tới được. App tự đối chiếu ngầm mỗi 5 phút;
+          nút này để kiểm bất cứ lúc nào.
+        </div>
+        <div class="field"><label>Đối chiếu ngày</label><input type="date" id="doiChieuNgay"></div>
+        <button class="btn btn-primary btn-block" onclick="doiChieuTay()">🔍 Đối chiếu ngay</button>
+        <div id="doiChieuKetQua" style="margin-top:11px;"></div>
       </div>
 
       <div class="card">
@@ -1446,6 +1483,11 @@ function setConfigSection(s){
   document.getElementById('cfgOptionsSection').classList.toggle('hidden', s!=='options');
   document.getElementById('cfgSecuritySection').classList.toggle('hidden', s!=='security');
   document.getElementById('cfgDataSection').classList.toggle('hidden', s!=='data');
+  if(s==='data'){
+    const a = document.getElementById('xuatFileNgay');   if(a && !a.value) a.value = todayKey();
+    const b = document.getElementById('doiChieuNgay');   if(b && !b.value) b.value = todayKey();
+    veTrangThaiTuLuu();
+  }
   document.getElementById('cfgUsersSection').classList.toggle('hidden', s!=='users');
   document.getElementById('cfgLockSection').classList.toggle('hidden', s!=='lock');
   document.getElementById('cfgLogSection').classList.toggle('hidden', s!=='log');
@@ -3229,6 +3271,7 @@ function addWeighing(){
     flags: (gate.flags && gate.flags.length) ? gate.flags.join(', ') : ''
   };
   weighings.unshift(phieu);
+  soMayThem(phieu);                 // V1.11.1 — ghi vào sổ máy (gom 2 giây)
   ghiNgay('weighings', phieu);      // gửi Firebase ngay, không chờ
   saveAll();
   document.getElementById('wKgBig').value='';
@@ -3239,6 +3282,7 @@ function addWeighing(){
 function deleteWeighing(id){
   if(!requirePerm('weighDelete')) return;
   if(!confirm("Xoá phiếu cân này?")) return;
+  soMayXoa(id);
   weighings = weighings.filter(w=>w.id!==id);
   saveAll();
   renderWeighTab();
@@ -3580,6 +3624,7 @@ function deleteSingleWeigh(id){
   if(pendingDeleteKey !== key){ armPendingDelete(key); return; }
   pendingDeleteKey = null;
   weighings = weighings.filter(w=>w.id!==id);
+  soMayXoa(id);
   xoaNgay('weighings', id);
   saveAll();
   renderWeighTab();
@@ -3597,6 +3642,7 @@ function deleteWeighGroup(idsStr){
   if(pendingDeleteKey !== key){ armPendingDelete(key); return; }
   pendingDeleteKey = null;
   weighings = weighings.filter(w=>!ids.includes(w.id));
+  soMayXoa(ids);
   ids.forEach(i=>xoaNgay('weighings', i));
   saveAll();
   renderWeighTab();
@@ -4601,6 +4647,120 @@ function printProductReportA4(){
 }
 
 
+
+/* ==========================================================================
+   V1.11.1 — SỔ MÁY (localStorage riêng, Firestore không đụng tới)
+   --------------------------------------------------------------------------
+   Vì sao cần: khi server TỪ CHỐI (App Check 403, sai quy tắc, hết hạn mức),
+   Firestore huỷ các bản ghi đang chờ và cuộn bộ nhớ đệm về đúng trạng thái
+   server — phiếu biến mất sau F5. Sổ này nằm ở chỗ khác, không bị cuốn theo.
+   Chỉ ghi phần tối thiểu (~80 byte/phiếu) và tự dọn sau 3 ngày, nên không
+   lặp lại lỗi vỡ trần 5 MB của V1.6.0 (chép cả phiếu 263 byte, giữ mãi).
+   ========================================================================== */
+const SO_MAY_KEY  = 'cantom_so_may_v1';
+const SO_MAY_NGAY = 3;          // giữ 3 ngày rồi tự dọn
+let soMay = [];                 // [{i,e,p,k,t}] = id, mã NV, mã hàng, KG, giờ
+let soMayCho = [];              // phiếu mới, chờ gom 2 giây rồi ghi một lượt
+let soMayHenGio = null;
+let soMayHong = false;          // localStorage đầy hoặc bị chặn
+
+function soMayNap(){
+  try{
+    const raw = localStorage.getItem(SO_MAY_KEY);
+    soMay = raw ? JSON.parse(raw) : [];
+    if(!Array.isArray(soMay)) soMay = [];
+  }catch(e){ soMay = []; }
+  soMayDonCu();
+}
+
+// Ghi thêm một phiếu — chỉ đưa vào bộ đệm, 2 giây sau mới ghi xuống một lượt.
+function soMayThem(w){
+  if(!w || !w.id || soMayHong) return;
+  soMayCho.push({
+    i: String(w.id),
+    e: w.employeeCode || '',
+    p: w.productId || '',
+    k: Number(w.weightKg) || 0,
+    t: w.createdAt || Date.now(),
+    d: w.dateKey || todayKey()
+  });
+  if(soMayHenGio) return;
+  soMayHenGio = setTimeout(()=>{ soMayHenGio = null; soMayGhiXuong(); }, 2000);
+}
+
+function soMayGhiXuong(){
+  if(!soMayCho.length || soMayHong) return;
+  const co = new Set(soMay.map(x=>x.i));
+  soMayCho.forEach(x=>{ if(!co.has(x.i)){ soMay.push(x); co.add(x.i); } });
+  soMayCho = [];
+  soMayLuu();
+}
+
+function soMayLuu(){
+  try{
+    localStorage.setItem(SO_MAY_KEY, JSON.stringify(soMay));
+  }catch(e){
+    // Đầy chỗ: dọn bớt rồi thử lại đúng một lần, không lặp vô tận.
+    console.warn('Sổ máy: không ghi được, dọn bớt rồi thử lại', e && e.name);
+    soMayDonCu(1);
+    try{ localStorage.setItem(SO_MAY_KEY, JSON.stringify(soMay)); }
+    catch(e2){ soMayHong = true; console.error('Sổ máy: đã tắt vì không còn chỗ'); }
+  }
+}
+
+// Bỏ phiếu cũ hơn N ngày
+function soMayDonCu(soNgay){
+  const n = Number(soNgay) || SO_MAY_NGAY;
+  const moc = Date.now() - n*24*60*60*1000;
+  const truoc = soMay.length;
+  soMay = soMay.filter(x => (Number(x.t) || 0) >= moc);
+  if(soMay.length !== truoc) soMayLuu();
+}
+
+// Gỡ phiếu khỏi sổ khi người dùng chủ ý xoá — để đối chiếu không báo nhầm
+function soMayXoa(ids){
+  if(soMayHong) return;
+  const bo = new Set((Array.isArray(ids) ? ids : [ids]).map(String));
+  soMayCho = soMayCho.filter(x=>!bo.has(x.i));
+  const truoc = soMay.length;
+  soMay = soMay.filter(x=>!bo.has(x.i));
+  if(soMay.length !== truoc) soMayLuu();
+}
+
+/* --------------------------------------------------------------------------
+   ĐỐI CHIẾU — so số lượng trước, chỉ quét chi tiết khi lệch.
+   Không hỏi server lần nào: chỉ so hai danh sách đã có sẵn trong bộ nhớ máy.
+   -------------------------------------------------------------------------- */
+let lanDoiChieuCuoi = 0;
+let phieuThieuHienTai = [];
+
+function doiChieuNhanh(dateKey){
+  const dk = dateKey || todayKey();
+  const trongSo = soMay.filter(x => x.d === dk);
+  let tren = 0;
+  for(let i=0;i<weighings.length;i++){ if(weighings[i].dateKey === dk) tren++; }
+  return { soMay: trongSo.length, server: tren, lech: trongSo.length !== tren, dk, trongSo };
+}
+
+function doiChieuChiTiet(dateKey){
+  const kq = doiChieuNhanh(dateKey);
+  const co = new Set();
+  for(let i=0;i<weighings.length;i++) co.add(String(weighings[i].id));
+  kq.thieu = kq.trongSo.filter(x => !co.has(x.i));
+  return kq;
+}
+
+// Chạy ngầm: bước 1 chỉ so hai con số, gần như luôn dừng ở đây.
+function doiChieuNgam(){
+  if(!fsReady || soMayHong) return;
+  const nhanh = doiChieuNhanh();
+  lanDoiChieuCuoi = Date.now();
+  if(!nhanh.lech) return;
+  const kq = doiChieuChiTiet();
+  phieuThieuHienTai = kq.thieu;
+  if(kq.thieu.length >= 5) veCanhBaoKet();
+}
+
 // ===== CLOUD SYNC (Firebase Firestore) =====
 function updateCloudStatus(state){
   const el = document.getElementById('cloudStatus');
@@ -4623,15 +4783,34 @@ function updateCloudStatus(state){
     el.style.color = "#FFD2CC";
     return;
   }
+  // V1.11.2 — lưới an toàn: "Đang gửi" đứng quá 30 giây thì tự chuyển về
+  // "Đã đồng bộ". Lúc đó dữ liệu đã nằm an toàn trong máy, Firestore tự gửi tiếp.
+  if(state === 'syncing'){
+    if(!lucBatDauGui) lucBatDauGui = Date.now();
+    if(Date.now() - lucBatDauGui > 30000){ lucBatDauGui = 0; state = 'synced'; }
+  }else{
+    lucBatDauGui = 0;
+  }
+
   const map = {
     off: "",
     connecting: "☁️ Đang kết nối…",
     syncing: soMucDangGui > 0 ? ("☁️ Đang gửi " + soMucDangGui.toLocaleString("en-US") + " mục…") : "☁️ Đang đồng bộ…",
-    synced: "☁️ Đã đồng bộ Firebase",
+    synced: "☁️ Đã đồng bộ" + soPhieuHomNay(),
     error: "⚠️ Lỗi đồng bộ — vẫn lưu trên máy",
   };
   el.textContent = map[state] || "";
   el.style.color = state === "error" ? "#FFD2CC" : "#B9F5D8";
+}
+
+let lucBatDauGui = 0;
+
+// Tổng phiếu cân hôm nay — luôn xanh, KHÔNG phải đếm phiếu đang kẹt.
+function soPhieuHomNay(){
+  const hk = todayKey();
+  let n = 0;
+  for(let i=0;i<weighings.length;i++){ if(weighings[i].dateKey === hk) n++; }
+  return n ? (" · " + n.toLocaleString("en-US") + " phiếu") : "";
 }
 
 const COLLECTIONS = {
@@ -4740,6 +4919,10 @@ function attachRealtimeListeners(){
       luuKhoLenMay(name, docs);
       lastSynced[name] = deepCopy(docs);
       if(name==='staffUsers'){ finalizeUserGate(); applyCurrentUserPermissions(); }
+      // V1.11.1 — GỐC BỆNH kẹt "Đang kết nối": trước đây chỉ syncNow mới đặt
+      // trạng thái, bộ lắng nghe không đặt. Nay gói về từ server là báo xong.
+      if(!khoDocLoi.length && !khoGhiLoi.length) updateCloudStatus("synced");
+      veCanhBaoKet();
       renderSoon();
     }, err=>{
       console.error("Lỗi lắng nghe realtime", name, err);
@@ -4792,6 +4975,15 @@ function batAppCheck(){
   }
 }
 
+// V1.11.1 — bọc lời hứa bằng đồng hồ đếm ngược. Trước đây các lệnh await trong
+// cloudInit không giới hạn thời gian: mạng chập là fsReady mãi không bật, app
+// treo ở "Đang kết nối" và ghiNgay bỏ rơi mọi phiếu bấm trong lúc đó.
+function gioiHanThoiGian(promise, ms, ten){
+  return Promise.race([
+    promise,
+    new Promise((_, tuChoi)=> setTimeout(()=> tuChoi(new Error('Quá hạn ' + (ms/1000) + ' giây khi ' + ten)), ms))
+  ]);
+}
 async function cloudInit(){
   if(!window.firebaseConfig){ updateCloudStatus("off"); finalizeUserGate(); return; }
   if(cloudInitRunning) return;
@@ -4806,25 +4998,29 @@ async function cloudInit(){
       // Dùng kho lưu trữ riêng của trình duyệt, dung lượng lớn hơn nhiều so với 5 MB.
       try{
         fsDb.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
-        await fsDb.enablePersistence({ synchronizeTabs:true });
+        await gioiHanThoiGian(fsDb.enablePersistence({ synchronizeTabs:true }), 8000, 'bật bộ nhớ đệm');
         boNhoDemBat = true;
       }catch(e){
         console.warn("Không bật được bộ nhớ đệm Firebase:", e && e.code);
       }
     }
-    await firebase.auth().signInAnonymously();
+    await gioiHanThoiGian(firebase.auth().signInAnonymously(), 8000, 'đăng nhập');
 
-    // Cài đặt chung: 1 tài liệu, rất nhẹ
-    const settingsDoc = await fsDb.collection("settings").doc("app").get();
-    if(settingsDoc.exists){
-      const sd = settingsDoc.data();
-      if(sd.companyInfo) companyInfo = sd.companyInfo;
-      if(sd.appOptions)  appOptions  = Object.assign({}, appOptions, sd.appOptions);
-      try{
-        localStorage.setItem(COMPANY_KEY, JSON.stringify(companyInfo));
-        localStorage.setItem(OPTIONS_KEY, JSON.stringify(appOptions));
-      }catch(e){}
-    }
+    // Cài đặt chung: 1 tài liệu, rất nhẹ. Tải được thì tốt, không thì bỏ qua —
+    // phiếu cân quan trọng hơn, không được chờ vì cái này.
+    try{
+      const settingsDoc = await gioiHanThoiGian(
+        fsDb.collection("settings").doc("app").get(), 8000, 'tải cài đặt');
+      if(settingsDoc && settingsDoc.exists){
+        const sd = settingsDoc.data();
+        if(sd.companyInfo) companyInfo = sd.companyInfo;
+        if(sd.appOptions)  appOptions  = Object.assign({}, appOptions, sd.appOptions);
+        try{
+          localStorage.setItem(COMPANY_KEY, JSON.stringify(companyInfo));
+          localStorage.setItem(OPTIONS_KEY, JSON.stringify(appOptions));
+        }catch(e){}
+      }
+    }catch(e){ console.warn('Bỏ qua bước tải cài đặt:', (e && e.message) || e); }
 
     // Mốc = dữ liệu đang có trên máy, để chưa vội đẩy gì lên khi vừa mở app.
     // Bộ lắng nghe bên dưới sẽ mang bản chuẩn từ server về ngay sau đó.
@@ -4834,6 +5030,7 @@ async function cloudInit(){
     fsReady = true;
     renderEverything();
     attachRealtimeListeners();
+    xaHangCho();            // đẩy các phiếu đã bấm trong lúc chưa kết nối được
   }catch(e){
     console.error("Lỗi kết nối Firebase", e);
     updateCloudStatus("error");
@@ -4850,6 +5047,228 @@ function deepCopy(x){ return JSON.parse(JSON.stringify(x)); }
 // (kể cả lúc chưa kịp lên server), nên không bị gói từ máy khác xoá mất.
 // Đây là chỗ vá lỗ hổng 900ms gây mất phiếu khi nhiều máy cân cùng lúc.
 // ===== CẢNH BÁO SERVER TỪ CHỐI GHI =====
+/* ==========================================================================
+   V1.11.1 — BẢNG ĐỎ KHI KẸT (từ 5 phiếu trở lên, quá 60 giây)
+   Dưới 5 phiếu thì im lặng hoàn toàn: cân liên tục thì lúc nào cũng có phiếu
+   đang bay lên server, đó là bình thường, không được làm người cân hoảng.
+   ========================================================================== */
+const KET_SO_PHIEU = 5;      // đủ 5 phiếu mới la làng
+const KET_GIAY     = 60;     // và phải quá 60 giây
+
+function demPhieuKet(){
+  const now = Date.now();
+  const han = KET_GIAY * 1000;
+  let n = 0, somNhat = 0;
+  tuoiChoXacNhan.forEach((v, id)=>{
+    if(v.op !== 'set'){ tuoiChoXacNhan.delete(id); return; }
+    // Phiếu đã bị xoá thì không còn gì để lo — gỡ khỏi phép đếm ngay.
+    if(!conTonTai(v.name, id)){
+      tuoiChoXacNhan.delete(id); idsChoXacNhan.delete(id); return;
+    }
+    const dangCho = idsChoXacNhan.has(id) || hangChoMoMang.some(x=>x.id===id);
+    if(!dangCho){ tuoiChoXacNhan.delete(id); return; }
+    if(now - v.luc >= han){ n++; if(!somNhat || v.luc < somNhat) somNhat = v.luc; }
+  });
+  // Phiếu server TỪ CHỐI thẳng thì tính luôn, không cần chờ hết giờ
+  const tuChoi = phieuLoiGui.length;
+  return { n: Math.max(n, tuChoi), somNhat, tuChoi };
+}
+
+function doiChieuTay(){
+  const el = document.getElementById('doiChieuKetQua');
+  const dk = (document.getElementById('doiChieuNgay').value) || todayKey();
+  if(!el) return;
+  if(soMayHong){
+    el.innerHTML = '<div style="background:#FDECEA;border:1px solid #F0C9C2;border-radius:8px;padding:10px 12px;color:#8E2018;font-weight:700;font-size:12.5px;">Sổ máy đang tắt (trình duyệt hết chỗ). Không đối chiếu được.</div>';
+    return;
+  }
+  const kq = doiChieuChiTiet(dk);
+  lanDoiChieuCuoi = Date.now();
+  phieuThieuHienTai = kq.thieu;
+  if(!kq.soMay){
+    el.innerHTML = '<div class="muted" style="font-size:12.5px;">Sổ máy chưa có phiếu nào của ngày này.</div>';
+    return;
+  }
+  if(!kq.thieu.length){
+    el.innerHTML = '<div style="background:#E9F7EF;border:1px solid #B7E3C9;border-radius:8px;padding:10px 12px;color:#1E6B48;font-weight:700;font-size:12.5px;">✓ Sổ máy ' +
+      kq.soMay.toLocaleString('en-US') + ' phiếu · Server ' + kq.server.toLocaleString('en-US') + ' phiếu — KHỚP HOÀN TOÀN</div>';
+    return;
+  }
+  const kg = kq.thieu.reduce((a,x)=>a + (Number(x.k)||0), 0);
+  const empMap = {}; employees.forEach(e=>{ empMap[e.code] = e; });
+  const prodMap = {}; products.forEach(x=>{ prodMap[x.id] = x; });
+  let h = '<div style="background:#FDECEA;border:1px solid #F0C9C2;border-radius:8px;padding:10px 12px;color:#8E2018;font-weight:700;font-size:12.5px;">⚠️ Sổ máy ' +
+    kq.soMay.toLocaleString('en-US') + ' phiếu · Server ' + kq.server.toLocaleString('en-US') +
+    ' phiếu — THIẾU ' + kq.thieu.length + ' PHIẾU (' + fmtKg(kg) + ' KG)</div>';
+  h += '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;">' +
+       '<tr><th style="background:var(--blue);color:#fff;padding:5px;text-align:left;">Giờ</th>' +
+       '<th style="background:var(--blue);color:#fff;padding:5px;text-align:left;">Nhân viên</th>' +
+       '<th style="background:var(--blue);color:#fff;padding:5px;text-align:left;">Mã hàng</th>' +
+       '<th style="background:var(--blue);color:#fff;padding:5px;text-align:right;">KG</th></tr>';
+  kq.thieu.slice(0,100).forEach(x=>{
+    const e = empMap[x.e], pr = prodMap[x.p];
+    h += '<tr style="background:#FDECEA;"><td style="border:1px solid var(--line);padding:5px;">' + gioNgan(x.t) + '</td>' +
+         '<td style="border:1px solid var(--line);padding:5px;">' + (x.e || '') + (e ? ' · ' + e.name : '') + '</td>' +
+         '<td style="border:1px solid var(--line);padding:5px;">' + ((pr && pr.code) || '') + '</td>' +
+         '<td style="border:1px solid var(--line);padding:5px;text-align:right;">' + fmtKg(x.k) + '</td></tr>';
+  });
+  h += '</table>';
+  if(kq.thieu.length > 100) h += '<div class="muted" style="font-size:11.5px;margin-top:6px;">Chỉ hiện 100 dòng đầu.</div>';
+  h += '<div style="background:#FFF8E8;border:1px solid #F0DCB0;border-radius:8px;padding:9px 11px;font-size:12px;line-height:1.6;color:#7A5A12;margin-top:9px;">' +
+       '<b>Xem kỹ trước khi kết luận.</b> Phiếu do người khác chủ ý xoá trên máy khác cũng hiện ở đây.</div>';
+  h += '<button class="btn btn-outline btn-block" style="margin-top:9px;" onclick="xuatFileChiTiet(\'' + dk + '\')">💾 Xuất file chi tiết ngày này</button>';
+  el.innerHTML = h;
+}
+
+function veCanhBaoKet(){
+  const bar = document.getElementById('ketBar');
+  if(!bar) return;
+  const { n, somNhat, tuChoi } = demPhieuKet();
+  if(n < KET_SO_PHIEU){ bar.style.display = 'none'; return; }
+
+  document.getElementById('ketBarTitle').textContent =
+    '⚠️ ' + n.toLocaleString('en-US') + ' PHIẾU CHƯA LÊN SERVER — ĐỪNG TẮT TRÌNH DUYỆT';
+  let vi = '';
+  if(tuChoi){
+    const lyDo = {}; phieuLoiGui.forEach(x=>{ lyDo[x.lyDo] = 1; });
+    vi = 'Server từ chối: ' + Object.keys(lyDo).join(' · ') + '. ';
+  }else{
+    vi = 'Server không phản hồi từ ' + gioNgan(somNhat) + '. ';
+  }
+  document.getElementById('ketBarWhy').textContent =
+    vi + 'Phiếu vẫn nằm trong sổ máy nên không mất. Xuất file chi tiết để giữ bản cứng.';
+  bar.style.display = 'block';
+}
+
+function gioNgan(ms){
+  if(!ms) return '—';
+  const d = new Date(ms);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function thuGuiLaiKet(){
+  if(!fsReady){ cloudInit(); }
+  if(phieuLoiGui.length) thuGuiLai();
+  xaHangCho();
+  if(fsReady) syncNow();
+  veCanhBaoKet();
+}
+
+/* ==========================================================================
+   V1.11.1 — XUẤT FILE CHI TIẾT (Excel)
+   Cột: Mã cân · Thời gian · Mã NV · Nhân viên · Mã hàng · KG · Người cân
+   ========================================================================== */
+function dungBangChiTiet(dateKey){
+  const dk = dateKey || todayKey();
+  const rows = weighings.filter(w=>w.dateKey === dk)
+                        .slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  const empMap = {}; employees.forEach(e=>{ empMap[e.id] = e; });
+  const prodMap = {}; products.forEach(x=>{ prodMap[x.id] = x; });
+  const aoa = [['Mã cân','Thời gian','Mã NV','Nhân viên','Mã hàng','KG','Người cân']];
+  let tongKg = 0;
+  rows.forEach((w, i)=>{
+    const e = empMap[w.employeeId], p = prodMap[w.productId];
+    tongKg += Number(w.weightKg) || 0;
+    aoa.push([
+      i + 1,
+      gioNgan(w.createdAt),
+      (e && e.code) || w.employeeCode || '',
+      (e && e.name) || '',
+      (p && p.code) || '',
+      Number(w.weightKg) || 0,
+      w.byUserName || ''
+    ]);
+  });
+  aoa.push(['TỔNG — ' + rows.length + ' phiếu','','','','', Number(tongKg.toFixed(3)), '']);
+  return { aoa, soPhieu: rows.length, dk };
+}
+
+function xuatFileChiTiet(dateKey){
+  const dk = dateKey || (document.getElementById('weighDate') && document.getElementById('weighDate').value) || todayKey();
+  const { aoa, soPhieu } = dungBangChiTiet(dk);
+  if(!soPhieu){ alert('Ngày ' + dk + ' chưa có phiếu cân nào.'); return; }
+  try{
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{wch:8},{wch:10},{wch:9},{wch:24},{wch:18},{wch:10},{wch:20}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Chi tiết');
+    XLSX.writeFile(wb, 'Can-tom-' + dk + '.xlsx');
+  }catch(e){
+    console.error('Lỗi xuất Excel', e);
+    alert('Không xuất được file: ' + ((e && e.message) || e));
+  }
+}
+
+/* --------------------------------------------------------------------------
+   TỰ LƯU vào thư mục đã chọn — chỉ chạy trên Chrome/Edge máy tính.
+   Safari iPhone không có API này; bên đó dùng nút xuất tay.
+   -------------------------------------------------------------------------- */
+let thuMucLuu = null;
+let tuLuuHenGio = null;
+
+function hoTroTuLuu(){ return typeof window.showDirectoryPicker === 'function'; }
+
+async function chonThuMucLuu(){
+  if(!hoTroTuLuu()){
+    alert('Máy này không hỗ trợ tự lưu (chỉ có trên Chrome/Edge máy tính).\nDùng nút "Xuất file chi tiết" để tải về.');
+    return;
+  }
+  try{
+    thuMucLuu = await window.showDirectoryPicker({ mode:'readwrite' });
+    batTuLuu();
+    veTrangThaiTuLuu();
+    alert('Đã chọn thư mục. Từ giờ app tự ghi đè file mỗi 2 phút.');
+  }catch(e){
+    if(e && e.name === 'AbortError') return;
+    console.warn('Không chọn được thư mục', e);
+  }
+}
+
+function batTuLuu(){
+  if(tuLuuHenGio) clearInterval(tuLuuHenGio);
+  tuLuuHenGio = setInterval(tuLuuFile, 120000);   // 2 phút một lần
+}
+
+async function tuLuuFile(){
+  if(!thuMucLuu) return;
+  try{
+    const dk = todayKey();
+    const { aoa, soPhieu } = dungBangChiTiet(dk);
+    if(!soPhieu) return;
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{wch:8},{wch:10},{wch:9},{wch:24},{wch:18},{wch:10},{wch:20}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Chi tiết');
+    const buf = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+    const fh = await thuMucLuu.getFileHandle('Can-tom-' + dk + '.xlsx', { create:true });
+    const ws2 = await fh.createWritable();
+    await ws2.write(buf);
+    await ws2.close();
+    lanTuLuuCuoi = Date.now();
+    veTrangThaiTuLuu();
+  }catch(e){
+    console.warn('Tự lưu thất bại:', (e && e.name) || e);
+    thuMucLuu = null;      // mất quyền -> dừng, người dùng chọn lại
+    veTrangThaiTuLuu();
+  }
+}
+
+let lanTuLuuCuoi = 0;
+function veTrangThaiTuLuu(){
+  const el = document.getElementById('tuLuuTrangThai');
+  if(!el) return;
+  if(!hoTroTuLuu()){
+    el.innerHTML = '<span style="color:var(--muted);">Máy này không hỗ trợ tự lưu (Safari/iPhone). Dùng nút xuất tay bên trên.</span>';
+    return;
+  }
+  if(!thuMucLuu){
+    el.innerHTML = '<span style="color:var(--rust);">Chưa chọn thư mục — chưa tự lưu.</span>';
+    return;
+  }
+  el.innerHTML = '<span style="color:#1E6B48;font-weight:700;">✓ Đang tự lưu mỗi 2 phút</span>' +
+    (lanTuLuuCuoi ? ' <span style="color:var(--muted);">· lần cuối ' + gioNgan(lanTuLuuCuoi) + '</span>' : '');
+}
+
 function veCanhBaoLoi(){
   const bar = document.getElementById('errBar');
   if(!bar) return;
@@ -4916,23 +5335,81 @@ function ghiNhanLoiGui(name, id, doc, err){
   updateCloudStatus();
   renderSoon();
 }
-function ghiNgay(name, doc){
-  if(!fsReady || !fsDb || !doc || !doc.id) return;
-  idsChoXacNhan.add(doc.id);
-  try{
-    fsDb.collection(name).doc(String(doc.id)).set(doc)
-      .then(()=>{ idsChoXacNhan.delete(doc.id); renderSoon(); })
-      .catch(err=>ghiNhanLoiGui(name, doc.id, doc, err));
-  }catch(e){ ghiNhanLoiGui(name, doc.id, doc, e); }
+/* ==========================================================================
+   V1.11.1 — HÀNG CHỜ MỞ MẠNG
+   Bản cũ mở đầu bằng `if(!fsReady) return;`. Lúc app còn kẹt ở "Đang kết nối",
+   mỗi lần bấm NHẬP phiếu chỉ nằm trong bộ nhớ rồi thôi — KHÔNG gửi đi và
+   KHÔNG có gì gửi lại về sau. Nay xếp vào hàng chờ, xả ĐÚNG MỘT LẦN khi kết
+   nối xong. Không có vòng lặp gửi lại: Firestore đã tự làm việc đó, tự làm
+   thêm sẽ làm sống lại phiếu đã xoá (lỗi V1.7.1).
+   ========================================================================== */
+let hangChoMoMang = [];        // [{name, doc, id}] — xả 1 lần khi fsReady
+let tuoiChoXacNhan = new Map();// id -> {luc, name, op} — CHỈ để đo, không dùng để gửi
+
+// Bản ghi còn tồn tại thật trong bộ nhớ app hay đã bị xoá?
+// Chốt chặn quyết định: đã xoá thì TUYỆT ĐỐI không gửi lại.
+function conTonTai(name, id){
+  const ds = COLLECTIONS[name] ? COLLECTIONS[name]() : null;
+  if(!ds) return true;
+  return ds.some(x => String(x.id) === String(id));
 }
-function xoaNgay(name, id){
-  if(!fsReady || !fsDb || !id) return;
+
+function ghiNgay(name, doc){
+  if(!doc || !doc.id) return;
+  const id = String(doc.id);
+  if(!fsReady || !fsDb){
+    hangChoMoMang.push({ name, doc, id });
+    tuoiChoXacNhan.set(id, { luc:Date.now(), name, op:'set' });
+    return;
+  }
   idsChoXacNhan.add(id);
+  if(!tuoiChoXacNhan.has(id)) tuoiChoXacNhan.set(id, { luc:Date.now(), name, op:'set' });
   try{
-    fsDb.collection(name).doc(String(id)).delete()
-      .then(()=>{ idsChoXacNhan.delete(id); renderSoon(); })
-      .catch(err=>ghiNhanLoiGui(name, id, null, err));
-  }catch(e){ ghiNhanLoiGui(name, id, null, e); }
+    fsDb.collection(name).doc(id).set(doc)
+      .then(()=>{
+        idsChoXacNhan.delete(id); tuoiChoXacNhan.delete(id);
+        veCanhBaoKet(); renderSoon();
+      })
+      .catch(err=>{ tuoiChoXacNhan.delete(id); ghiNhanLoiGui(name, id, doc, err); });
+  }catch(e){ tuoiChoXacNhan.delete(id); ghiNhanLoiGui(name, id, doc, e); }
+}
+
+function xoaNgay(name, id){
+  if(!id) return;
+  const sid = String(id);
+  hangChoMoMang = hangChoMoMang.filter(x => x.id !== sid);
+  if(!fsReady || !fsDb){
+    hangChoMoMang.push({ name, doc:null, id:sid });
+    return;
+  }
+  idsChoXacNhan.add(sid);
+  try{
+    fsDb.collection(name).doc(sid).delete()
+      .then(()=>{
+        idsChoXacNhan.delete(sid); tuoiChoXacNhan.delete(sid);
+        veCanhBaoKet(); renderSoon();
+      })
+      .catch(err=>ghiNhanLoiGui(name, sid, null, err));
+  }catch(e){ ghiNhanLoiGui(name, sid, null, e); }
+}
+
+// Xả hàng chờ ĐÚNG MỘT LẦN khi vừa mở được kết nối.
+function xaHangCho(){
+  if(!fsReady || !fsDb || !hangChoMoMang.length) return;
+  const ds = hangChoMoMang.slice();
+  hangChoMoMang = [];
+  let boQua = 0;
+  ds.forEach(v=>{
+    if(v.doc){
+      // Phiếu đã bị xoá trong lúc chờ -> KHÔNG gửi, tránh làm nó sống lại.
+      if(!conTonTai(v.name, v.id)){ boQua++; tuoiChoXacNhan.delete(v.id); return; }
+      ghiNgay(v.name, v.doc);
+    }else{
+      xoaNgay(v.name, v.id);
+    }
+  });
+  if(boQua) console.log('Hàng chờ: bỏ qua ' + boQua + ' bản ghi đã bị xoá trong lúc chờ');
+  veCanhBaoKet();
 }
 
 function cloudSync(){
@@ -4945,6 +5422,7 @@ async function syncNow(){
   if(syncInFlight){ syncQueued = true; return; }
   syncInFlight = true;
   const khoLoi = [];
+  let chuaXacNhanServer = false;   // V1.11.2 — có kho quá hạn 15 giây, Firestore đang tự gửi tiếp
   try{
     // B1: tính trước tất cả thay đổi để biết khối lượng
     const viecTheoKho = {};
@@ -4988,7 +5466,21 @@ async function syncNow(){
             const ref = fsDb.collection(name).doc(String(w.id));
             if(w.op==='set') batch.set(ref, w.data); else batch.delete(ref);
           });
-          await batch.commit();
+          // V1.11.2 — batch.commit() chỉ hồi đáp khi SERVER xác nhận. Mạng chậm
+          // là chờ vô hạn: syncNow đứng mãi, syncInFlight kẹt ở true, và từ đó
+          // mọi lần đồng bộ sau đều bị bỏ qua. Quá 15 giây thì thôi đứng chờ —
+          // Firestore đã giữ lệnh ghi trong hàng đợi của nó và sẽ tự gửi lên.
+          try{
+            await gioiHanThoiGian(batch.commit(), 15000, 'gửi kho ' + name);
+          }catch(err){
+            if(String(err && err.message).indexOf('Quá hạn') === 0){
+              console.warn('Kho "' + name + '": server chưa xác nhận trong 15 giây — '
+                         + 'đã giao cho Firestore tự gửi tiếp.');
+              chuaXacNhanServer = true;
+            }else{
+              throw err;   // lỗi thật (từ chối, sai quy tắc) -> để catch bên ngoài xử lý
+            }
+          }
           soMucDangGui = Math.max(0, soMucDangGui - Math.min(400, writes.length - i));
           updateCloudStatus("syncing");
         }
@@ -5002,17 +5494,27 @@ async function syncNow(){
     if(settingsChanged){
       const ci = deepCopy(companyInfo), ao = deepCopy(appOptions);
       try{
-        await fsDb.collection("settings").doc("app").set({ companyInfo: ci, appOptions: ao });
+        await gioiHanThoiGian(
+          fsDb.collection("settings").doc("app").set({ companyInfo: ci, appOptions: ao }),
+          15000, 'ghi cài đặt');
         lastSynced.companyInfo = ci;
         lastSynced.appOptions  = ao;
       }catch(err){
-        khoLoi.push('cài đặt');
-        console.error('Không ghi được cài đặt:', (err && (err.code || err.message)) || err);
+        if(String(err && err.message).indexOf('Quá hạn') === 0){
+          console.warn('Cài đặt: server chưa xác nhận trong 15 giây — Firestore tự gửi tiếp.');
+          chuaXacNhanServer = true;
+          lastSynced.companyInfo = ci;
+          lastSynced.appOptions  = ao;
+        }else{
+          khoLoi.push('cài đặt');
+          console.error('Không ghi được cài đặt:', (err && (err.code || err.message)) || err);
+        }
       }
     }
 
     soMucDangGui = 0;
     khoGhiLoi = khoLoi.slice();
+    if(chuaXacNhanServer) console.log('Đồng bộ: đã giao phần còn lại cho Firestore tự gửi.');
     updateCloudStatus(khoLoi.length ? "error" : "synced");
   }catch(e){
     console.error("Lỗi đồng bộ Firebase", e);
@@ -5060,6 +5562,18 @@ setInterval(()=>{
   if(!fsReady){ cloudInit(); return; }
   if(khoGhiLoi.length) cloudSync();   // thử lại kho đang lỗi
 }, 20000);
+// V1.11.1 — kiểm tra kẹt mỗi 10 giây (chỉ đọc bộ nhớ trong app, rất nhẹ)
+setInterval(veCanhBaoKet, 10000);
+// V1.11.2 — làm tươi con số phiếu trên thanh xanh (chỉ đọc bộ nhớ, rất nhẹ)
+setInterval(()=>{
+  if(fsReady && !khoDocLoi.length && !khoGhiLoi.length && !phieuLoiGui.length
+     && !syncInFlight) updateCloudStatus("synced");
+}, 15000);
+// V1.11.1 — đối chiếu ngầm mỗi 5 phút: bước 1 chỉ so hai con số, gần như luôn dừng ở đó
+setInterval(doiChieuNgam, 300000);
+// V1.11.1 — ghi nốt phần còn trong bộ đệm sổ máy trước khi đóng tab
+window.addEventListener('pagehide', ()=>{ soMayGhiXuong(); });
+window.addEventListener('visibilitychange', ()=>{ if(document.hidden) soMayGhiXuong(); });
 window.addEventListener('online', ()=>{
   if(!fsReady) cloudInit(); else cloudSync();
 });
@@ -5070,6 +5584,7 @@ switchTab('weigh');
 showSplash();      // khoá app ngay từ giây đầu, tránh vào được rồi mới đòi mật khẩu
 checkUserGate();   // nếu máy đã có sẵn tài khoản thì hiện đăng nhập ngay
 setTimeout(()=>{ if(!splashDone) finalizeUserGate(); }, 10000);  // mạng lỗi thì không kẹt quá 10 giây
+soMayNap();          // V1.11.1 — nạp sổ máy trước khi cân
 cloudInit();
 checkPinLock();
 checkBackupReminder();
