@@ -400,7 +400,7 @@
   <div class="brand-row">
     <div class="brand">
       <div class="brand-title">⚖️ Cân Tôm</div>
-      <div class="brand-status"><span class="ver-badge">V1.11.4</span> · <span id="cloudStatus"></span></div>
+      <div class="brand-status"><span class="ver-badge">V1.11.5</span> · <span id="cloudStatus"></span></div>
     </div>
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
@@ -1103,11 +1103,36 @@ function loadJSON(key, fallback){
   try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
   catch(e){ console.error("Lỗi đọc dữ liệu", key, e); return fallback; }
 }
+// V1.11.5 — kho phiếu cân được lưu RIÊNG, có lưới an toàn.
+// Trước đây nó nằm chung khối try: vỡ trần một cái là các kho phía sau
+// (phiếu chi, tăng ca, người dùng, cài đặt) đều không được lưu.
+let ngungLuuPhieuLenMay = false;
+function luuPhieuLenMayNeuCan(){
+  if(boNhoDemBat || ngungLuuPhieuLenMay) return;
+  // Quá nhiều phiếu thì đừng thử — chắc chắn vỡ trần 5 MB
+  if(weighings.length > 4000){
+    ngungLuuPhieuLenMay = true;
+    console.warn('Kho phiếu quá lớn (' + weighings.length + '), không chép lên máy nữa. '
+               + 'Phiếu vẫn an toàn: đã lên Firebase và đã ghi vào Sổ máy.');
+    try{ localStorage.removeItem(WEIGH_KEY); }catch(e){}
+    return;
+  }
+  try{
+    localStorage.setItem(WEIGH_KEY, JSON.stringify(weighings));
+  }catch(e){
+    // Hết chỗ: dừng hẳn, dọn bản cũ để nhường chỗ cho Sổ máy. KHÔNG báo động,
+    // vì phiếu đã lên Firebase và đã nằm trong Sổ máy.
+    ngungLuuPhieuLenMay = true;
+    try{ localStorage.removeItem(WEIGH_KEY); }catch(e2){}
+    console.warn('localStorage hết chỗ cho kho phiếu — đã dừng chép và dọn bản cũ.');
+  }
+}
+
 function saveAll(){
+  luuPhieuLenMayNeuCan();
   try{
     localStorage.setItem(EMP_KEY, JSON.stringify(employees));
     localStorage.setItem(PROD_KEY, JSON.stringify(products));
-    if(!boNhoDemBat) localStorage.setItem(WEIGH_KEY, JSON.stringify(weighings));
     localStorage.setItem(OPEN_KEY, JSON.stringify(openingBalances));
     localStorage.setItem(PAY_KEY, JSON.stringify(payments));
     localStorage.setItem(OVERTIME_KEY, JSON.stringify(overtimeDays));
@@ -1115,9 +1140,18 @@ function saveAll(){
     localStorage.setItem('cantom_devices', JSON.stringify(devices));
     localStorage.setItem(COMPANY_KEY, JSON.stringify(companyInfo));
     localStorage.setItem(OPTIONS_KEY, JSON.stringify(appOptions));
-  }catch(e){ alert("Không lưu được dữ liệu trên máy: " + e.message); }
+  }catch(e){
+    // Chỉ báo MỘT LẦN, tránh hiện hộp thoại mỗi lần bấm NHẬP
+    console.error('Không lưu được dữ liệu trên máy:', e && e.message);
+    if(!daBaoLoiLuu){
+      daBaoLoiLuu = true;
+      alert("Máy hết chỗ lưu cục bộ. Phiếu cân VẪN AN TOÀN (đã lên Firebase và Sổ máy). "
+          + "Vào Cài đặt → Dữ liệu → Đối chiếu để kiểm tra.");
+    }
+  }
   cloudSync();
 }
+let daBaoLoiLuu = false;
 
 function formatNumber(n){ return (Number(n)||0).toLocaleString("en-US"); }
 // Định dạng số KG: làm tròn theo Cài đặt, có dấu phẩy phân nhóm nghìn,
@@ -1132,7 +1166,7 @@ function formatMoney(n){ return formatNumber(n) + " đ"; }
 
 let employees = loadJSON(EMP_KEY, []);
 let products = loadJSON(PROD_KEY, []);
-let weighings = loadJSON(WEIGH_KEY, []);
+let weighings = loadJSON(WEIGH_KEY, []);   // chỉ là bản dự phòng; bộ lắng nghe sẽ thay bằng dữ liệu server
 let openingBalances = loadJSON(OPEN_KEY, []);
 let payments = loadJSON(PAY_KEY, []);
 let overtimeDays = loadJSON(OVERTIME_KEY, []);
@@ -5019,10 +5053,24 @@ async function cloudInit(){
       // Dùng kho lưu trữ riêng của trình duyệt, dung lượng lớn hơn nhiều so với 5 MB.
       try{
         fsDb.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
-        await gioiHanThoiGian(fsDb.enablePersistence({ synchronizeTabs:true }), 8000, 'bật bộ nhớ đệm');
+        // V1.11.5 — SỬA LỖI NẶNG của V1.11.1:
+        // Đồng hồ đếm ngược ở đây làm cờ boNhoDemBat bị sai. Máy đã có nhiều dữ
+        // liệu thì mở kho đệm lâu hơn 8 giây; quá hạn là app tưởng bộ nhớ đệm
+        // không bật, quay về chép TOÀN BỘ phiếu cân vào localStorage -> vỡ trần
+        // 5 MB (đúng lỗi V1.6.0). Nay vẫn giữ đồng hồ để không treo app, nhưng
+        // gắn thêm .then() để khi kho đệm mở xong (dù muộn) thì cờ vẫn được bật.
+        const hua = fsDb.enablePersistence({ synchronizeTabs:true });
+        hua.then(()=>{
+          if(!boNhoDemBat){
+            boNhoDemBat = true;
+            console.log('Bộ nhớ đệm đã bật (muộn hơn đồng hồ đếm ngược).');
+            try{ localStorage.removeItem(WEIGH_KEY); }catch(e){}
+          }
+        }).catch(()=>{});
+        await gioiHanThoiGian(hua, 15000, 'bật bộ nhớ đệm');
         boNhoDemBat = true;
       }catch(e){
-        console.warn("Không bật được bộ nhớ đệm Firebase:", e && e.code);
+        console.warn("Chưa bật xong bộ nhớ đệm Firebase:", (e && (e.code || e.message)) || e);
       }
     }
     await gioiHanThoiGian(firebase.auth().signInAnonymously(), 8000, 'đăng nhập');
@@ -5711,6 +5759,16 @@ showSplash();      // khoá app ngay từ giây đầu, tránh vào được r�
 checkUserGate();   // nếu máy đã có sẵn tài khoản thì hiện đăng nhập ngay
 setTimeout(()=>{ if(!splashDone) finalizeUserGate(); }, 10000);  // mạng lỗi thì không kẹt quá 10 giây
 soMayNap();          // V1.11.1 — nạp sổ máy trước khi cân
+// V1.11.5 — kho phiếu cũ trong localStorage chiếm tới 5 MB và không còn tác dụng
+// khi bộ nhớ đệm Firebase đã bật. Dọn sớm để nhường chỗ cho Sổ máy.
+setTimeout(()=>{
+  try{
+    if(boNhoDemBat && localStorage.getItem(WEIGH_KEY)){
+      localStorage.removeItem(WEIGH_KEY);
+      console.log('Đã dọn kho phiếu cũ trong localStorage.');
+    }
+  }catch(e){}
+}, 20000);
 cloudInit();
 checkPinLock();
 checkBackupReminder();
