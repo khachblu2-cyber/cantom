@@ -400,7 +400,7 @@
   <div class="brand-row">
     <div class="brand">
       <div class="brand-title">⚖️ Cân Tôm</div>
-      <div class="brand-status"><span class="ver-badge">V1.11.5</span> · <span id="cloudStatus"></span></div>
+      <div class="brand-status"><span class="ver-badge">V1.11.7</span> · <span id="cloudStatus"></span></div>
     </div>
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
@@ -444,7 +444,7 @@
     <input type="date" id="weighDate" class="f-date" onchange="onWeighDateChange()">
     <button class="btn-form" onclick="openDaySlip()" title="Xem phiếu chi tiết trong ngày">📄 Chi tiết<br>trong ngày</button>
     <input type="number" id="wKgBig" class="f-kg" placeholder="0.0" step="0.1" inputmode="decimal" oninput="updateWeighPricePreview()" onkeydown="if(event.key==='Enter'){event.preventDefault();addWeighing();}">
-    <button class="btn-nhap" onclick="addWeighing()">NHẬP</button>
+    <button class="btn-nhap" id="btnNhap" onclick="addWeighing()">NHẬP</button>
   </div>
   <div id="activeProdBar">
     <span>Đang chọn:</span> <b id="activeProdLabel">— chưa chọn mã hàng —</b>
@@ -479,6 +479,19 @@
       <div id="weighListWrap"></div>
     </div>
   </div>
+
+  <!-- V1.11.6 — KHỐI KIỂM TRA cho người cân (Cài đặt họ không vào được) -->
+  <div class="wrap-full">
+    <div style="border:1px solid var(--line);border-radius:9px;padding:12px 13px;background:#FAFCFF;margin-top:10px;">
+      <div style="font-size:13px;font-weight:700;color:var(--blue-dk);margin-bottom:9px;">🔍 Kiểm tra dữ liệu hôm nay</div>
+      <div style="display:flex;gap:9px;margin-bottom:9px;flex-wrap:wrap;">
+        <button class="btn btn-outline" style="flex:1;min-width:130px;" onclick="doiChieuNhanhTabCan()">🔍 Đối chiếu</button>
+        <button class="btn btn-outline" style="flex:1;min-width:130px;" onclick="xuatFileChiTiet()">📄 Xuất Excel</button>
+      </div>
+      <div id="ktNhanhKetQua" style="font-size:12px;"></div>
+    </div>
+  </div>
+
   <div style="height:30px;"></div>
 </div>
 
@@ -1832,6 +1845,14 @@ async function chayDonNhanVien(){
 }
 
 function fullBackupExport(){
+  // V1.11.6 — CHẶN khi dữ liệu chưa tải xong.
+  // Trước đây bấm lúc app mới mở ra file 878 KB thay vì 14,7 MB — thiếu gần
+  // hết phiếu cân, mà nhìn tên file không biết được.
+  if(!daNhanGoiServer){
+    alert('⏳ Dữ liệu chưa tải xong từ server.\n\nChờ vài giây rồi sao lưu lại — '
+        + 'sao lưu lúc này sẽ THIẾU phiếu cân.');
+    return;
+  }
   const payload = { employees, products, weighings, openingBalances, payments, overtimeDays, companyInfo, appOptions, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -1840,7 +1861,7 @@ function fullBackupExport(){
   const pad = n => String(n).padStart(2,'0');
   const stamp = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}h${pad(now.getMinutes())}`;
   a.href = url;
-  a.download = `sao-luu-can-tom-${stamp}.json`;
+  a.download = `SLCT_${stamp}_${weighings.length}phieu.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -2138,6 +2159,13 @@ function renderUserList(){
 }
 
 // ===== MÀN HÌNH CHỌN NGƯỜI DÙNG =====
+const ICON_CAN = '<svg viewBox="0 0 64 64" width="42" height="42" fill="none" stroke="currentColor" '
+  + 'stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">'
+  + '<rect x="10" y="12" width="44" height="9" rx="2.5"/>'
+  + '<path d="M14 21v27a3 3 0 0 0 3 3h30a3 3 0 0 0 3-3V21"/>'
+  + '<rect x="21" y="29" width="22" height="12" rx="2"/>'
+  + '<path d="M26 35h3M32 35h3M38 35h1"/></svg>';
+
 let splashDone = false;
 function showSplash(){
   if(document.getElementById('appSplash')) return;
@@ -2146,14 +2174,66 @@ function showSplash(){
   d.innerHTML = `
     <div class="lg-shell" style="text-align:center;">
       <div class="lg-hero">
-        <div class="lg-badge">⚖️</div>
+        <div class="lg-badge">${ICON_CAN}</div>
         <div class="lg-title">Cân Tôm</div>
-        <div class="lg-sub" id="splashMsg">Đang tải dữ liệu…</div>
+        <div class="lg-sub" id="splashMsg">Đang mở kết nối…</div>
+        <div id="splashBar" style="height:5px;background:rgba(255,255,255,.2);border-radius:3px;
+             overflow:hidden;margin:12px auto 8px;max-width:300px;">
+          <div id="splashBarIn" style="height:100%;background:#fff;width:6%;transition:width .3s;"></div>
+        </div>
+        <div class="lg-sub" id="splashCount" style="font-size:12.5px;"></div>
+        <div id="splashSlow" style="display:none;margin-top:16px;">
+          <div style="background:rgba(0,0,0,.22);border:1px solid rgba(255,214,153,.5);border-radius:9px;
+               padding:11px 13px;font-size:12.5px;color:#FFE2AC;line-height:1.6;text-align:left;">
+            <b style="color:#FFD98A;">Mạng chậm</b><br>
+            Vào cân được ngay, nhưng dữ liệu chưa đủ.<br>
+            <b>Chưa nên bấm Sao lưu lúc này — file sẽ thiếu.</b>
+          </div>
+          <button onclick="boQuaManCho()" style="margin-top:10px;width:100%;background:#fff;color:#123E77;
+                  border:none;border-radius:8px;padding:11px;font-size:13.5px;font-weight:700;">Vào cân ngay</button>
+        </div>
       </div>
     </div>`;
   document.body.appendChild(d);
+  if(!splashLucBatDau) splashLucBatDau = Date.now();
+  if(splashDongHo) clearInterval(splashDongHo);
+  splashDongHo = setInterval(veManCho, 700);
+  veManCho();
 }
+
+// Biểu tượng cân điện tử (mặt cân + thân + màn hình số) — dùng chung cho màn chờ và đăng nhập
+let splashLucBatDau = 0, splashDongHo = null;
+const SPLASH_QUA_HAN = 25000;   // 25 giây thì cho vào cân dù chưa tải xong
+
+function veManCho(){
+  const msg = document.getElementById('splashMsg');
+  if(!msg) return;
+  const giay = Math.round((Date.now() - splashLucBatDau)/1000);
+  const soPhieu = weighings.length;
+
+  let chu, phanTram;
+  if(!fsReady){ chu = 'Đang mở kết nối… (' + giay + 's)'; phanTram = 8; }
+  else if(!staffUsers.length && !daNhanGoiServer){ chu = 'Đang tải dữ liệu…'; phanTram = 30; }
+  else { chu = 'Đang tải phiếu cân…'; phanTram = Math.min(92, 30 + soPhieu/400); }
+
+  msg.textContent = chu;
+  const bar = document.getElementById('splashBarIn');
+  if(bar) bar.style.width = phanTram + '%';
+  const cnt = document.getElementById('splashCount');
+  if(cnt) cnt.textContent = soPhieu ? (soPhieu.toLocaleString('en-US') + ' phiếu') : '';
+
+  const slow = document.getElementById('splashSlow');
+  if(slow && giay*1000 >= SPLASH_QUA_HAN) slow.style.display = 'block';
+}
+
+function boQuaManCho(){
+  daBoQuaManCho = true;
+  finalizeUserGate();
+}
+let daBoQuaManCho = false;
+let daNhanGoiServer = false;   // đã nhận ít nhất một gói dữ liệu THẬT từ server
 function hideSplash(){
+  if(splashDongHo){ clearInterval(splashDongHo); splashDongHo = null; }
   const d = document.getElementById('appSplash');
   if(d) d.remove();
 }
@@ -2166,6 +2246,10 @@ function finalizeUserGate(){
 function checkUserGate(){
   if(currentUser){ hideSplash(); return; }                  // đã đăng nhập rồi
   if(document.getElementById('userPickerOverlay')) return;  // màn hình đăng nhập đang mở
+  // V1.11.6 — TẢI XONG MỚI CHO ĐĂNG NHẬP.
+  // Trước đây app cho vào ngay khi có danh sách tài khoản, dù phiếu cân chưa tải
+  // xong. Đó là lý do bấm Sao lưu lúc đó ra file 878 KB thay vì 14,7 MB.
+  if(!splashDone && !daBoQuaManCho && !daNhanGoiServer){ showSplash(); return; }
   if(staffUsers.length===0){
     // Chưa thấy tài khoản nào. Nếu đám mây chưa tải xong thì giữ màn hình chờ,
     // tránh cho vào app rồi mới đòi mật khẩu.
@@ -2187,9 +2271,9 @@ function showUserPickerOverlay(){
   overlay.innerHTML = `
     <div class="lg-shell">
       <div class="lg-hero">
-        <div class="lg-badge">⚖️</div>
+        <div class="lg-badge">${ICON_CAN}</div>
         <div class="lg-title">Cân Tôm</div>
-        <div class="lg-sub">Tính tiền công nhật</div>
+        <div class="lg-sub" id="lgReady">Tính tiền công nhật</div>
       </div>
       <div class="lg-card" id="lgCard">
         <div class="lg-label">Đăng nhập</div>
@@ -3252,6 +3336,15 @@ setInterval(()=>{ if(appOptions.lockGps) refreshGpsCheck(); }, 120000);
 
 function checkWeighAllowed(){
   const flags = [];
+  // V1.11.6 — chặn cân khi server từ chối, hoặc mất mạng quá lâu
+  if(dangChanCan()){
+    const d = demPhieuKet();
+    return { ok:false, msg: d.tuChoi
+      ? '⛔ Server đang từ chối ghi dữ liệu. CÂN TAY RA GIẤY.\n\nPhiếu đã cân vẫn an toàn trong Sổ máy. '
+        + 'Bấm Xuất Excel TRƯỚC khi tải lại app.'
+      : '⛔ Mất mạng quá ' + CHAN_PHUT + ' phút. CÂN TAY RA GIẤY.\n\nMạng về sẽ tự gửi lên và tự mở lại — '
+        + 'tải lại app cũng không mất phiếu.' };
+  }
   if(can('bypassLock') && currentUser) return { ok:true, flags:[] };
   // 1. Khung giờ
   if(appOptions.lockHours){
@@ -4904,6 +4997,7 @@ let soMucDangGui = 0;        // số bản ghi đang chờ gửi trong lượt n
 let syncInFlight = false;    // đang gửi -> không chồng lệnh
 let syncQueued = false;      // có thay đổi mới trong lúc đang gửi
 let cloudInitRunning = false;
+let lucServerPhanHoi = 0;
 
 
 function renderEverything(){
@@ -4965,6 +5059,14 @@ function attachRealtimeListeners(){
       // các lệnh ghi lúc mất mạng. Tự làm thêm sẽ làm sống lại dữ liệu đã xoá.
       // Ghi nhận bản ghi Firebase đã nhận nhưng server chưa xác nhận,
       // để hiện dấu ⏳ cạnh phiếu trong bảng chi tiết.
+      // V1.11.6 — gói đến TỪ SERVER (không phải bộ nhớ đệm) => dữ liệu đã đủ.
+      if(qs.metadata && qs.metadata.fromCache === false){
+        lucServerPhanHoi = Date.now();
+        if(name === 'weighings' && !daNhanGoiServer){
+          daNhanGoiServer = true;
+          setTimeout(finalizeUserGate, 300);   // để render kịp rồi mới mở cổng
+        }
+      }
       qs.docs.forEach(d=>{
         if(d.metadata && d.metadata.hasPendingWrites) idsChoXacNhan.add(d.id);
         else idsChoXacNhan.delete(d.id);
@@ -4973,7 +5075,7 @@ function attachRealtimeListeners(){
       COLLECTION_SETTERS[name](docs);
       luuKhoLenMay(name, docs);
       lastSynced[name] = deepCopy(docs);
-      if(name==='staffUsers'){ finalizeUserGate(); applyCurrentUserPermissions(); }
+      if(name==='staffUsers') applyCurrentUserPermissions();
       // V1.11.1 — GỐC BỆNH kẹt "Đang kết nối": trước đây chỉ syncNow mới đặt
       // trạng thái, bộ lắng nghe không đặt. Nay gói về từ server là báo xong.
       if(!khoDocLoi.length && !khoGhiLoi.length) updateCloudStatus("synced");
@@ -5121,8 +5223,25 @@ function deepCopy(x){ return JSON.parse(JSON.stringify(x)); }
    Dưới 5 phiếu thì im lặng hoàn toàn: cân liên tục thì lúc nào cũng có phiếu
    đang bay lên server, đó là bình thường, không được làm người cân hoảng.
    ========================================================================== */
-const KET_SO_PHIEU = 5;      // đủ 5 phiếu mới la làng
-const KET_GIAY     = 60;     // và phải quá 60 giây
+/* V1.11.6 — BA MỨC, phân biệt theo NGUYÊN NHÂN chứ không gộp chung.
+   - Mất mạng: Firestore giữ lệnh ghi trong máy và tự gửi lại khi mạng về.
+     Phiếu KHÔNG mất, F5 cũng không mất => chỉ báo vàng, vẫn cho cân.
+   - Server TỪ CHỐI: Firestore HUỶ lệnh ghi, F5 là trắng (đúng cảnh 08/08).
+     Cân thêm cũng vô ích => chặn ngay từ phiếu đầu. */
+const KET_SO_PHIEU  = 5;      // đủ 5 phiếu mới báo vàng
+const KET_GIAY      = 60;     // và phải quá 60 giây
+const CHAN_PHUT     = 5;      // mất mạng quá 5 phút -> chặn cân
+
+// Lỗi nào là SERVER TỪ CHỐI (nguy hiểm), lỗi nào chỉ là mất mạng (không sao)
+function laServerTuChoi(lyDo){
+  const t = String(lyDo || '');
+  return t.indexOf('permission') >= 0
+      || t.indexOf('unauthenticated') >= 0
+      || t.indexOf('resource-exhausted') >= 0
+      || t.indexOf('chặn quyền') >= 0
+      || t.indexOf('Hết hạn mức') >= 0
+      || t.indexOf('Chưa đăng nhập') >= 0;
+}
 
 function demPhieuKet(){
   const now = Date.now();
@@ -5138,10 +5257,27 @@ function demPhieuKet(){
     if(!dangCho){ tuoiChoXacNhan.delete(id); return; }
     if(now - v.luc >= han){ n++; if(!somNhat || v.luc < somNhat) somNhat = v.luc; }
   });
-  // Phiếu server TỪ CHỐI thẳng thì tính luôn, không cần chờ hết giờ
-  const tuChoi = phieuLoiGui.length;
-  return { n: Math.max(n, tuChoi), somNhat, tuChoi };
+  // Bao nhiêu bản ghi bị SERVER TỪ CHỐI thật sự (không tính lỗi mất mạng)
+  const tuChoi = phieuLoiGui.filter(x=>laServerTuChoi(x.lyDo)).length;
+  const matMangLoi = phieuLoiGui.length - tuChoi;
+  const tong = Math.max(n + matMangLoi, tuChoi);
+
+  // Mức: 0 = im lặng · 1 = vàng (vẫn cân) · 2 = đỏ (chặn cân)
+  let muc = 0;
+  const matMang = (navigator && navigator.onLine === false);
+  const choLau = somNhat ? (now - somNhat) : 0;
+  if(tuChoi > 0){
+    muc = 2;                                        // server từ chối -> chặn NGAY
+  }else if(choLau >= CHAN_PHUT*60*1000 && tong > 0){
+    muc = 2;                                        // mất mạng quá lâu -> chặn
+  }else if(tong >= KET_SO_PHIEU || (matMang && tong > 0)){
+    muc = 1;                                        // mất mạng -> vàng, vẫn cân
+  }
+  return { n: tong, somNhat, tuChoi, muc, matMang };
 }
+
+// Đang bị chặn cân?
+function dangChanCan(){ return demPhieuKet().muc === 2; }
 
 /* ==========================================================================
    V1.11.3 — GIAI ĐOẠN 0: ĐO SỨC CHỨA DỮ LIỆU
@@ -5248,6 +5384,35 @@ function doSucChua(){
   wrap.innerHTML = h;
 }
 
+/* V1.11.6 — Đối chiếu gọn cho người cân, đặt ở tab Cân tôm.
+   CHỈ XEM, không có nút gửi lại — gửi lại có thể làm sống lại phiếu người
+   khác đã cố ý xoá, nên để dành cho người có quyền vào Cài đặt. */
+function doiChieuNhanhTabCan(){
+  const el = document.getElementById('ktNhanhKetQua');
+  if(!el) return;
+  const dk = (document.getElementById('weighDate') && document.getElementById('weighDate').value) || todayKey();
+  if(soMayHong){
+    el.innerHTML = '<div style="background:#FFF8E8;border:1px solid #F0DCB0;border-radius:7px;padding:8px 10px;color:#7A5A12;">Máy này không dùng được Sổ máy nên chưa đối chiếu được.</div>';
+    return;
+  }
+  const kq = doiChieuChiTiet(dk);
+  if(!kq.soMay){
+    el.innerHTML = '<div class="muted">Sổ máy chưa có phiếu nào của ngày ' + ngayVN(dk) + '.</div>';
+    return;
+  }
+  if(!kq.thieu.length){
+    el.innerHTML = '<div style="background:#E9F7EF;border:1px solid #B7E3C9;border-radius:7px;padding:8px 10px;color:#1E6B48;font-weight:600;">'
+      + '✓ Sổ máy khớp server · ' + kq.soMay.toLocaleString('en-US') + ' / ' + kq.server.toLocaleString('en-US')
+      + ' phiếu · kiểm lúc ' + gioNgan(Date.now()) + '</div>';
+    return;
+  }
+  const kg = kq.thieu.reduce((a,x)=>a + (Number(x.k)||0), 0);
+  el.innerHTML = '<div style="background:#FDECEA;border:1px solid #F0C9C2;border-radius:7px;padding:9px 11px;color:#8E2018;font-weight:700;">'
+    + '⚠ Sổ máy ' + kq.soMay.toLocaleString('en-US') + ' · Server ' + kq.server.toLocaleString('en-US')
+    + ' — THIẾU ' + kq.thieu.length + ' PHIẾU (' + fmtKg(kg) + ' KG)'
+    + '<div style="font-weight:400;font-size:11.5px;margin-top:5px;">Bấm Xuất Excel để giữ bản cứng, rồi báo người quản lý xử lý trong Cài đặt.</div></div>';
+}
+
 function doiChieuTay(){
   const el = document.getElementById('doiChieuKetQua');
   const dk = (document.getElementById('doiChieuNgay').value) || todayKey();
@@ -5297,21 +5462,59 @@ function doiChieuTay(){
 function veCanhBaoKet(){
   const bar = document.getElementById('ketBar');
   if(!bar) return;
-  const { n, somNhat, tuChoi } = demPhieuKet();
-  if(n < KET_SO_PHIEU){ bar.style.display = 'none'; return; }
+  const { n, somNhat, tuChoi, muc } = demPhieuKet();
 
-  document.getElementById('ketBarTitle').textContent =
-    '⚠️ ' + n.toLocaleString('en-US') + ' PHIẾU CHƯA LÊN SERVER — ĐỪNG TẮT TRÌNH DUYỆT';
-  let vi = '';
-  if(tuChoi){
-    const lyDo = {}; phieuLoiGui.forEach(x=>{ lyDo[x.lyDo] = 1; });
-    vi = 'Server từ chối: ' + Object.keys(lyDo).join(' · ') + '. ';
-  }else{
-    vi = 'Server không phản hồi từ ' + gioNgan(somNhat) + '. ';
+  if(muc === 0){ bar.style.display = 'none'; capNhatKhoaNhap(false); return; }
+
+  if(muc === 1){
+    // VÀNG — mất mạng, Firestore vẫn giữ phiếu và sẽ tự gửi. Cân bình thường.
+    bar.style.display = 'block';
+    bar.style.background = '#B87A0E';
+    document.getElementById('ketBarTitle').textContent =
+      '⚠ Mất mạng — ' + n.toLocaleString('en-US') + ' phiếu chờ, sẽ tự lên khi có mạng';
+    document.getElementById('ketBarWhy').textContent = '';
+    const acts = bar.querySelector('.acts');
+    if(acts) acts.style.display = 'none';
+    capNhatKhoaNhap(false);
+    return;
   }
-  document.getElementById('ketBarWhy').textContent =
-    vi + 'Phiếu vẫn nằm trong sổ máy nên không mất. Xuất file chi tiết để giữ bản cứng.';
+
+  // ĐỎ — chặn cân
   bar.style.display = 'block';
+  bar.style.background = '#8E2018';
+  const acts = bar.querySelector('.acts');
+  if(acts) acts.style.display = 'flex';
+  document.getElementById('ketBarTitle').textContent = '⛔ NGỪNG CÂN — CÂN TAY RA GIẤY';
+  let vi;
+  if(tuChoi){
+    const lyDo = {}; phieuLoiGui.forEach(x=>{ if(laServerTuChoi(x.lyDo)) lyDo[x.lyDo] = 1; });
+    // Server TỪ CHỐI: Firestore đã huỷ hàng đợi, F5 là mất sạch (đúng cảnh 08/08).
+    // Phải xuất file TRƯỚC khi tải lại.
+    vi = 'Server từ chối ghi: ' + Object.keys(lyDo).join(' · ') + '. '
+       + n.toLocaleString('en-US') + ' phiếu vẫn nằm trong Sổ máy. '
+       + '⚠️ BẤM XUẤT EXCEL TRƯỚC KHI TẢI LẠI APP.';
+  }else{
+    // Mất mạng: Firestore giữ hàng đợi trên đĩa, F5 xong tự gửi tiếp. An toàn.
+    vi = 'Mất mạng từ ' + gioNgan(somNhat) + ' (quá ' + CHAN_PHUT + ' phút). '
+       + n.toLocaleString('en-US') + ' phiếu đang chờ. '
+       + 'Mạng về sẽ tự gửi lên và tự mở lại — tải lại app cũng không mất phiếu.';
+  }
+  document.getElementById('ketBarWhy').textContent = vi;
+  capNhatKhoaNhap(true);
+}
+
+// Khoá / mở nút NHẬP
+let dangKhoaNhap = false;
+function capNhatKhoaNhap(khoa){
+  if(khoa === dangKhoaNhap) return;
+  dangKhoaNhap = khoa;
+  const btn = document.getElementById('btnNhap');
+  if(btn){
+    btn.disabled = khoa;
+    btn.style.opacity = khoa ? '.45' : '';
+    btn.style.filter = khoa ? 'grayscale(1)' : '';
+    btn.style.cursor = khoa ? 'not-allowed' : '';
+  }
 }
 
 function gioNgan(ms){
@@ -5757,7 +5960,7 @@ if(document.fonts && document.fonts.ready) document.fonts.ready.then(measureTopB
 switchTab('weigh');
 showSplash();      // khoá app ngay từ giây đầu, tránh vào được rồi mới đòi mật khẩu
 checkUserGate();   // nếu máy đã có sẵn tài khoản thì hiện đăng nhập ngay
-setTimeout(()=>{ if(!splashDone) finalizeUserGate(); }, 10000);  // mạng lỗi thì không kẹt quá 10 giây
+setTimeout(()=>{ if(!splashDone) finalizeUserGate(); }, SPLASH_QUA_HAN + 6000);  // không bao giờ kẹt màn chờ
 soMayNap();          // V1.11.1 — nạp sổ máy trước khi cân
 // V1.11.5 — kho phiếu cũ trong localStorage chiếm tới 5 MB và không còn tác dụng
 // khi bộ nhớ đệm Firebase đã bật. Dọn sớm để nhường chỗ cho Sổ máy.
@@ -5774,11 +5977,14 @@ checkPinLock();
 checkBackupReminder();
 
 function checkBackupReminder(){
+  // V1.11.6 — chờ tải xong mới xét. Không thì nhắc lúc app mới mở, ra file thiếu.
+  if(!daNhanGoiServer){ setTimeout(checkBackupReminder, 3000); return; }
   const last = Number(localStorage.getItem("cantom_last_backup_at") || 0);
   const now = Date.now();
   const daysSince = last ? Math.floor((now - last) / (24*60*60*1000)) : null;
   const remindDays = appOptions.backupDays || 3;
   if(employees.length===0 && weighings.length===0) return;
+  if(!daNhanGoiServer) return;   // V1.11.6 — chưa tải xong thì đừng nhắc, file sẽ thiếu
   if(daysSince === null || daysSince >= remindDays){
     setTimeout(()=>{
       const msg = daysSince === null
