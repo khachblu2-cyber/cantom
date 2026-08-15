@@ -411,6 +411,51 @@
            không thì listener cũ vẫn sống, vẫn nhận dữ liệu, VẪN TÍNH TIỀN ĐỌC.
            Kết quả với 6 máy: 4/6 máy nhẹ đi 15 lần (gồm cả 3 máy cân).
            Còn máy Công nợ và máy chủ tải đầy đủ — sẽ nhẹ khi làm bản tổng hợp ngày.
+           (md5 9f98379af49fc0b41bd7ea2d87bf6dc9)
+  V1.12.4  SỬA LỖI V1.12.3 — tính năng tải theo quyền KHÔNG CHẠY.
+           Bộ lắng nghe gắn NGAY KHI KẾT NỐI XONG, tức TRƯỚC lúc đăng nhập,
+           lúc đó currentUser còn null. V1.12.3 cho can2() trả TRUE khi chưa
+           đăng nhập -> soNgayCanTai() trả 0 -> MỌI MÁY vẫn tải đầy đủ 39.000
+           phiếu ở màn chờ. Đăng nhập xong mới thu hẹp, nhưng ĐÃ TẢI XONG RỒI.
+           Vá: đảo ngược mặc định.
+             - Chưa đăng nhập      -> tải TỐI THIỂU (1 ngày)
+             - Máy chưa có tài khoản nào (staffUsers rỗng) -> đầy đủ
+             - Đăng nhập xong      -> applyCurrentUserPermissions gọi
+                                      ganLaiListenerNeuCan() để nới theo quyền
+           Máy cân : 2.700 -> đăng nhập -> 2.700 (KHÔNG tải lại gì)
+           Máy chủ : 2.700 -> đăng nhập -> 39.000 (tải thêm phần còn thiếu)
+           BÀI HỌC: khi phân quyền ảnh hưởng tới việc TẢI DỮ LIỆU, phải xét
+           THỨ TỰ — cái gì chạy trước lúc đăng nhập thì chưa biết người dùng
+           là ai. Mặc định lúc chưa biết phải là mức AN TOÀN NHẤT (ít nhất),
+           không phải mức rộng nhất.
+           (md5 976be3f918bce89a6c606cc36a011224)
+  V1.12.5  CHỐT CHẶN SAO LƯU khi máy bị giới hạn số ngày.
+           Từ V1.12.3 máy chỉ tải 1-3 ngày phiếu. fullBackupExport lấy thẳng
+           mảng `weighings` trong bộ nhớ -> máy bị giới hạn xuất ra file CHỈ CÓ
+           1-3 NGÀY mà KHÔNG BÁO GÌ. Đúng lại chuyện file 878 KB hôm 12/08,
+           nhưng lần này do chính việc tối ưu tải gây ra.
+           Nay kiểm tra CẢ HAI điều kiện:
+             Chốt 1: daNhanGoiServer — đã tải xong chưa
+             Chốt 2: soNgayCanTai() > 0 — có đang bị giới hạn ngày không
+           Nếu bị giới hạn thì hỏi, đồng ý thì taiDayDuRoiSaoLuu():
+             - Bật cờ dangTaiDayDuDeSaoLuu -> soNgayCanTai() trả 0
+             - Gắn lại listener (đầy đủ), chờ tới khi số phiếu ngừng tăng
+               (3 lần liên tiếp không đổi) hoặc quá 30 giây
+             - Xuất file, rồi THU LẠI mức nhẹ sau 1,5 giây
+           BÀI HỌC: mỗi khi giới hạn dữ liệu tải về, phải rà MỌI hàm đọc thẳng
+           từ mảng trong bộ nhớ (weighings, payments...) — sao lưu, xuất Excel,
+           báo cáo, đối chiếu. Chúng đều ngầm giả định "dữ liệu trong máy là đủ".
+           (md5 7a9363b356028be2dcc3e1031e7bfef2)
+  V1.12.6  Cột "Mã hàng" trong file Excel lấy TÊN (p.name) thay vì MÃ (p.code)
+           cho dễ đọc: "ACHU-LO1" -> "A Châu Lo1". Mã hàng chưa đặt tên thì
+           tự lấy mã thay thế, không để trống: (p && (p.name || p.code)).
+           Áp dụng cho cả 2 nguồn trong dungBangChiTiet (server + Sổ máy).
+           Khối cuối tab Cân tôm CHIA ĐÔI: "📄 Xuất Excel" (viền xanh dương) và
+           "💾 Sao lưu" (viền xanh lá), mỗi ô có biểu tượng + một dòng giải thích.
+           Tiêu đề khối đổi thành "💾 Lưu dữ liệu".
+           LƯU Ý: nút Sao lưu ở đây sẽ gặp chốt chặn V1.12.5 trên máy cân
+           (chỉ tải 1 ngày) — app hỏi "tải đầy đủ rồi sao lưu?", mất 10-20 giây.
+           Đó là hành vi ĐÚNG, không phải lỗi.
 
 ================================================================================
   HẾT PHẦN BÀN GIAO
@@ -824,7 +869,7 @@
   <div class="brand-row">
     <div class="brand">
       <div class="brand-title">⚖️ Cân Tôm</div>
-      <div class="brand-status"><span class="ver-badge">V1.12.3</span> · <span id="cloudStatus"></span></div>
+      <div class="brand-status"><span class="ver-badge">V1.12.6</span> · <span id="cloudStatus"></span></div>
     </div>
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
@@ -907,11 +952,24 @@
   <!-- V1.11.6 — KHỐI KIỂM TRA cho người cân (Cài đặt họ không vào được) -->
   <div class="wrap-full">
     <div style="border:1px solid var(--line);border-radius:9px;padding:12px 13px;background:#FAFCFF;margin-top:10px;">
-      <div style="font-size:13px;font-weight:700;color:var(--blue-dk);margin-bottom:9px;">📄 Xuất file phiếu cân</div>
-      <button class="btn btn-outline btn-block" onclick="xuatFileChiTiet()">📄 Xuất file Excel hôm nay</button>
-      <div class="muted" style="font-size:11.5px;margin-top:8px;line-height:1.6;">
-        File gồm toàn bộ phiếu cân trong ngày. Nếu có phiếu chưa lên server,
-        file vẫn ghi đủ và đánh dấu ở cột Ghi chú.
+      <div style="font-size:13px;font-weight:700;color:var(--blue-dk);margin-bottom:10px;">💾 Lưu dữ liệu</div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;background:#fff;border:1px solid var(--line);border-radius:8px;padding:11px 10px;text-align:center;">
+          <div style="font-size:22px;line-height:1.1;">📄</div>
+          <div style="font-size:12.5px;font-weight:700;color:var(--blue-dk);margin:5px 0 2px;">Xuất Excel</div>
+          <div class="muted" style="font-size:10.5px;line-height:1.45;min-height:30px;">Phiếu cân trong ngày, xem bằng Excel</div>
+          <button class="btn btn-outline btn-block" style="margin-top:8px;padding:8px 4px;font-size:12px;" onclick="xuatFileChiTiet()">Xuất hôm nay</button>
+        </div>
+        <div style="flex:1;background:#fff;border:1px solid var(--line);border-radius:8px;padding:11px 10px;text-align:center;">
+          <div style="font-size:22px;line-height:1.1;">💾</div>
+          <div style="font-size:12.5px;font-weight:700;color:var(--blue-dk);margin:5px 0 2px;">Sao lưu</div>
+          <div class="muted" style="font-size:10.5px;line-height:1.45;min-height:30px;">Toàn bộ dữ liệu, nạp lại được vào app</div>
+          <button class="btn btn-block" style="margin-top:8px;padding:8px 4px;font-size:12px;background:#fff;color:var(--moss);border:1px solid var(--moss);" onclick="fullBackupExport()">Sao lưu ngay</button>
+        </div>
+      </div>
+      <div class="muted" style="font-size:10.5px;margin-top:9px;line-height:1.55;">
+        Xuất Excel để xem và đối chiếu. Sao lưu để phục hồi khi có sự cố.
+        Phiếu chưa lên server đều được ghi vào cả hai file.
       </div>
       <div id="ktNhanhKetQua" style="font-size:12px;"></div>
     </div>
@@ -2277,13 +2335,58 @@ async function chayDonNhanVien(){
     </div>`;
 }
 
-function fullBackupExport(){
-  // V1.11.6 — CHẶN khi dữ liệu chưa tải xong.
-  // Trước đây bấm lúc app mới mở ra file 878 KB thay vì 14,7 MB — thiếu gần
-  // hết phiếu cân, mà nhìn tên file không biết được.
+/* V1.12.5 — CHỐT CHẶN THỨ HAI CHO SAO LƯU.
+   Từ V1.12.3 máy chỉ tải 1-3 ngày phiếu tuỳ quyền. fullBackupExport lấy thẳng
+   mảng `weighings` trong bộ nhớ -> máy bị giới hạn sẽ xuất ra file CHỈ CÓ
+   1-3 NGÀY mà không báo gì. Đúng lại chuyện file 878 KB, nhưng do chính việc
+   tối ưu tải gây ra.
+   Nay kiểm tra CẢ HAI điều kiện trước khi cho xuất. */
+let dangTaiDayDuDeSaoLuu = false;   // tạm nới listener về đầy đủ
+
+/* Tạm nới listener về đầy đủ, chờ tải xong rồi sao lưu, sau đó thu lại.
+   Không để nguyên mức đầy đủ vì máy cân cần nhẹ. */
+async function taiDayDuRoiSaoLuu(){
+  const truoc = weighings.length;
+  dangTaiDayDuDeSaoLuu = true;
+  attachRealtimeListeners();
+
+  // Chờ tới khi số phiếu ngừng tăng (tải xong) hoặc quá 30 giây
+  const batDau = Date.now();
+  let lanCuoi = truoc, yen = 0;
+  while(Date.now() - batDau < 30000){
+    await new Promise(r=>setTimeout(r, 800));
+    if(weighings.length === lanCuoi){ yen++; if(yen >= 3) break; }
+    else { yen = 0; lanCuoi = weighings.length; }
+  }
+  if(weighings.length <= truoc){
+    alert('Không tải thêm được dữ liệu cũ. Thử lại khi mạng ổn hơn,\n'
+        + 'hoặc dùng máy có quyền Công nợ/Cài đặt để sao lưu.');
+    dangTaiDayDuDeSaoLuu = false;
+    attachRealtimeListeners();
+    return;
+  }
+  fullBackupExport();                    // giờ đã đầy đủ, chốt 2 sẽ cho qua
+  dangTaiDayDuDeSaoLuu = false;
+  setTimeout(attachRealtimeListeners, 1500);   // thu lại mức nhẹ
+}
+
+async function fullBackupExport(){
+  // Chốt 1 — dữ liệu đã tải xong chưa
   if(!daNhanGoiServer){
     alert('⏳ Dữ liệu chưa tải xong từ server.\n\nChờ vài giây rồi sao lưu lại — '
         + 'sao lưu lúc này sẽ THIẾU phiếu cân.');
+    return;
+  }
+  // Chốt 2 — máy này có đang bị giới hạn số ngày không
+  const soNgay = soNgayCanTai();
+  if(soNgay > 0 && !dangTaiDayDuDeSaoLuu){
+    const dong = confirm(
+      '⚠️ Máy này chỉ tải ' + soNgay + ' ngày phiếu gần nhất cho nhẹ.\n'
+    + 'Sao lưu bây giờ sẽ THIẾU dữ liệu cũ.\n\n'
+    + 'Bấm OK để tải đầy đủ rồi sao lưu (mất 10-20 giây),\n'
+    + 'hoặc Huỷ và dùng máy có quyền Công nợ/Cài đặt.');
+    if(!dong) return;
+    await taiDayDuRoiSaoLuu();
     return;
   }
   const payload = { employees, products, weighings, openingBalances, payments, overtimeDays, companyInfo, appOptions, exportedAt: new Date().toISOString() };
@@ -5535,16 +5638,27 @@ function luuKhoLenMay(name, docs){
    ========================================================================== */
 const NGAY_TAB = { weigh: 1, report: 3 };   // Công nợ/Cài đặt = đầy đủ
 
-// Số ngày phiếu cân cần tải, theo quyền tài khoản và tab đang mở
+/* Số ngày phiếu cân cần tải, theo quyền tài khoản.
+   V1.12.4 — SỬA LỖI CỦA V1.12.3:
+   Bộ lắng nghe gắn NGAY KHI KẾT NỐI XONG, tức TRƯỚC lúc đăng nhập. Lúc đó
+   currentUser còn null. Bản V1.12.3 cho `can2` trả true khi chưa đăng nhập
+   -> mọi máy đều tải ĐẦY ĐỦ 39.000 phiếu ở màn chờ, rồi mới đăng nhập và
+   mới thu hẹp — nhưng đã tải xong rồi, MUỘN MẤT. Máy cân không được lợi gì.
+   Nay đảo ngược: chưa biết là ai thì tải TỐI THIỂU (1 ngày). Đăng nhập xong
+   applyCurrentUserPermissions -> ganLaiListenerNeuCan() sẽ nới ra theo quyền.
+   Người cân: 1 ngày -> 1 ngày, không tải lại gì.
+   Máy chủ:   1 ngày -> đầy đủ, tải thêm phần còn thiếu sau khi đăng nhập. */
 function soNgayCanTai(){
-  // Có quyền Công nợ hoặc Cài đặt -> luôn đầy đủ
-  if(can2('debt') || can2('config')) return 0;          // 0 = không giới hạn
-  // Đang ở tab Báo cáo, hoặc có quyền Báo cáo -> lấy mức rộng hơn
+  if(dangTaiDayDuDeSaoLuu) return 0;                   // đang tạm nới để sao lưu
+  // Máy chưa thiết lập tài khoản nào -> không có gì để phân quyền, tải đầy đủ
+  if(!staffUsers.length) return 0;
+  if(!currentUser) return NGAY_TAB.weigh;               // chưa đăng nhập: tải ít nhất
+  if(can2('debt') || can2('config')) return 0;         // 0 = không giới hạn
   if(can2('report')) return NGAY_TAB.report;
   return NGAY_TAB.weigh;
 }
 function can2(tab){
-  if(!currentUser) return true;                          // chưa đăng nhập: chưa giới hạn
+  if(!currentUser) return false;    // xem chú thích ở soNgayCanTai
   const p = currentUser.permissions || {};
   return !!p[tab];
 }
@@ -6057,7 +6171,7 @@ function dungBangChiTiet(dateKey){
       t: w.createdAt || 0,
       maNV: (e && e.code) || w.employeeCode || '',
       ten: (e && e.name) || '',
-      maHang: (p && p.code) || '',
+      maHang: (p && (p.name || p.code)) || '',
       kg: Number(w.weightKg) || 0,
       nguoiCan: w.byUserName || '',
       chuaLen: ''
@@ -6076,7 +6190,7 @@ function dungBangChiTiet(dateKey){
         t: Number(x.t) || 0,
         maNV: x.e || '',
         ten: (e && e.name) || '',
-        maHang: (p && p.code) || '',
+        maHang: (p && (p.name || p.code)) || '',
         kg: Number(x.k) || 0,
         nguoiCan: '',
         chuaLen: 'CHƯA LÊN SERVER'
