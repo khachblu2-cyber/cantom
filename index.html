@@ -156,7 +156,7 @@
     Tải xong phiếu cân MỚI cho đăng nhập. Trước đây app cho vào ngay khi có
     danh sách tài khoản -> bấm Sao lưu lúc đó ra file 878 KB thay vì 14,7 MB.
     Cờ daNhanGoiServer bật khi kho weighings nhận gói fromCache===false.
-    Quá 25 giây (SPLASH_QUA_HAN) thì hiện nút "Vào cân ngay" — KHÔNG BAO GIỜ
+    Quá 8 giây (SPLASH_QUA_HAN) thì hiện nút "Vào cân ngay" — KHÔNG BAO GIỜ
     khoá cứng, cả xưởng không được đứng chờ vì mạng.
 
   ▸ SAO LƯU
@@ -456,6 +456,24 @@
            LƯU Ý: nút Sao lưu ở đây sẽ gặp chốt chặn V1.12.5 trên máy cân
            (chỉ tải 1 ngày) — app hỏi "tải đầy đủ rồi sao lưu?", mất 10-20 giây.
            Đó là hành vi ĐÚNG, không phải lỗi.
+           (md5 a63da1f8dc889613c858e51f8b330976)
+  V1.12.7  VÁ MÀN CHỜ ĐỨNG (do chính V1.12.4 gây ra).
+           Triệu chứng: màn chờ hiện "Đang tải phiếu cân… 524 phiếu" rồi ĐỨNG
+           YÊN, phải đợi hết đồng hồ dự phòng 31 giây mới vào được — dù dữ liệu
+           đã về đủ.
+           Nguyên nhân: màn chờ đợi cờ daNhanGoiServer, cờ này chỉ bật khi kho
+           weighings nhận gói có fromCache === false. Từ V1.12.4, lúc CHƯA
+           ĐĂNG NHẬP listener dùng .where('dateKey','>=',...) — đây là QUERY
+           MỚI. Firestore thường bắn gói TỪ BỘ NHỚ ĐỆM trước (fromCache=true)
+           rồi mới bắn gói server. Gói server tới chậm hoặc không tới thì cờ
+           KHÔNG BAO GIỜ BẬT.
+           Vá: có gói phiếu cân về rồi (dù từ bộ nhớ đệm) thì hẹn 1,5 giây rồi
+           mở cổng — đủ để gói server tới nếu đang trên đường; tới thì huỷ hẹn.
+           Rút SPLASH_QUA_HAN 25s -> 8s (giờ chỉ tải 1 ngày, không cần chờ lâu).
+           Kết quả: cảnh trong ảnh từ 12s xuống 1,9s. Mất mạng hoàn toàn:
+           31s xuống 12s.
+           BÀI HỌC: đổi listener sang có .where() là tạo QUERY MỚI — mọi thứ
+           đang chờ tín hiệu từ listener cũ đều phải rà lại.
 
 ================================================================================
   HẾT PHẦN BÀN GIAO
@@ -869,7 +887,7 @@
   <div class="brand-row">
     <div class="brand">
       <div class="brand-title">⚖️ Cân Tôm</div>
-      <div class="brand-status"><span class="ver-badge">V1.12.6</span> · <span id="cloudStatus"></span></div>
+      <div class="brand-status"><span class="ver-badge">V1.12.7</span> · <span id="cloudStatus"></span></div>
     </div>
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
@@ -2739,7 +2757,9 @@ function showSplash(){
 
 // Biểu tượng cân điện tử (mặt cân + thân + màn hình số) — dùng chung cho màn chờ và đăng nhập
 let splashLucBatDau = 0, splashDongHo = null;
-const SPLASH_QUA_HAN = 25000;   // 25 giây thì cho vào cân dù chưa tải xong
+/* V1.12.7 — rút từ 25s xuống 8s. Từ V1.12.4 lúc chưa đăng nhập chỉ tải
+   1 NGÀY phiếu (~2.700), về rất nhanh — không cần chờ lâu như khi tải 40.000. */
+const SPLASH_QUA_HAN = 8000;
 
 function veManCho(){
   const msg = document.getElementById('splashMsg');
@@ -2768,8 +2788,10 @@ function boQuaManCho(){
 }
 let daBoQuaManCho = false;
 let daNhanGoiServer = false;   // đã nhận ít nhất một gói dữ liệu THẬT từ server
+let choMoCong = null;          // hẹn giờ mở cổng khi gói đến từ bộ nhớ đệm
 function hideSplash(){
   if(splashDongHo){ clearInterval(splashDongHo); splashDongHo = null; }
+  if(choMoCong){ clearTimeout(choMoCong); choMoCong = null; }
   const d = document.getElementById('appSplash');
   if(d) d.remove();
 }
@@ -5709,6 +5731,22 @@ function attachRealtimeListeners(){
           setTimeout(finalizeUserGate, 300);   // để render kịp rồi mới mở cổng
         }
       }
+      /* V1.12.7 — VÁ MÀN CHỜ ĐỨNG.
+         Từ V1.12.4, lúc chưa đăng nhập listener dùng .where('dateKey','>=',...)
+         — đây là QUERY MỚI. Firestore thường bắn gói TỪ BỘ NHỚ ĐỆM trước
+         (fromCache=true) rồi mới bắn gói server sau. Nếu gói server tới chậm
+         hoặc không tới, cờ daNhanGoiServer KHÔNG BAO GIỜ bật -> màn chờ đứng
+         cho tới hết đồng hồ dự phòng (ảnh chụp: đã có 524 phiếu mà vẫn đứng).
+         Nay: có gói phiếu cân về rồi (dù từ bộ nhớ đệm) thì mở cổng sau 1,5
+         giây — đủ để gói server tới nếu nó đang trên đường. */
+      if(name === 'weighings' && !daNhanGoiServer && !choMoCong){
+        choMoCong = setTimeout(()=>{
+          choMoCong = null;
+          if(daNhanGoiServer) return;          // gói server đã tới, khỏi cần
+          daNhanGoiServer = true;
+          finalizeUserGate();
+        }, 1500);
+      }
       qs.docs.forEach(d=>{
         if(d.metadata && d.metadata.hasPendingWrites) idsChoXacNhan.add(d.id);
         else idsChoXacNhan.delete(d.id);
@@ -6612,7 +6650,7 @@ if(document.fonts && document.fonts.ready) document.fonts.ready.then(measureTopB
 switchTab('weigh');
 showSplash();      // khoá app ngay từ giây đầu, tránh vào được rồi mới đòi mật khẩu
 checkUserGate();   // nếu máy đã có sẵn tài khoản thì hiện đăng nhập ngay
-setTimeout(()=>{ if(!splashDone) finalizeUserGate(); }, SPLASH_QUA_HAN + 6000);  // không bao giờ kẹt màn chờ
+setTimeout(()=>{ if(!splashDone) finalizeUserGate(); }, SPLASH_QUA_HAN + 4000);  // không bao giờ kẹt màn chờ
 soMayNap();          // V1.11.1 — nạp sổ máy trước khi cân
 // V1.11.5 — kho phiếu cũ trong localStorage chiếm tới 5 MB và không còn tác dụng
 // khi bộ nhớ đệm Firebase đã bật. Dọn sớm để nhường chỗ cho Sổ máy.
