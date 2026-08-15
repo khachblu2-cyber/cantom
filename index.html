@@ -474,6 +474,25 @@
            31s xuống 12s.
            BÀI HỌC: đổi listener sang có .where() là tạo QUERY MỚI — mọi thứ
            đang chờ tín hiệu từ listener cũ đều phải rà lại.
+           (md5 61fa9f49511cdee05f3ca56906cad03f)
+  V1.12.8  VÁ 3 LỖI:
+           (a) Báo nhầm "Không tải thêm được dữ liệu cũ" trên máy có đủ quyền.
+               V1.12.5 coi là THẤT BẠI khi số phiếu KHÔNG TĂNG sau khi nới
+               listener. Nhưng máy vốn đã tải đầy đủ thì nới thêm KHÔNG CÓ GÌ
+               ĐỂ TẢI — số phiếu không tăng là bình thường. Nay chỉ báo lỗi
+               khi kho THẬT SỰ rỗng.
+           (b) Chốt chặn sao lưu xét mocDangTai (mức ĐANG ÁP DỤNG) thay vì chỉ
+               soNgayCanTai() (mức MONG MUỐN) — hai cái lệch nhau khi listener
+               chưa gắn lại xong.
+           (c) Màn chờ đếm CÙNG CÁCH với thanh xanh (chỉ phiếu hôm nay). Trước
+               đây màn chờ hiện 524 (tổng trong máy) mà vào app thấy 522 (hôm
+               nay) — không mất phiếu nhưng gây hoang mang.
+           Kèm: đưa khai báo `let mocDangTai` lên đầu, trước mọi chỗ dùng
+           (trước ở dòng 5xxx, sau chỗ dùng ở dòng 2xxx — lỗi TDZ mà
+           `node --check` KHÔNG bắt được).
+           BÀI HỌC: `node --check` chỉ kiểm cú pháp, KHÔNG kiểm thứ tự khai
+           báo let/const. Phải rà riêng: mọi biến let/const cấp cao nhất phải
+           khai báo TRƯỚC dòng đầu tiên dùng nó ngoài phạm vi hàm.
 
 ================================================================================
   HẾT PHẦN BÀN GIAO
@@ -887,7 +906,7 @@
   <div class="brand-row">
     <div class="brand">
       <div class="brand-title">⚖️ Cân Tôm</div>
-      <div class="brand-status"><span class="ver-badge">V1.12.7</span> · <span id="cloudStatus"></span></div>
+      <div class="brand-status"><span class="ver-badge">V1.12.8</span> · <span id="cloudStatus"></span></div>
     </div>
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
@@ -2359,10 +2378,17 @@ async function chayDonNhanVien(){
    1-3 NGÀY mà không báo gì. Đúng lại chuyện file 878 KB, nhưng do chính việc
    tối ưu tải gây ra.
    Nay kiểm tra CẢ HAI điều kiện trước khi cho xuất. */
+let mocDangTai = undefined;         // mốc của listener weighings hiện tại
 let dangTaiDayDuDeSaoLuu = false;   // tạm nới listener về đầy đủ
 
 /* Tạm nới listener về đầy đủ, chờ tải xong rồi sao lưu, sau đó thu lại.
    Không để nguyên mức đầy đủ vì máy cân cần nhẹ. */
+/* V1.12.8 — VÁ LỖI BÁO NHẦM "Không tải thêm được dữ liệu cũ".
+   V1.12.5 coi là THẤT BẠI khi số phiếu KHÔNG TĂNG sau khi nới listener.
+   Nhưng máy vốn đã tải đầy đủ (có quyền Công nợ/Cài đặt) thì nới thêm
+   KHÔNG CÓ GÌ ĐỂ TẢI — số phiếu không tăng là chuyện bình thường, không
+   phải lỗi. Máy đang có đủ dữ liệu mà lại báo lỗi và không cho sao lưu.
+   Nay chỉ coi là thất bại khi THẬT SỰ không có phiếu nào. */
 async function taiDayDuRoiSaoLuu(){
   const truoc = weighings.length;
   dangTaiDayDuDeSaoLuu = true;
@@ -2376,14 +2402,13 @@ async function taiDayDuRoiSaoLuu(){
     if(weighings.length === lanCuoi){ yen++; if(yen >= 3) break; }
     else { yen = 0; lanCuoi = weighings.length; }
   }
-  if(weighings.length <= truoc){
-    alert('Không tải thêm được dữ liệu cũ. Thử lại khi mạng ổn hơn,\n'
-        + 'hoặc dùng máy có quyền Công nợ/Cài đặt để sao lưu.');
+  if(!weighings.length){
+    alert('Chưa có phiếu cân nào để sao lưu.');
     dangTaiDayDuDeSaoLuu = false;
     attachRealtimeListeners();
     return;
   }
-  fullBackupExport();                    // giờ đã đầy đủ, chốt 2 sẽ cho qua
+  await fullBackupExport();              // giờ đã đầy đủ, chốt 2 sẽ cho qua
   dangTaiDayDuDeSaoLuu = false;
   setTimeout(attachRealtimeListeners, 1500);   // thu lại mức nhẹ
 }
@@ -2395,8 +2420,11 @@ async function fullBackupExport(){
         + 'sao lưu lúc này sẽ THIẾU phiếu cân.');
     return;
   }
-  // Chốt 2 — máy này có đang bị giới hạn số ngày không
-  const soNgay = soNgayCanTai();
+  // Chốt 2 — máy này có đang bị giới hạn số ngày không.
+  // V1.12.8: chỉ hỏi khi listener THẬT SỰ đang giới hạn (mocDangTai có giá trị).
+  // soNgayCanTai() là mức MONG MUỐN, còn mocDangTai là mức ĐANG ÁP DỤNG —
+  // hai cái có thể lệch nhau trong lúc listener chưa gắn lại xong.
+  const soNgay = (mocDangTai ? soNgayCanTai() : 0);
   if(soNgay > 0 && !dangTaiDayDuDeSaoLuu){
     const dong = confirm(
       '⚠️ Máy này chỉ tải ' + soNgay + ' ngày phiếu gần nhất cho nhẹ.\n'
@@ -2775,8 +2803,13 @@ function veManCho(){
   msg.textContent = chu;
   const bar = document.getElementById('splashBarIn');
   if(bar) bar.style.width = phanTram + '%';
+  // V1.12.8 — đếm CÙNG CÁCH với thanh xanh (chỉ phiếu hôm nay), không thì
+  // màn chờ hiện 524 mà vào app thấy 522, gây hoang mang dù không mất phiếu.
+  const hk = todayKey();
+  let soHomNay = 0;
+  for(let i=0;i<weighings.length;i++){ if(weighings[i].dateKey === hk) soHomNay++; }
   const cnt = document.getElementById('splashCount');
-  if(cnt) cnt.textContent = soPhieu ? (soPhieu.toLocaleString('en-US') + ' phiếu') : '';
+  if(cnt) cnt.textContent = soHomNay ? (soHomNay.toLocaleString('en-US') + ' phiếu') : '';
 
   const slow = document.getElementById('splashSlow');
   if(slow && giay*1000 >= SPLASH_QUA_HAN) slow.style.display = 'block';
@@ -5703,7 +5736,6 @@ function mocTaiPhieu(){
   });
   return moc;
 }
-let mocDangTai = undefined;   // mốc của listener weighings hiện tại
 
 function attachRealtimeListeners(){
   // Dọn listener cũ (nếu gọi lại)
