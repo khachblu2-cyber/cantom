@@ -156,7 +156,7 @@
     Tải xong phiếu cân MỚI cho đăng nhập. Trước đây app cho vào ngay khi có
     danh sách tài khoản -> bấm Sao lưu lúc đó ra file 878 KB thay vì 14,7 MB.
     Cờ daNhanGoiServer bật khi kho weighings nhận gói fromCache===false.
-    Quá 8 giây (SPLASH_QUA_HAN) thì hiện nút "Vào cân ngay" — KHÔNG BAO GIỜ
+    Quá 25 giây (SPLASH_QUA_HAN) thì hiện nút "Vào cân ngay" — KHÔNG BAO GIỜ
     khoá cứng, cả xưởng không được đứng chờ vì mạng.
 
   ▸ SAO LƯU
@@ -389,110 +389,45 @@
            toàn bộ phiếu của CẢ XƯỞNG (từ server) + phần máy đó cân mà chưa lên.
            Máy nào kẹt phiếu thì phải xuất trên CHÍNH MÁY ĐÓ mới đủ.
            (md5 d4128ae51ef7476490c63db193cd08a4)
-  V1.12.3  TẢI PHIẾU CÂN THEO QUYỀN TÀI KHOẢN — giảm 15 lần cho máy cân.
-           Trước đây bộ lắng nghe weighings KHÔNG có .where() -> mọi máy đều
-           tải TOÀN BỘ kho (40.000 phiếu, 10,4 MB, 8-15 giây trên 4G) mỗi lần
-           mở app, và con số đó tăng ~2.700/ngày, KHÔNG BAO GIỜ dừng.
-           Nay chia theo quyền (hàm soNgayCanTai / mocTaiPhieu):
-             - Chỉ quyền 'weigh'          -> 1 NGÀY  (~2.700 phiếu · 0,5s)
-             - Có quyền 'report'          -> 3 NGÀY  (~8.100 phiếu · 1,4s)
-             - Có quyền 'debt' hoặc 'config' -> ĐẦY ĐỦ
-           VÌ SAO Công nợ KHÔNG cắt được: buildDebtBalanceData gọi
-           congTheoNgay(B.thoTheoNgay, e.id, null, toKey) — tham số null nghĩa
-           là cộng TỪ NGÀY ĐẦU TIÊN. Số dư nợ là tổng tiền công từ trước tới
-           nay trừ tổng đã trả. Cắt là SỐ DƯ SAI, mà lại không báo lỗi gì.
-           Tab Báo cáo: nếu người dùng chọn khoảng ngày RỘNG HƠN mức mặc định,
-           mocTaiPhieu() tự nới mốc theo prodReportFrom / pivotDate. Không nới
-           thì báo cáo THIẾU dữ liệu mà không báo lỗi — nguy hiểm hơn chậm.
-           Trên 7 ngày thì hỏi xác nhận trước (canhBaoKhoangDai).
-           ganLaiListenerNeuCan() gọi khi đổi ngày / đổi tài khoản / đổi ngày
-           báo cáo. CHỈ gắn lại khi mốc thật sự đổi — tránh tốn lượt đọc.
-           LƯU Ý: phải gọi hàm huỷ listener cũ (firestoreListeners.forEach),
-           không thì listener cũ vẫn sống, vẫn nhận dữ liệu, VẪN TÍNH TIỀN ĐỌC.
-           Kết quả với 6 máy: 4/6 máy nhẹ đi 15 lần (gồm cả 3 máy cân).
-           Còn máy Công nợ và máy chủ tải đầy đủ — sẽ nhẹ khi làm bản tổng hợp ngày.
-           (md5 9f98379af49fc0b41bd7ea2d87bf6dc9)
-  V1.12.4  SỬA LỖI V1.12.3 — tính năng tải theo quyền KHÔNG CHẠY.
-           Bộ lắng nghe gắn NGAY KHI KẾT NỐI XONG, tức TRƯỚC lúc đăng nhập,
-           lúc đó currentUser còn null. V1.12.3 cho can2() trả TRUE khi chưa
-           đăng nhập -> soNgayCanTai() trả 0 -> MỌI MÁY vẫn tải đầy đủ 39.000
-           phiếu ở màn chờ. Đăng nhập xong mới thu hẹp, nhưng ĐÃ TẢI XONG RỒI.
-           Vá: đảo ngược mặc định.
-             - Chưa đăng nhập      -> tải TỐI THIỂU (1 ngày)
-             - Máy chưa có tài khoản nào (staffUsers rỗng) -> đầy đủ
-             - Đăng nhập xong      -> applyCurrentUserPermissions gọi
-                                      ganLaiListenerNeuCan() để nới theo quyền
-           Máy cân : 2.700 -> đăng nhập -> 2.700 (KHÔNG tải lại gì)
-           Máy chủ : 2.700 -> đăng nhập -> 39.000 (tải thêm phần còn thiếu)
-           BÀI HỌC: khi phân quyền ảnh hưởng tới việc TẢI DỮ LIỆU, phải xét
-           THỨ TỰ — cái gì chạy trước lúc đăng nhập thì chưa biết người dùng
-           là ai. Mặc định lúc chưa biết phải là mức AN TOÀN NHẤT (ít nhất),
-           không phải mức rộng nhất.
-           (md5 976be3f918bce89a6c606cc36a011224)
-  V1.12.5  CHỐT CHẶN SAO LƯU khi máy bị giới hạn số ngày.
-           Từ V1.12.3 máy chỉ tải 1-3 ngày phiếu. fullBackupExport lấy thẳng
-           mảng `weighings` trong bộ nhớ -> máy bị giới hạn xuất ra file CHỈ CÓ
-           1-3 NGÀY mà KHÔNG BÁO GÌ. Đúng lại chuyện file 878 KB hôm 12/08,
-           nhưng lần này do chính việc tối ưu tải gây ra.
-           Nay kiểm tra CẢ HAI điều kiện:
-             Chốt 1: daNhanGoiServer — đã tải xong chưa
-             Chốt 2: soNgayCanTai() > 0 — có đang bị giới hạn ngày không
-           Nếu bị giới hạn thì hỏi, đồng ý thì taiDayDuRoiSaoLuu():
-             - Bật cờ dangTaiDayDuDeSaoLuu -> soNgayCanTai() trả 0
-             - Gắn lại listener (đầy đủ), chờ tới khi số phiếu ngừng tăng
-               (3 lần liên tiếp không đổi) hoặc quá 30 giây
-             - Xuất file, rồi THU LẠI mức nhẹ sau 1,5 giây
-           BÀI HỌC: mỗi khi giới hạn dữ liệu tải về, phải rà MỌI hàm đọc thẳng
-           từ mảng trong bộ nhớ (weighings, payments...) — sao lưu, xuất Excel,
-           báo cáo, đối chiếu. Chúng đều ngầm giả định "dữ liệu trong máy là đủ".
-           (md5 7a9363b356028be2dcc3e1031e7bfef2)
-  V1.12.6  Cột "Mã hàng" trong file Excel lấy TÊN (p.name) thay vì MÃ (p.code)
-           cho dễ đọc: "ACHU-LO1" -> "A Châu Lo1". Mã hàng chưa đặt tên thì
-           tự lấy mã thay thế, không để trống: (p && (p.name || p.code)).
-           Áp dụng cho cả 2 nguồn trong dungBangChiTiet (server + Sổ máy).
-           Khối cuối tab Cân tôm CHIA ĐÔI: "📄 Xuất Excel" (viền xanh dương) và
-           "💾 Sao lưu" (viền xanh lá), mỗi ô có biểu tượng + một dòng giải thích.
-           Tiêu đề khối đổi thành "💾 Lưu dữ liệu".
-           LƯU Ý: nút Sao lưu ở đây sẽ gặp chốt chặn V1.12.5 trên máy cân
-           (chỉ tải 1 ngày) — app hỏi "tải đầy đủ rồi sao lưu?", mất 10-20 giây.
-           Đó là hành vi ĐÚNG, không phải lỗi.
-           (md5 a63da1f8dc889613c858e51f8b330976)
-  V1.12.7  VÁ MÀN CHỜ ĐỨNG (do chính V1.12.4 gây ra).
-           Triệu chứng: màn chờ hiện "Đang tải phiếu cân… 524 phiếu" rồi ĐỨNG
-           YÊN, phải đợi hết đồng hồ dự phòng 31 giây mới vào được — dù dữ liệu
-           đã về đủ.
-           Nguyên nhân: màn chờ đợi cờ daNhanGoiServer, cờ này chỉ bật khi kho
-           weighings nhận gói có fromCache === false. Từ V1.12.4, lúc CHƯA
-           ĐĂNG NHẬP listener dùng .where('dateKey','>=',...) — đây là QUERY
-           MỚI. Firestore thường bắn gói TỪ BỘ NHỚ ĐỆM trước (fromCache=true)
-           rồi mới bắn gói server. Gói server tới chậm hoặc không tới thì cờ
-           KHÔNG BAO GIỜ BẬT.
-           Vá: có gói phiếu cân về rồi (dù từ bộ nhớ đệm) thì hẹn 1,5 giây rồi
-           mở cổng — đủ để gói server tới nếu đang trên đường; tới thì huỷ hẹn.
-           Rút SPLASH_QUA_HAN 25s -> 8s (giờ chỉ tải 1 ngày, không cần chờ lâu).
-           Kết quả: cảnh trong ảnh từ 12s xuống 1,9s. Mất mạng hoàn toàn:
-           31s xuống 12s.
-           BÀI HỌC: đổi listener sang có .where() là tạo QUERY MỚI — mọi thứ
-           đang chờ tín hiệu từ listener cũ đều phải rà lại.
-           (md5 61fa9f49511cdee05f3ca56906cad03f)
-  V1.12.8  VÁ 3 LỖI:
-           (a) Báo nhầm "Không tải thêm được dữ liệu cũ" trên máy có đủ quyền.
-               V1.12.5 coi là THẤT BẠI khi số phiếu KHÔNG TĂNG sau khi nới
-               listener. Nhưng máy vốn đã tải đầy đủ thì nới thêm KHÔNG CÓ GÌ
-               ĐỂ TẢI — số phiếu không tăng là bình thường. Nay chỉ báo lỗi
-               khi kho THẬT SỰ rỗng.
-           (b) Chốt chặn sao lưu xét mocDangTai (mức ĐANG ÁP DỤNG) thay vì chỉ
-               soNgayCanTai() (mức MONG MUỐN) — hai cái lệch nhau khi listener
-               chưa gắn lại xong.
-           (c) Màn chờ đếm CÙNG CÁCH với thanh xanh (chỉ phiếu hôm nay). Trước
-               đây màn chờ hiện 524 (tổng trong máy) mà vào app thấy 522 (hôm
-               nay) — không mất phiếu nhưng gây hoang mang.
-           Kèm: đưa khai báo `let mocDangTai` lên đầu, trước mọi chỗ dùng
-           (trước ở dòng 5xxx, sau chỗ dùng ở dòng 2xxx — lỗi TDZ mà
-           `node --check` KHÔNG bắt được).
-           BÀI HỌC: `node --check` chỉ kiểm cú pháp, KHÔNG kiểm thứ tự khai
-           báo let/const. Phải rà riêng: mọi biến let/const cấp cao nhất phải
-           khai báo TRƯỚC dòng đầu tiên dùng nó ngoài phạm vi hàm.
+
+  --- V1.12.3 đến V1.12.8: ĐÃ GỠ BỎ, KHÔNG DÙNG ---
+  Dòng V1.12.3-1.12.8 làm tính năng "tải phiếu theo quyền tài khoản" (máy cân
+  chỉ tải 1 ngày cho nhẹ). Đã GỠ BỎ HOÀN TOÀN vì lý do sau — ĐỌC KỸ TRƯỚC KHI
+  ĐỊNH LÀM LẠI:
+    Cắt dữ liệu tải về ảnh hưởng tới 11 HÀM cần TOÀN BỘ lịch sử, mà chỉ chặn
+    được 1 (sao lưu). Nguy hiểm nhất:
+      dungBangTraCuu        -> CÔNG NỢ SAI, trả lương thiếu tiền công nhân
+      employeeDailyEarnings -> màn hình chi tiền thiếu ngày
+      performPeriodClose    -> chốt kỳ sai
+      quetNhanVienChuaDung  -> tưởng nhân viên chưa dùng rồi XOÁ NHẦM
+      exportArchiveExcel, totalMealBonusAllTime, tienCongTheoNgay,
+      renderLichSuCan, locLichSuCan, doSucChua, wipeAllData
+    Chưa gây hậu quả chỉ vì quyền trùng khớp may mắn (ai vào được các tab đó
+    thì cũng được tải đầy đủ) — KHÔNG có chốt chặn thật.
+    Kèm 6 lần vá liên tiếp trong một buổi sáng, lần nào cũng sinh lỗi mới:
+      V1.12.3 tính năng không chạy (listener gắn trước lúc đăng nhập)
+      V1.12.4 vá xong thì màn chờ đứng 25 giây
+      V1.12.5 chốt sao lưu báo lỗi sai trên máy đủ quyền
+      V1.12.7 vá màn chờ
+      V1.12.8 vá chốt sao lưu, VẪN ra file thiếu (5.150/39.000 phiếu)
+    NGUYÊN NHÂN GỐC: vá theo triệu chứng, kiểm tra CỜ TRẠNG THÁI
+    (daNhanGoiServer, soNgayCanTai, mocDangTai) thay vì đo DỮ LIỆU THỰC TẾ.
+  >>> Việc tối ưu tải chỉ nên làm SAU khi có BẢN TỔNG HỢP NGÀY, lúc đó công nợ
+      không còn đọc từ phiếu gốc nữa thì cắt tải mới an toàn thật sự.
+
+  V1.13.0  Dựng lại từ V1.12.2 (bản ổn định), thêm 2 việc nhỏ chỉ đụng giao diện:
+           - Cột "Mã hàng" trong Excel lấy TÊN (p.name) thay vì MÃ (p.code):
+             "ACHU-LO1" -> "A Châu Lo1". Thiếu tên thì tự lấy mã.
+           - Khối cuối tab Cân tôm CHIA ĐÔI: "📄 Xuất Excel" và "💾 Sao lưu".
+           ĐÃ ĐỐI CHIẾU TỪNG DÒNG với V1.12.2: chỉ khác 29 dòng, TẤT CẢ là
+           giao diện. Mọi hàm động tới dữ liệu và tiền GIỐNG HỆT:
+             tronNghin · tienCongNgay · dayEarnedRaw · mealBonusForDay ·
+             dungBangTraCuu · congTheoNgay · buildDebtBalanceData ·
+             buildDebtReportRows · tienCongTheoNgay · ghiNgay · xoaNgay ·
+             saveAll · syncNow · addWeighing · confirmPaymentAndPrintBill ·
+             deleteWeighing · deleteSingleWeigh · deleteWeighGroup ·
+             fullBackupExport · fullBackupImport
+           Listener KHÔNG có .where() -> tải đầy đủ như cũ, mọi hàm đều đủ dữ liệu.
 
 ================================================================================
   HẾT PHẦN BÀN GIAO
@@ -906,7 +841,7 @@
   <div class="brand-row">
     <div class="brand">
       <div class="brand-title">⚖️ Cân Tôm</div>
-      <div class="brand-status"><span class="ver-badge">V1.12.8</span> · <span id="cloudStatus"></span></div>
+      <div class="brand-status"><span class="ver-badge">V1.13.0</span> · <span id="cloudStatus"></span></div>
     </div>
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
@@ -1261,7 +1196,7 @@
     <div id="bcMuc1">
       <div class="card-title">📋 Bảng tổng hợp chi tiết cân theo ngày</div>
       <div class="card">
-        <div class="field"><label>Chọn ngày</label><input type="date" id="pivotDate" onchange="doiNgayPivot()"></div>
+        <div class="field"><label>Chọn ngày</label><input type="date" id="pivotDate" onchange="renderPivotTable(document.getElementById('pivotDate').value)"></div>
       </div>
       <div style="overflow-x:auto;">
         <div id="pivotTableWrap"></div>
@@ -1279,8 +1214,8 @@
       <div class="card-title">🏭 Báo cáo tổng hợp thành phẩm chế biến</div>
       <div class="card">
         <div class="row">
-          <div class="field"><label>Từ ngày</label><input type="date" id="prodReportFrom" onchange="doiNgayBaoCao()"></div>
-          <div class="field"><label>Đến ngày</label><input type="date" id="prodReportTo" onchange="doiNgayBaoCao()"></div>
+          <div class="field"><label>Từ ngày</label><input type="date" id="prodReportFrom" onchange="renderProductReport()"></div>
+          <div class="field"><label>Đến ngày</label><input type="date" id="prodReportTo" onchange="renderProductReport()"></div>
         </div>
       </div>
       <div style="overflow-x:auto;">
@@ -2372,67 +2307,13 @@ async function chayDonNhanVien(){
     </div>`;
 }
 
-/* V1.12.5 — CHỐT CHẶN THỨ HAI CHO SAO LƯU.
-   Từ V1.12.3 máy chỉ tải 1-3 ngày phiếu tuỳ quyền. fullBackupExport lấy thẳng
-   mảng `weighings` trong bộ nhớ -> máy bị giới hạn sẽ xuất ra file CHỈ CÓ
-   1-3 NGÀY mà không báo gì. Đúng lại chuyện file 878 KB, nhưng do chính việc
-   tối ưu tải gây ra.
-   Nay kiểm tra CẢ HAI điều kiện trước khi cho xuất. */
-let mocDangTai = undefined;         // mốc của listener weighings hiện tại
-let dangTaiDayDuDeSaoLuu = false;   // tạm nới listener về đầy đủ
-
-/* Tạm nới listener về đầy đủ, chờ tải xong rồi sao lưu, sau đó thu lại.
-   Không để nguyên mức đầy đủ vì máy cân cần nhẹ. */
-/* V1.12.8 — VÁ LỖI BÁO NHẦM "Không tải thêm được dữ liệu cũ".
-   V1.12.5 coi là THẤT BẠI khi số phiếu KHÔNG TĂNG sau khi nới listener.
-   Nhưng máy vốn đã tải đầy đủ (có quyền Công nợ/Cài đặt) thì nới thêm
-   KHÔNG CÓ GÌ ĐỂ TẢI — số phiếu không tăng là chuyện bình thường, không
-   phải lỗi. Máy đang có đủ dữ liệu mà lại báo lỗi và không cho sao lưu.
-   Nay chỉ coi là thất bại khi THẬT SỰ không có phiếu nào. */
-async function taiDayDuRoiSaoLuu(){
-  const truoc = weighings.length;
-  dangTaiDayDuDeSaoLuu = true;
-  attachRealtimeListeners();
-
-  // Chờ tới khi số phiếu ngừng tăng (tải xong) hoặc quá 30 giây
-  const batDau = Date.now();
-  let lanCuoi = truoc, yen = 0;
-  while(Date.now() - batDau < 30000){
-    await new Promise(r=>setTimeout(r, 800));
-    if(weighings.length === lanCuoi){ yen++; if(yen >= 3) break; }
-    else { yen = 0; lanCuoi = weighings.length; }
-  }
-  if(!weighings.length){
-    alert('Chưa có phiếu cân nào để sao lưu.');
-    dangTaiDayDuDeSaoLuu = false;
-    attachRealtimeListeners();
-    return;
-  }
-  await fullBackupExport();              // giờ đã đầy đủ, chốt 2 sẽ cho qua
-  dangTaiDayDuDeSaoLuu = false;
-  setTimeout(attachRealtimeListeners, 1500);   // thu lại mức nhẹ
-}
-
-async function fullBackupExport(){
-  // Chốt 1 — dữ liệu đã tải xong chưa
+function fullBackupExport(){
+  // V1.11.6 — CHẶN khi dữ liệu chưa tải xong.
+  // Trước đây bấm lúc app mới mở ra file 878 KB thay vì 14,7 MB — thiếu gần
+  // hết phiếu cân, mà nhìn tên file không biết được.
   if(!daNhanGoiServer){
     alert('⏳ Dữ liệu chưa tải xong từ server.\n\nChờ vài giây rồi sao lưu lại — '
         + 'sao lưu lúc này sẽ THIẾU phiếu cân.');
-    return;
-  }
-  // Chốt 2 — máy này có đang bị giới hạn số ngày không.
-  // V1.12.8: chỉ hỏi khi listener THẬT SỰ đang giới hạn (mocDangTai có giá trị).
-  // soNgayCanTai() là mức MONG MUỐN, còn mocDangTai là mức ĐANG ÁP DỤNG —
-  // hai cái có thể lệch nhau trong lúc listener chưa gắn lại xong.
-  const soNgay = (mocDangTai ? soNgayCanTai() : 0);
-  if(soNgay > 0 && !dangTaiDayDuDeSaoLuu){
-    const dong = confirm(
-      '⚠️ Máy này chỉ tải ' + soNgay + ' ngày phiếu gần nhất cho nhẹ.\n'
-    + 'Sao lưu bây giờ sẽ THIẾU dữ liệu cũ.\n\n'
-    + 'Bấm OK để tải đầy đủ rồi sao lưu (mất 10-20 giây),\n'
-    + 'hoặc Huỷ và dùng máy có quyền Công nợ/Cài đặt.');
-    if(!dong) return;
-    await taiDayDuRoiSaoLuu();
     return;
   }
   const payload = { employees, products, weighings, openingBalances, payments, overtimeDays, companyInfo, appOptions, exportedAt: new Date().toISOString() };
@@ -2785,9 +2666,7 @@ function showSplash(){
 
 // Biểu tượng cân điện tử (mặt cân + thân + màn hình số) — dùng chung cho màn chờ và đăng nhập
 let splashLucBatDau = 0, splashDongHo = null;
-/* V1.12.7 — rút từ 25s xuống 8s. Từ V1.12.4 lúc chưa đăng nhập chỉ tải
-   1 NGÀY phiếu (~2.700), về rất nhanh — không cần chờ lâu như khi tải 40.000. */
-const SPLASH_QUA_HAN = 8000;
+const SPLASH_QUA_HAN = 25000;   // 25 giây thì cho vào cân dù chưa tải xong
 
 function veManCho(){
   const msg = document.getElementById('splashMsg');
@@ -2803,13 +2682,8 @@ function veManCho(){
   msg.textContent = chu;
   const bar = document.getElementById('splashBarIn');
   if(bar) bar.style.width = phanTram + '%';
-  // V1.12.8 — đếm CÙNG CÁCH với thanh xanh (chỉ phiếu hôm nay), không thì
-  // màn chờ hiện 524 mà vào app thấy 522, gây hoang mang dù không mất phiếu.
-  const hk = todayKey();
-  let soHomNay = 0;
-  for(let i=0;i<weighings.length;i++){ if(weighings[i].dateKey === hk) soHomNay++; }
   const cnt = document.getElementById('splashCount');
-  if(cnt) cnt.textContent = soHomNay ? (soHomNay.toLocaleString('en-US') + ' phiếu') : '';
+  if(cnt) cnt.textContent = soPhieu ? (soPhieu.toLocaleString('en-US') + ' phiếu') : '';
 
   const slow = document.getElementById('splashSlow');
   if(slow && giay*1000 >= SPLASH_QUA_HAN) slow.style.display = 'block';
@@ -2821,10 +2695,8 @@ function boQuaManCho(){
 }
 let daBoQuaManCho = false;
 let daNhanGoiServer = false;   // đã nhận ít nhất một gói dữ liệu THẬT từ server
-let choMoCong = null;          // hẹn giờ mở cổng khi gói đến từ bộ nhớ đệm
 function hideSplash(){
   if(splashDongHo){ clearInterval(splashDongHo); splashDongHo = null; }
-  if(choMoCong){ clearTimeout(choMoCong); choMoCong = null; }
   const d = document.getElementById('appSplash');
   if(d) d.remove();
 }
@@ -2976,7 +2848,6 @@ function applyWeighDateLock(){
   }
 }
 function applyCurrentUserPermissions(){
-  setTimeout(ganLaiListenerNeuCan, 100);   // V1.12.3 — quyền đổi thì mức tải cũng đổi
   const bar = document.getElementById('currentUserBar');
   applyWeighDateLock();
   if(!currentUser){
@@ -3664,19 +3535,7 @@ function onWeighDateChange(){
     document.getElementById('weighDate').value = todayKey();
     alert("Tài khoản của bạn chỉ được cân cho ngày hôm nay.");
     return;
-  }
-  ganLaiListenerNeuCan();   // V1.12.3 — đổi ngày thì tải phiếu ngày đó
-  renderWeighTab(); }
-
-/* V1.12.3 — Gắn lại listener weighings khi mốc ngày cần tải thay đổi.
-   Gọi khi: đổi ngày đang xem, đổi tài khoản, đổi tab.
-   Nếu mốc không đổi thì KHÔNG làm gì — tránh gắn lại vô ích và tốn lượt đọc. */
-function ganLaiListenerNeuCan(){
-  if(!fsReady || !fsDb) return;
-  const moc = mocTaiPhieu();
-  if(moc === mocDangTai) return;
-  attachRealtimeListeners();
-}
+  } renderWeighTab(); }
 
 function getFilteredEmployees(){
   const q = (document.getElementById('empSearch').value||'').trim().toLowerCase();
@@ -5325,31 +5184,6 @@ function buildProductReportData(){
   const totalAmount = rows.reduce((s,r)=>s+r.amount,0);
   return { fromKey, toKey, rows, totalQty, totalAmount };
 }
-/* V1.12.3 — Đổi ngày ở tab Báo cáo: nới mốc tải rồi mới vẽ.
-   Nếu khoảng chọn dài, cảnh báo trước vì tải có thể lâu. */
-function doiNgayBaoCao(){
-  if(!canhBaoKhoangDai()) return;
-  ganLaiListenerNeuCan();
-  renderProductReport();
-}
-function doiNgayPivot(){
-  ganLaiListenerNeuCan();
-  renderPivotTable(document.getElementById('pivotDate').value);
-}
-// Cảnh báo khi khoảng ngày quá dài (chỉ hỏi khi trên 7 ngày)
-function canhBaoKhoangDai(){
-  const f = document.getElementById('prodReportFrom');
-  const t = document.getElementById('prodReportTo');
-  if(!f || !t || !f.value || !t.value) return true;
-  const d1 = new Date(f.value + 'T00:00:00'), d2 = new Date(t.value + 'T00:00:00');
-  const soNgay = Math.round((d2 - d1) / 86400000) + 1;
-  if(soNgay <= 7) return true;
-  if(soNgayCanTai() === 0) return true;              // tài khoản vốn tải đầy đủ
-  const uocPhieu = soNgay * 2700;
-  return confirm('Bạn chọn ' + soNgay + ' ngày — khoảng ' + uocPhieu.toLocaleString('en-US')
-    + ' phiếu.\nTải có thể mất 15-50 giây tuỳ mạng.\n\nTiếp tục?');
-}
-
 function renderProductReport(){
   const wrap = document.getElementById('productReportWrap');
   const { rows, totalQty, totalAmount } = buildProductReportData();
@@ -5676,78 +5510,13 @@ function luuKhoLenMay(name, docs){
   catch(e){ console.warn('Không lưu được kho "'+name+'" trên máy:', e && e.name); }
 }
 
-/* ==========================================================================
-   V1.12.3 — TẢI PHIẾU CÂN THEO TAB ĐANG MỞ
-   --------------------------------------------------------------------------
-   Trước đây bộ lắng nghe kho weighings KHÔNG có .where() -> tải TOÀN BỘ kho
-   (40.000 phiếu, 10,4 MB) mỗi lần mở app, và con số đó tăng mãi.
-   Nay mỗi tab chỉ tải đúng phần nó cần:
-     - Tab Cân tôm : 1 ngày   (~2.700 phiếu · 0,5s)   <- máy cân nhẹ 15 lần
-     - Tab Báo cáo : 3 ngày   (~8.100 phiếu · 1,4s)
-     - Tab Công nợ : ĐẦY ĐỦ   (bắt buộc — số dư cộng từ ngày đầu tiên tới nay,
-                               congTheoNgay(..., null, toKey), cắt là SAI SỐ DƯ)
-   Lấy mức RỘNG NHẤT trong các tab mà tài khoản có quyền, để đổi tab không
-   phải tải lại. Đổi ngày đang xem thì gắn lại listener cho ngày đó.
-   QUAN TRỌNG: phải gọi hàm huỷ listener cũ, không thì nó vẫn sống, vẫn nhận
-   dữ liệu và VẪN TÍNH TIỀN ĐỌC.
-   ========================================================================== */
-const NGAY_TAB = { weigh: 1, report: 3 };   // Công nợ/Cài đặt = đầy đủ
-
-/* Số ngày phiếu cân cần tải, theo quyền tài khoản.
-   V1.12.4 — SỬA LỖI CỦA V1.12.3:
-   Bộ lắng nghe gắn NGAY KHI KẾT NỐI XONG, tức TRƯỚC lúc đăng nhập. Lúc đó
-   currentUser còn null. Bản V1.12.3 cho `can2` trả true khi chưa đăng nhập
-   -> mọi máy đều tải ĐẦY ĐỦ 39.000 phiếu ở màn chờ, rồi mới đăng nhập và
-   mới thu hẹp — nhưng đã tải xong rồi, MUỘN MẤT. Máy cân không được lợi gì.
-   Nay đảo ngược: chưa biết là ai thì tải TỐI THIỂU (1 ngày). Đăng nhập xong
-   applyCurrentUserPermissions -> ganLaiListenerNeuCan() sẽ nới ra theo quyền.
-   Người cân: 1 ngày -> 1 ngày, không tải lại gì.
-   Máy chủ:   1 ngày -> đầy đủ, tải thêm phần còn thiếu sau khi đăng nhập. */
-function soNgayCanTai(){
-  if(dangTaiDayDuDeSaoLuu) return 0;                   // đang tạm nới để sao lưu
-  // Máy chưa thiết lập tài khoản nào -> không có gì để phân quyền, tải đầy đủ
-  if(!staffUsers.length) return 0;
-  if(!currentUser) return NGAY_TAB.weigh;               // chưa đăng nhập: tải ít nhất
-  if(can2('debt') || can2('config')) return 0;         // 0 = không giới hạn
-  if(can2('report')) return NGAY_TAB.report;
-  return NGAY_TAB.weigh;
-}
-function can2(tab){
-  if(!currentUser) return false;    // xem chú thích ở soNgayCanTai
-  const p = currentUser.permissions || {};
-  return !!p[tab];
-}
-// Mốc dateKey nhỏ nhất cần tải
-function mocTaiPhieu(){
-  const n = soNgayCanTai();
-  if(!n) return null;                                    // đầy đủ
-  const dk = (document.getElementById('weighDate') && document.getElementById('weighDate').value) || todayKey();
-  const d = new Date(dk + 'T00:00:00');
-  d.setDate(d.getDate() - (n - 1));
-  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
-  let moc = y + '-' + m + '-' + day;
-
-  // Người dùng chọn khoảng ngày RỘNG HƠN ở tab Báo cáo thì phải nới mốc,
-  // không thì báo cáo THIẾU dữ liệu mà không báo lỗi gì — nguy hiểm hơn chậm.
-  [ 'prodReportFrom', 'pivotDate' ].forEach(id=>{
-    const el = document.getElementById(id);
-    const v = el && el.value;
-    if(v && v < moc) moc = v;
-  });
-  return moc;
-}
-
 function attachRealtimeListeners(){
   // Dọn listener cũ (nếu gọi lại)
   firestoreListeners.forEach(unsub=>unsub());
   firestoreListeners = [];
-  mocDangTai = mocTaiPhieu();
 
   Object.keys(COLLECTIONS).forEach(name=>{
-    let ref = fsDb.collection(name);
-    // Chỉ giới hạn kho phiếu cân — các kho khác đều nhẹ, tải hết
-    if(name === 'weighings' && mocDangTai) ref = ref.where('dateKey', '>=', mocDangTai);
-    const unsub = ref.onSnapshot(qs=>{
+    const unsub = fsDb.collection(name).onSnapshot(qs=>{
       // Server là bản chuẩn — thay thẳng. Firestore đã tự gộp sẵn
       // các bản ghi máy này vừa ghi mà chưa kịp lên server.
       // Server là bản chuẩn — thay thẳng.
@@ -5762,22 +5531,6 @@ function attachRealtimeListeners(){
           daNhanGoiServer = true;
           setTimeout(finalizeUserGate, 300);   // để render kịp rồi mới mở cổng
         }
-      }
-      /* V1.12.7 — VÁ MÀN CHỜ ĐỨNG.
-         Từ V1.12.4, lúc chưa đăng nhập listener dùng .where('dateKey','>=',...)
-         — đây là QUERY MỚI. Firestore thường bắn gói TỪ BỘ NHỚ ĐỆM trước
-         (fromCache=true) rồi mới bắn gói server sau. Nếu gói server tới chậm
-         hoặc không tới, cờ daNhanGoiServer KHÔNG BAO GIỜ bật -> màn chờ đứng
-         cho tới hết đồng hồ dự phòng (ảnh chụp: đã có 524 phiếu mà vẫn đứng).
-         Nay: có gói phiếu cân về rồi (dù từ bộ nhớ đệm) thì mở cổng sau 1,5
-         giây — đủ để gói server tới nếu nó đang trên đường. */
-      if(name === 'weighings' && !daNhanGoiServer && !choMoCong){
-        choMoCong = setTimeout(()=>{
-          choMoCong = null;
-          if(daNhanGoiServer) return;          // gói server đã tới, khỏi cần
-          daNhanGoiServer = true;
-          finalizeUserGate();
-        }, 1500);
       }
       qs.docs.forEach(d=>{
         if(d.metadata && d.metadata.hasPendingWrites) idsChoXacNhan.add(d.id);
@@ -6682,7 +6435,7 @@ if(document.fonts && document.fonts.ready) document.fonts.ready.then(measureTopB
 switchTab('weigh');
 showSplash();      // khoá app ngay từ giây đầu, tránh vào được rồi mới đòi mật khẩu
 checkUserGate();   // nếu máy đã có sẵn tài khoản thì hiện đăng nhập ngay
-setTimeout(()=>{ if(!splashDone) finalizeUserGate(); }, SPLASH_QUA_HAN + 4000);  // không bao giờ kẹt màn chờ
+setTimeout(()=>{ if(!splashDone) finalizeUserGate(); }, SPLASH_QUA_HAN + 6000);  // không bao giờ kẹt màn chờ
 soMayNap();          // V1.11.1 — nạp sổ máy trước khi cân
 // V1.11.5 — kho phiếu cũ trong localStorage chiếm tới 5 MB và không còn tác dụng
 // khi bộ nhớ đệm Firebase đã bật. Dọn sớm để nhường chỗ cho Sổ máy.
