@@ -1,436 +1,154 @@
 <!--
 ================================================================================
-  BÀN GIAO — APP CÂN TÔM (Tính tiền công nhật)
-  Phiên bản: V1.11.8    Cập nhật: 13/08/2026
+  BÀN GIAO — APP CÂN TÔM · BẢN CÂN (chỉ để cân)
+  Phiên bản: CÂN V1.2    Ngày: 17/08/2026
+  Link: khachblu2-cyber.github.io/cantom/
 --------------------------------------------------------------------------------
-  TÀI LIỆU NÀY NẰM NGAY TRONG FILE, KHÔNG BAO GIỜ LỆCH VỚI CODE.
-  Mỗi lần sửa file BẮT BUỘC cập nhật luôn phần này (số phiên bản + dòng
-  lịch sử + md5 mới). Muốn tiếp tục công việc ở nơi khác: chỉ cần đưa
-  nguyên file này, không cần thêm tài liệu nào.
+  ĐÂY LÀ BẢN RÚT GỌN, cắt ra từ bản đầy đủ V1.13.0
+  (md5 d1fe66192ef126e8fbcca02924c48e1c).
+  Bản đầy đủ chạy ở link RIÊNG: khachblu2-cyber.github.io/quanly/
 ================================================================================
 
-■ 1. BỐI CẢNH
-  Công ty thuỷ sản tại Cà Mau / Bạc Liêu. App tính tiền công nhật cho công
-  nhân cân tôm.
-  Quy mô thực tế (13/08/2026):
-    - 35.889 phiếu cân trong kho, tăng ~2.500-2.700 phiếu MỖI NGÀY
-    - 2.522 nhân viên · 281 mã hàng · ~200-226 người làm mỗi ngày
-    - 3 máy Windows cân đồng thời tại xưởng + iPhone của chủ theo dõi
-  Ngôn ngữ: tiếng Việt toàn bộ (giao diện, chú thích code, trao đổi).
+■ 1. VÌ SAO CÓ BẢN NÀY
+  Kho weighings tăng ~2.700 phiếu/ngày, không bao giờ dừng. Bản đầy đủ tải
+  TOÀN BỘ kho mỗi lần mở app:
+     Hôm nay 51.000 phiếu = 8-15 giây · 1 năm 985.000 phiếu = 167 giây
+  Bản cân chỉ tải phiếu của NGÀY ĐANG XEM (~2.700), luôn 0,5 giây, và
+  KHÔNG BAO GIỜ TĂNG dù kho có 5 triệu phiếu.
 
-■ 2. HẠ TẦNG
-  File single-file HTML, tên Can-tom-tinh-tien-V*.html
-  Hosting GitHub Pages, tài khoản khachblu2-cyber
-    - Bản chạy thật:  khachblu2-cyber.github.io/cantom/   (đổi tên index.html)
-    - Bản thử:        khachblu2-cyber.github.io/test/
-  Firebase project: can-tom-tinh-tien (gói Blaze), region asia-southeast1
-  Thư viện: Firebase 10.13.0 compat, xlsx (SheetJS), JsBarcode
+■ 2. HAI LINK — DÙNG ĐÚNG CHỖ
+  /cantom/  BẢN CÂN (file này)  · 3 máy cân + máy báo cáo · tải theo ngày
+  /quanly/  V1.13.0 đầy đủ      · máy chủ + máy công nợ   · tải đầy đủ
+  Cùng Firebase (can-tom-tinh-tien), cùng tài khoản, cùng cấu trúc dữ liệu.
+  Phiếu cân từ bản nào cũng lên server y hệt.
 
-  LƯU Ý: app Sổ Thu Chi của cùng người dùng chạy ở project KHÁC
-  (so-thu-chi-9f0b5). Hai project hoàn toàn tách biệt.
+■ 3. ĐÃ XOÁ GÌ — VÀ VÌ SAO XOÁ CHỨ KHÔNG ẨN
+  XOÁ HẲN khỏi HTML: tab Công nợ (debtTab), tab Chốt & In (settleTab),
+  tab Cài đặt (configTab), nút Sao lưu, 3 nút tab tương ứng.
+  ALL_TABS = ['weigh','catalog','report']
 
-  Firebase config:
-    apiKey: "AIzaSyAb6nA3PBtJTmgEH2YFUtFtdJ8N6qty4do"
-    authDomain: "can-tom-tinh-tien.firebaseapp.com"
-    projectId: "can-tom-tinh-tien"
-    storageBucket: "can-tom-tinh-tien.firebasestorage.app"
-    messagingSenderId: "588993717848"
-    appId: "1:588993717848:web:d8ea39af3d940d53950c2d"
+  VÌ SAO XOÁ CHỨ KHÔNG ẨN — BÀI HỌC TỪ V1.12.3-1.12.8:
+  Lần đó vẫn để lại tab Công nợ trong file, chỉ giới hạn dữ liệu tải về.
+  Kết quả: 11 hàm cần TOÀN BỘ lịch sử bị thiếu dữ liệu, chỉ chặn được 1.
+  Nguy hiểm nhất là dungBangTraCuu -> CÔNG NỢ SAI, trả lương thiếu tiền
+  công nhân. Chưa gây hậu quả chỉ vì quyền trùng khớp may mắn.
+  6 lần vá liên tiếp trong một buổi sáng, lần nào cũng sinh lỗi mới.
+  >>> XOÁ HẲN thì KHÔNG CÓ GÌ ĐỂ SAI. Đây là loại an toàn không dựa vào
+      điều kiện nào cả.
 
-  App Check: reCAPTCHA Enterprise, site key 6LexjnMtAAAAAGDjVlIge-xnBmOFRUqIxEap6hxl
-    >>> ĐANG UNENFORCE. KHÔNG BẬT LẠI. <<<
-    Đo ngày 13/08: chỉ 76% yêu cầu hợp lệ, 23% KHÔNG hợp lệ (37K/162K trong
-    7 ngày). Hôm 08/08 chỉ 13% mà bật cưỡng chế đã mất phiếu cân cả buổi sáng.
-    Điểm sáng: "unknown origin requests = 0" -> chưa có ai gọi từ trang lạ.
-    Nghĩa là bật App Check cũng không chặn được gì, chỉ chuốc rủi ro.
+■ 4. CƠ CHẾ TẢI THEO NGÀY
+  mocTaiPhieu()         -> mốc dateKey rộng nhất trong 3 ô ngày đang xem:
+                           weighDate (tab Cân tôm) · pivotDate · prodReportFrom
+  ganLaiListenerNeuCan() -> gắn lại listener CHỈ KHI mốc thật sự đổi
+  attachRealtimeListeners() -> weighings dùng .where('dateKey','>=', mốc)
+                            -> employees/products/... vẫn tải đầy đủ (nhẹ)
 
-  Sao lưu Firebase (bật 12/08/2026):
-    - PITR (Point-in-time recovery): 7 ngày, khôi phục tới từng phút
-    - Scheduled backups: Daily giữ 7 ngày · Weekly (Monday) giữ 98 ngày
-    - Chi phí ~2.500đ/tháng
-    - Đường vào: Firestore Database -> tab "Disaster Recovery" (không còn
-      tên "Backups" như tài liệu cũ)
+  Gọi ganLaiListenerNeuCan() ở: onWeighDateChange · doiNgayPivot ·
+                                 doiNgayBaoCao · switchTab('report')
 
-■ 3. QUY TẮC LÀM VIỆC BẮT BUỘC
-  1. Luôn hỏi xác nhận trước khi sửa file. Nêu rõ sẽ đổi gì.
-  2. Tăng số phiên bản mỗi lần sửa (ghi ở class="ver-badge").
-  3. Tên file tải về kèm số phiên bản: Can-tom-tinh-tien-V1.11.8.html
-  4. Chỉ sửa đúng file được nêu tên.
-  5. Đổi giao diện thì làm mockup ảnh trước, cho xem rồi mới sửa code.
-     Ảnh xuất JPEG nhẹ (~30-60 KB), KHÔNG xuất PNG (điện thoại không mở nổi).
-  6. Quy trình /test/ trước, /cantom/ sau.
-  7. Báo lỗi thẳng thắn, thừa nhận sai và nêu nguyên nhân gốc trước khi vá.
-  8. CẬP NHẬT PHẦN BÀN GIAO NÀY mỗi lần sửa file.
+  BẮT BUỘC gọi firestoreListeners.forEach(unsub=>unsub()) trước khi gắn lại.
+  Không gọi thì listener cũ VẪN SỐNG, VẪN NHẬN DỮ LIỆU, VẪN TÍNH TIỀN ĐỌC.
 
-  Kiểm tra bắt buộc trước khi giao file:
-    - Trích script bằng regex, chạy `node --check`
-    - Đối chiếu onclick với hàm đã định nghĩa
-    - Đối chiếu getElementById với id có trong HTML (kể cả id tạo bằng JS)
-    - Đếm cân bằng thẻ <div> / </div>
-    - Chạy thử logic trong Node với dữ liệu giả
-    - Ghi md5 khi giao file
+■ 5. VÌ SAO TAB BÁO CÁO AN TOÀN
+  Đã đọc code xác nhận: cả hai báo cáo TỰ LỌC THEO NGÀY ngay trong hàm.
+     buildPivotData(dateKey)  -> if(w.dateKey !== dateKey) return;
+     buildProductReportData() -> if(w.dateKey < fromKey || > toKey) return;
+  Nên tải theo ngày là ĐÚNG BẢN CHẤT, không phải cắt xén.
+  Khác hẳn buildDebtBalanceData (tab Công nợ): gọi congTheoNgay(..., null, toKey)
+  — tham số null nghĩa là cộng TỪ NGÀY ĐẦU TIÊN. Cắt là SỐ DƯ SAI. Nên tab đó
+  bị xoá khỏi bản cân.
+  Chọn khoảng trên 7 ngày thì hỏi xác nhận trước (canhBaoKhoangDai).
 
-■ 4. KIẾN TRÚC ĐỒNG BỘ — KHÔNG ĐƯỢC VI PHẠM
-  (a) Bộ lắng nghe THAY THẲNG, không tự ghép dữ liệu:
-        const docs = qs.docs.map(d=>d.data());
-        COLLECTION_SETTERS[name](docs);
-      Firestore đã tự gộp sẵn bản ghi máy vừa ghi mà chưa lên server.
+■ 6. SAO LƯU BỊ CHẶN
+  fullBackupExport() chặn tuyệt đối và checkBackupReminder() trả về ngay.
+  Bản cân chỉ có 1 ngày dữ liệu -> file sao lưu sẽ THIẾU toàn bộ dữ liệu cũ.
+  Sao lưu PHẢI làm ở /quanly/.
+  Nút "Xuất Excel" vẫn giữ — nó chỉ cần 1 ngày, và gộp cả Sổ máy.
 
-  (b) KHÔNG tự viết vòng lặp gửi lại. Firestore đã làm sẵn.
-      Đã mắc lỗi này 4 lần: V1.4.0-1.5.x (ghép dữ liệu), V1.7.0 (cứu phiếu),
-      V1.12.1 (hàng đợi tự gửi lại -> phiếu ĐÃ XOÁ SỐNG LẠI).
+■ 7. CHỐT AN TOÀN CHO HÀM DÙNG DOM ĐÃ XOÁ
+  Các hàm sau thêm dòng thoát sớm nếu phần tử không còn:
+    populateDebtSelects · renderUserList · renderActivityLog · renderDeviceList
+    loadConfigForm · setDebtSection · setConfigSection
+  switchTab dùng an()/chon() thay getElementById trực tiếp, và chuyển
+  debt/settle/config về 'weigh'.
+  ĐÃ GỠ dòng khởi động `document.getElementById('settleDate').value = todayKey();`
+  — dòng này NÉM LỖI ngay lúc mở app vì settleDate đã bị xoá.
 
-  (c) ghiNgay/xoaNgay gửi NGAY từng bản ghi, không chờ gom 900ms.
-      Danh mục/cài đặt vẫn gom 900ms qua cloudSync -> syncNow.
+■ 8. GIỮ NGUYÊN TỪ V1.13.0 — KHÔNG ĐỤNG
+  Toàn bộ công thức tính tiền: tronNghin · tienCongNgay · dayEarnedRaw ·
+  mealBonusForDay · isOvertimeDay
+  Tầng đồng bộ: ghiNgay · xoaNgay · saveAll · syncNow
+  Sổ máy + đối chiếu ngầm 5 phút · Ba mức cảnh báo (vàng/đỏ/chặn cân) ·
+  Màn chờ · Đăng nhập & phân quyền (dùng chung tài khoản với /quanly/) ·
+  Xuất Excel gộp Sổ máy · Bill 80mm
 
-  (d) syncNow gửi TỪNG KHO một lô riêng. Firestore huỷ trọn lô nếu một bản
-      ghi bị từ chối -> gộp chung sẽ khiến 1 bản ghi hỏng chặn hết phiếu cân.
+■ 9. ĐÃ CHẠY THỬ TRONG TRÌNH DUYỆT GIẢ (jsdom)
+  - Mở app: KHÔNG LỖI
+  - Chuyển tab 7 lần (kể cả debt/config/settle): không lỗi
+  - renderEverything · logActivity · populateDebtSelects · checkBackupReminder ·
+    veCanhBaoKet · doiChieuNgam: không lỗi
+  - Tính tiền: tronNghin · tienCongNgay có/không tiền cơm: ĐÚNG
+  - Báo cáo: buildPivotData 2 người · tổng 61.700đ · 38,7 KG: ĐÚNG
+  - File Excel: 4 dòng, cột Mã hàng lấy TÊN: ĐÚNG
+  - addWeighing: thêm được phiếu, KG đúng
+  - fullBackupExport: bị chặn đúng
 
-  (e) MỌI lệnh await chờ server PHẢI có đồng hồ đếm ngược (gioiHanThoiGian).
-      Quá hạn = THÔI ĐỨNG CHỜ, KHÔNG PHẢI LÀ HỎNG. Việc vẫn chạy tiếp ở nền.
-      Đây là bài học đắt nhất của V1.11.x — xem mục 8.
+■ 10. VIỆC CÒN LẠI (làm ở /quanly/)
+  Bản quản lý VẪN tải đầy đủ và vẫn phình theo thời gian. Cần làm:
+    Bước 1 Bản tổng hợp ngày (Cloud Function, không đụng HTML)
+    Bước 2 Đối chiếu 7 ngày — lệch 1 đồng cũng dừng
+    Bước 3 Chuyển Công nợ/Báo cáo đọc từ bản tổng hợp (có công tắc lùi)
+    Bước 4 Cắt tải phiếu gốc ở /quanly/
+    Bước 5 Bản tổng hợp tháng
+  Xem chi tiết: KE-HOACH-toi-uu-du-lieu.md và BUOC-1-ban-tong-hop-ngay.md
+  Nhưng máy chủ + máy công nợ chỉ dùng vài lần mỗi ngày nên không gấp bằng
+  máy cân — và máy cân đã xong với bản này.
 
-  Các kho đồng bộ (7): employees, products, weighings, openingBalances,
-                        payments, overtimeDays, staffUsers
-  KHÔNG đồng bộ (chỉ lưu từng máy): activityLog, devices
+■ 11. TRIỂN KHAI — THỨ TỰ BẮT BUỘC
+  1. Đưa V1.13.0 lên /quanly/ TRƯỚC (đổi tên index.html)
+  2. Kiểm tra /quanly/ vào được, tab Công nợ hiện đủ
+  3. Rồi mới đưa bản cân này lên /cantom/
+  4. F5 từng máy, kiểm tra thanh xanh hiện "CÂN V1.0"
+  Làm ngược thì máy công nợ mất chỗ vào.
 
-■ 5. QUY TẮC TÍNH TIỀN — MỘT CON SỐ DUY NHẤT
-      tienCongNgay(employeeId, dateKey) = tronNghin(tiềnCân + tiềnCơm)
-      tronNghin(v) = Math.round(v/1000)*1000
-      tiềnCơm = Math.round(tiềnCân * 0.1), CHỈ khi ngày đó đánh dấu tăng ca
+■ 12. LỊCH SỬ PHIÊN BẢN BẢN CÂN
+  CÂN V1.0  Cắt ra từ V1.13.0. Xoá tab Công nợ / Chốt & In / Cài đặt, nút Sao
+            lưu. Listener weighings dùng .where('dateKey','>=', ngày đang xem).
+            Thêm 22 chốt an toàn cho hàm dùng DOM đã xoá.
+            (md5 b2d0dd0da970c975e9b0c0bc4eb84024)
+  CÂN V1.1  VÁ MÀN CHỜ ĐỨNG. Triệu chứng: hiện "Đang tải phiếu cân… 1.043 phiếu"
+            rồi ĐỨNG YÊN, phải đợi hết 31 giây mới vào được dù dữ liệu đã về.
+            Nguyên nhân: màn chờ đợi cờ daNhanGoiServer, cờ này chỉ bật khi kho
+            weighings nhận gói có fromCache === false. Nhưng listener dùng
+            .where(...) là QUERY MỚI — Firestore bắn gói TỪ BỘ NHỚ ĐỆM trước
+            (fromCache=true) rồi mới bắn gói server. Gói server tới chậm hoặc
+            không tới thì cờ KHÔNG BAO GIỜ BẬT.
+            Vá: có gói phiếu cân về rồi (dù từ bộ nhớ đệm) thì hẹn 1,5 giây rồi
+            mở cổng; gói server tới trong lúc đó thì huỷ hẹn. Rút SPLASH_QUA_HAN
+            25s -> 8s (chỉ tải 1 ngày, không cần chờ lâu).
+            Kết quả: cảnh trong ảnh 31s -> 1,9s. Mất mạng hoàn toàn 31s -> 12s.
+            ĐÃ ĐỐI CHIẾU: 28 hàm động tới dữ liệu/tiền KHÔNG ĐỔI MỘT CHỮ,
+            277 hàm còn đủ 277. Chỉ đụng đúng phần màn chờ.
+            BÀI HỌC: bản vá này vốn đã có ở V1.12.7, nhưng bản cân dựng từ
+            V1.13.0 (nhánh khác) nên KHÔNG kế thừa. Khi cắt file từ nhánh cũ,
+            phải rà lại xem có bản vá nào ở nhánh khác cần chép sang không.
+            (md5 26c7cbeaacf4e297715ff5e9deb8016b)
+  CÂN V1.2  ĐỔI GIAO DIỆN SANG XANH LÁ để phân biệt với bản quản lý (xanh dương).
+            Nhìn thanh trên cùng là biết ngay đang ở link nào.
+            Bảng đổi màu:
+              #1D5FAE -> #1E7A52  (xanh chính)
+              #123E77 -> #0F4A31  (xanh đậm)
+              #2E7BD1 -> #2E9E6B  (xanh nhạt)
+              #0E3667 -> #0B3B27  (nền màn đăng nhập / màn chờ)
+              #EAF1FB -> #E9F5EE · #C9DDF5 -> #BFE3CD · #D3E4F8 -> #C9E8D6
+              #C6DCF6 -> #BFE3CD · #9FC2E8 -> #A6D9BC (các sắc nhạt)
+              #7FB2EA -> #7FD3A8 · #9CB8DE -> #9CCFB4 · #B7D4F5 -> #B7E8CD
+            GIỮ NGUYÊN #7FB2E5 và #C7A6E8 — đây là BẢNG MÀU CHỌN CHO MÃ HÀNG,
+            đổi sẽ làm màu mã hàng khác với bản quản lý.
+            Đã đổi cả #userPickerOverlay (màn đăng nhập) và #appSplash (màn chờ).
+            ĐÃ ĐỐI CHIẾU: 62 dòng khác — 60 dòng là mã màu, 2 dòng là số phiên
+            bản. 277 hàm còn đủ 277, KHÔNG hàm dữ liệu nào đổi.
 
-  Làm tròn TỪNG NGƯỜI TỪNG NGÀY rồi mới cộng. Không cộng hết rồi mới làm tròn.
-  (Thử với 3 người: cộng sai cách lệch 48.000đ)
-
-  Áp dụng ở: bảng tổng hợp cân theo ngày, màn hình chi tiền, chi tiết theo kỳ,
-  tổng hợp công nợ, số dư công nợ, "Tổng ngày này" ở tab Cân tôm, bảng Cả
-  xưởng, và PHIẾU IN.
-
-  KHÔNG làm tròn ở: từng dòng size, từng phiếu lẻ, dòng CỘNG tiền cân, dòng
-  TIỀN CƠM — đó là thành phần chi tiết, phải giữ số thật.
-
-■ 6. ĐỊNH DẠNG SỐ
-  Mọi số KG dùng fmtKg(). Không bao giờ để lộ 31.599999999999998 hay 3745.00.
-  Tiền dùng formatNumber() / formatMoney().
-
-■ 7. TÍNH NĂNG THÊM Ở DÒNG V1.11.x (quan trọng, đọc kỹ)
-
-  ▸ SỔ MÁY (localStorage riêng, key: cantom_so_may_v1)
-    Vì sao cần: từ V1.6.0 phiếu cân không còn chép vào localStorage (vỡ trần
-    5MB), nên phiếu CHỈ tồn tại trong bộ nhớ đệm Firestore. Khi server TỪ CHỐI,
-    Firestore HUỶ bản ghi chờ và cuộn bộ nhớ đệm về trạng thái server -> F5 là
-    trắng (đúng sự cố 08/08).
-    Sổ máy ghi ~100 byte/phiếu {i,e,p,k,t,d}, gom 2 giây một lần, giữ 3 ngày.
-    3 ngày ~880 KB = 17% trần 5MB. An toàn.
-    Hàm: soMayNap/soMayThem/soMayGhiXuong/soMayLuu/soMayDonCu/soMayXoa
-
-  ▸ ĐỐI CHIẾU
-    doiChieuNhanh() — chỉ so HAI CON SỐ (0,1ms), 99% số lần dừng ở đây
-    doiChieuChiTiet() — chỉ chạy khi lệch, quét ~20ms
-    doiChieuNgam() — tự chạy mỗi 5 phút, KHÔNG gọi server, không tốn lượt đọc
-    doiChieuTay() — nút trong Cài đặt (đầy đủ, có bảng chi tiết)
-    (V1.12.2 đã BỎ nút đối chiếu ở tab Cân tôm — xem mục lịch sử)
-
-  ▸ BA MỨC CẢNH BÁO (V1.11.6-1.11.7)
-    Phân biệt theo NGUYÊN NHÂN, không gộp chung:
-      laServerTuChoi() nhận diện permission-denied / unauthenticated /
-                       resource-exhausted  -> NGUY HIỂM
-      unavailable = chỉ mất mạng -> KHÔNG SAO
-
-    | Tình huống                       | Mức  | Cân được? |
-    | Bình thường                      | 0    | Cân       |
-    | Mất mạng, 5+ phiếu quá 60 giây   | VÀNG | Cân       |
-    | Mất mạng quá 5 phút (CHAN_PHUT)  | ĐỎ   | CHẶN      |
-    | Server từ chối                   | ĐỎ   | CHẶN NGAY |
-
-    Chặn = nút NHẬP mờ (capNhatKhoaNhap) + checkWeighAllowed trả về ok:false.
-    Mạng về là TỰ MỞ LẠI, không cần F5.
-
-    Bảng đỏ ghi hướng dẫn KHÁC NHAU cho hai trường hợp:
-      - Mất mạng: "tải lại app cũng không mất phiếu" (Firestore giữ hàng đợi
-        trên đĩa, F5 xong tự gửi tiếp)
-      - Server từ chối: "BẤM XUẤT EXCEL TRƯỚC KHI TẢI LẠI APP" (Firestore đã
-        huỷ hàng đợi, F5 là mất sạch)
-
-  ▸ MÀN CHỜ KHỞI ĐỘNG (V1.11.6)
-    Tải xong phiếu cân MỚI cho đăng nhập. Trước đây app cho vào ngay khi có
-    danh sách tài khoản -> bấm Sao lưu lúc đó ra file 878 KB thay vì 14,7 MB.
-    Cờ daNhanGoiServer bật khi kho weighings nhận gói fromCache===false.
-    Quá 25 giây (SPLASH_QUA_HAN) thì hiện nút "Vào cân ngay" — KHÔNG BAO GIỜ
-    khoá cứng, cả xưởng không được đứng chờ vì mạng.
-
-  ▸ SAO LƯU
-    Tên file: SLCT_2026-08-12_19h56_35889phieu.json
-    CHẶN xuất khi chưa tải xong (daNhanGoiServer=false).
-    checkBackupReminder cũng chờ tải xong mới nhắc.
-    File đủ ~14,7 MB với 35.889 phiếu. Nếu ra vài trăm KB là THIẾU.
-
-  ▸ XUẤT EXCEL 7 CỘT
-    Mã cân · Thời gian · Mã NV · Nhân viên · Mã hàng · KG · Người cân
-    Máy Windows/Chrome: chọn thư mục 1 lần (chonThuMucLuu) -> tự ghi đè mỗi
-    2 phút. iPhone/Safari không hỗ trợ, phải bấm nút xuất tay.
-
-  ▸ ĐO SỨC CHỨA DỮ LIỆU (Cài đặt -> Dữ liệu)
-    Lấy mẫu 200 bản ghi để ước lượng (2ms, sai số 0,39%), KHÔNG dựng cả chuỗi
-    (272ms — chính là cách làm hỏng nút Sao lưu).
-
-■ 8. LỊCH SỬ LỖI ĐÃ SỬA — ĐỌC ĐỂ KHÔNG TÁI PHẠM
-  V1.5.6  Vòng lặp ghi vô tận 22.000 lượt/ngày — mốc lastSynced liệt kê tay
-  V1.5.9  Ba máy đè dữ liệu — cho gói từ bộ nhớ đệm ghi đè dữ liệu mới hơn
-  V1.7.1  Dữ liệu đã xoá SỐNG LẠI — đoạn "cứu phiếu cân" đẩy dữ liệu cũ lên
-  V1.8.0  Mất phiếu khi 3 máy cân cùng lúc — lỗ hổng 900ms
-  V1.9.2  Không xoá được phiếu mồ côi
-  V1.10.4 Bấm 1 lần ra 2 phiếu (Chrome/Mac) — thêm khoá chống nhập kép 600ms
-
-  --- Dòng V1.11.x/V1.12.x (08-13/08/2026) ---
-  V1.12.0 ĐỒNG HỒ ĐẾM NGƯỢC 8 GIÂY SAI CHỖ. Đo "có phiếu đang chờ không" —
-          mà cân liên tục thì LÚC NÀO CŨNG CÓ -> báo đỏ vĩnh viễn.
-          Bài học: đo "server còn xác nhận không", đừng đo "có phiếu chờ không".
-  V1.12.1 HÀNG ĐỢI TỰ GỬI LẠI 10 GIÂY -> PHIẾU ĐÃ XOÁ SỐNG LẠI.
-          deleteWeighing đi qua saveAll->syncNow, KHÔNG báo cho hàng đợi biết.
-          Lệnh ghi bị huỷ ở tầng dưới không bao giờ hồi đáp -> kẹt -> báo đỏ ma.
-          Bài học: LẶP LẠI ĐÚNG LỖI V1.7.1. Đừng viết đè lên Firestore.
-  V1.12.2 Gỡ bỏ hàng đợi tự gửi lại. Thêm conTonTai() — đã xoá thì TUYỆT ĐỐI
-          không gửi lại.
-  V1.11.1 Vá `if(!fsReady) return;` ở đầu ghiNgay — lúc app kẹt "Đang kết nối",
-          bấm NHẬP là phiếu RƠI VÀO HƯ KHÔNG, không gửi và không gửi lại.
-  V1.11.2 batch.commit() không có đồng hồ -> syncNow đứng mãi, syncInFlight
-          kẹt true VĨNH VIỄN -> mọi lần đồng bộ sau đều bị bỏ qua.
-  V1.11.4 LÀM TRÒN SAI ở 3 chỗ: phiếu in ghi 325.450đ nhưng Công nợ trả
-          325.000đ. Lệch 450đ, công nhân đối chiếu là cãi nhau.
-  V1.11.5 !!! LỖI NẶNG NHẤT DÒNG NÀY !!!
-          Đồng hồ 8 giây ở enablePersistence làm cờ boNhoDemBat SAI.
-          Máy nhiều dữ liệu mở kho đệm lâu hơn 8 giây -> app tưởng bộ nhớ đệm
-          không bật -> quay về chép TOÀN BỘ phiếu vào localStorage -> VỠ TRẦN
-          5MB (đúng lỗi V1.6.0). saveAll đứt giữa chừng, các kho phía sau
-          (phiếu chi, tăng ca, cài đặt) KHÔNG được lưu.
-          Vá: gắn .then() để cờ vẫn bật khi kho đệm mở xong dù muộn + tách
-          kho phiếu ra khỏi khối try chung + chỉ báo lỗi MỘT LẦN.
-          BÀI HỌC: thêm đồng hồ cho một lệnh thì PHẢI RÀ MỌI CỜ TRẠNG THÁI
-          mà lệnh đó đặt ra.
-
-  BÀI HỌC LẶP LẠI NHIỀU LẦN: đừng tự viết lại thứ Firestore đã làm sẵn.
-  Bốn lần mắc cùng lỗi này (merge, cứu phiếu, chặn bộ nhớ đệm, hàng đợi gửi lại).
-
-■ 9. CẤU TRÚC DỮ LIỆU
-  employees:       { id, code, name, address, phone, cccd, birth, active, photo }
-  products:        { id, code, name, unitPrice, color, active, showInWeigh }
-  weighings:       { id, employeeId, productId, weightKg, unitPrice, amount,
-                     createdAt, dateKey, employeeCode, byUserId, byUserName,
-                     deviceId, flags }                    (~288 byte/phiếu)
-  payments:        { id, employeeId, dateKey, type, amount, note, paidDates[],
-                     chiTietNgay[{dateKey,amount}], createdAt, byUserId,
-                     byUserName, deviceId }
-  openingBalances: { id, employeeId, amount, note, createdAt }
-  overtimeDays:    { id, employeeId, dateKey }
-  staffUsers:      { id, code, name, fullName, username, password,
-                     permissions{}, actions{} }
-  activityLog:     { id, at, userId, userName, deviceId, action, detail }  // KHÔNG đồng bộ
-  devices:         { id, deviceId, label, approved, addedAt }              // KHÔNG đồng bộ
-
-  !!! staffUsers.password đang lưu CHỮ THƯỜNG, không mã hoá.
-
-■ 10. VIỆC CÒN TREO — theo thứ tự ưu tiên
-
-  ▸ A. BẢN TỔNG HỢP NGÀY — CÓ HẠN CHÓT, ~3 TUẦN
-    Kho weighings 35.889 phiếu (13/08), tăng ~2.500/ngày.
-    Ngưỡng: iPhone/Safari khựng ở 20.000-30.000 (ĐÃ VƯỢT), máy Windows/Chrome
-    ở 100.000-150.000 -> khoảng đầu tháng 9.
-    Triệu chứng đã xuất hiện: iPhone "upload rất chậm", máy Windows mở kho đệm
-    hơn 8 giây (gây ra lỗi V1.11.5).
-
-    PHÁT HIỆN QUAN TRỌNG: app ĐÃ CÓ SẴN hàm dungBangTraCuu() trả về đúng
-    cấu trúc { employeeId: { dateKey: tiền công ĐÃ làm tròn } } — chính là
-    hình dạng của bản tổng hợp. Không phải nghĩ công thức mới.
-    Chỉ 2 hàm gọi nó: buildDebtReportRows (d.2977) và buildDebtBalanceData
-    (d.3182). Toàn bộ công nợ đi qua đúng hai cửa này.
-
-    Kế hoạch 4 giai đoạn (THỨ TỰ BẮT BUỘC, làm ngược là gãy chức năng lương):
-      GĐ0 Đo (ĐÃ XONG - Cài đặt -> Dữ liệu -> Sức chứa dữ liệu)
-      GĐ1 Kho dailySummary, id = dateKey+'|'+employeeId. Cloud Function chạy
-          THEO LỊCH (không dùng onWrite: 3.000 phiếu/ngày sẽ gọi dồn dập và
-          đụng giới hạn ghi 1 lần/giây/document).
-          TÍNH LẠI TỪ ĐẦU, KHÔNG CỘNG DỒN — Cloud Functions bảo đảm "ít nhất
-          một lần", chạy trùng là cộng đôi.
-          App KHÔNG đọc kho này ở GĐ1, lương vẫn tính từ phiếu gốc.
-      GĐ2 Màn hình đối chiếu TỪNG NGƯỜI (không chỉ tổng). Phải khớp tuyệt đối
-          liên tục >= 7 ngày mới đi tiếp. Lệch 1 đồng cũng dừng.
-      GĐ3 Đổi dungBangTraCuu đọc từ dailySummary. BẮT BUỘC có công tắc trong
-          Cài đặt để gạt về nguồn cũ.
-      GĐ4 Bộ lắng nghe weighings thêm .where('dateKey','>=', 3 ngày trước).
-          NHỚ GỌI HÀM HUỶ listener cũ, không thì rò rỉ và vẫn tính tiền đọc.
-
-  ▸ B. SAO LƯU DRIVE 20H (chờ máy tính)
-    Cloud Function chạy theo lịch, xuất JSON đầy đủ, đẩy lên Google Drive.
-    Cần: Firebase CLI, service account, chia sẻ thư mục Drive cho email của
-    service account. KHÔNG dùng trình duyệt hẹn giờ (20h thường không máy nào bật).
-
-  ▸ C. BẢO MẬT — "BẬC 2": TÀI KHOẢN FIREBASE THẬT
-    Quy tắc hiện tại: allow read, write: if request.auth != null
-    App dùng đăng nhập ẩn danh -> ai cũng tự tạo được auth -> QUY TẮC NÀY
-    KHÔNG CHẶN AI CẢ. Người biết địa chỉ trang là đọc được toàn bộ lương + CCCD.
-    Kế hoạch 3 giai đoạn: (1) đăng nhập song song, (2) chuyển 6 tài khoản,
-    (3) tắt ẩn danh + siết quy tắc (token.email != null) + xoá mật khẩu.
-    Màn hình đăng nhập KHÔNG ĐỔI — vẫn tên+mật khẩu, app tự ghép thành
-    tinh@cantom.local. Không cần tài khoản Google.
-    Sau đó mới làm được: Cloud Function cho thao tác nhạy cảm (xoá hàng loạt,
-    sửa lương, đổi đơn giá) — mô hình MISA thu nhỏ.
-
-  ▸ D. NHIỀU CÔNG TY (chưa gấp, chỉ chuẩn bị)
-    Đã xác định: 3 công ty KHÔNG dùng chung nhân viên, KHÔNG cần xem tổng,
-    cân CÙNG THỜI ĐIỂM.
-    -> Loại bỏ cách gộp chung một Firebase (kho phình gấp 3).
-    -> Nên: MỘT FILE chứa cấu hình cả 3 project, chọn công ty lúc đăng nhập.
-       Dữ liệu vẫn tách hẳn, sửa lỗi chỉ một lần. Ước tính 1-2 ngày.
-    -> Nếu gấp: nhân bản file (1 giờ/công ty), sau gộp lại vẫn được.
-
-  ▸ E. VIỆC NHỎ
-    - Dấu ⏳ không tắt sau khi bật/tắt máy bay (KHÔNG mất dữ liệu, nhập phiếu
-      mới là tự tắt). Đã quyết ĐỂ NGUYÊN, sợ vá lại sinh lỗi khác.
-    - Bật lại đồng bộ activityLog để xem thao tác nhân viên trên máy khác
-    - Dọn nhân viên tên "-" (công cụ đã có ở Cài đặt -> Dữ liệu)
-    - Nối cân điện tử: đã có cáp UNITEK USB<->RS232, cần Windows + Chrome
-      (Web Serial). Safari/Android không hỗ trợ.
-
-■ 11. KIẾN THỨC KỸ THUẬT ĐÃ TÍCH LUỸ
-  - Firestore batch là trọn gói — một bản ghi bị từ chối thì cả lô huỷ
-  - batch.commit() chỉ hồi đáp khi SERVER xác nhận -> phải có đồng hồ
-  - App Check bị từ chối -> Firebase khoá thử lại tới 24 GIỜ. Unenforce rồi
-    vẫn phải F5 để máy khởi động lại
-  - reCAPTCHA admin nay bắt buộc chọn dự án Google Cloud -> mọi khoá mới đều
-    là Enterprise, không tạo được v3 thường
-  - App Check phải activate NGAY SAU firebase.initializeApp(), trước
-    firebase.firestore() và firebase.auth()
-  - iOS xoá TOÀN BỘ IndexedDB/localStorage nếu 7 ngày không mở trang trong
-    Safari. Cách tránh: THÊM APP VÀO MÀN HÌNH CHÍNH (đã làm) +
-    navigator.storage.persist()
-  - Safari iPhone: JSON.stringify an toàn < 15MB, hỏng > 50MB.
-    Chrome máy tính: an toàn < 50MB, hỏng > 200MB
-  - localStorage ghi kiểu đọc-hết-viết-đè-hết -> càng dài càng chậm.
-    IndexedDB ghi thẳng vào cuối, không chậm theo kích thước
-  - confirm()/prompt() bị chặn trong iframe xem trước — dùng xác nhận hai lần
-  - Chrome chặn dán code vào Console lần đầu, phải gõ `allow pasting`
-  - Cloud Functions Gen1 chỉ hỗ trợ Node <= 20; firebase-functions@^4.9.0 +
-    firebase-admin@^12.1.0 cho cú pháp v1
-  - Chi phí Firestore: 0,06 USD / 100.000 lượt đọc. Tải lại toàn bộ kho
-    1,1 triệu phiếu = 0,66 USD/máy
-  - GitHub Pages: nhớ đổi tên file thành index.html, và Ctrl+F5 để không
-    dính bản cũ
-
-■ 12. LỊCH SỬ PHIÊN BẢN DÒNG V1.11.x
-  V1.11.0  Bản gốc ổn định (md5 657a092cd1769e208c21f4e948dfda02)
-  V1.11.1  Đồng hồ đếm ngược cho cloudInit · hàng chờ mở mạng cho ghiNgay ·
-           Sổ máy + đối chiếu · bảng đỏ khi kẹt · tab Cài đặt full màn hình
-  V1.11.2  Đồng hồ 15 giây cho batch.commit (vá syncInFlight kẹt vĩnh viễn) ·
-           dời số phiên bản ra dòng trạng thái · thêm tổng phiếu hôm nay
-  V1.11.3  Ô đo sức chứa dữ liệu (giai đoạn 0)
-  V1.11.4  Vá làm tròn 3 chỗ: Tổng ngày này · bảng Cả xưởng · phiếu in
-           (md5 ac6715f27b4d46b4e46bd9d6855a4cd4)
-  V1.11.5  VÁ LỖI VỠ TRẦN 5MB do cờ boNhoDemBat sai
-           (md5 8ebbb1f2c2b09c4268745a2dc48d8db8)
-  V1.11.6  Màn chờ tải xong mới cho đăng nhập · ba mức cảnh báo · khối kiểm
-           tra ở tab Cân tôm · tên file SLCT_ · chặn sao lưu khi chưa tải xong
-           (md5 b5c9279344c106d6573e2238bbc55bed)
-  V1.11.7  Ngưỡng chặn 2 -> 5 phút · bảng đỏ ghi hướng dẫn khác nhau cho
-           mất mạng và server từ chối
-           (md5 9a17c1d9db56b9c6fca5605b7598a875)
-  V1.11.8  Nhét tài liệu bàn giao vào chính file này. KHÔNG đụng một dòng code.
-           (md5 52df68c9a70c769a2c0b19ca1e890bde)
-  V1.11.9  VÁ LỖI TAB CÔNG NỢ TRẮNG MÀN HÌNH khi bấm "Phiếu chi".
-           Hai lỗi chồng nhau, có sẵn từ V1.11.0, bù trừ nhau nên phép đếm
-           div toàn file vẫn cân bằng và không ai phát hiện:
-             (a) openSection THIẾU 1 thẻ </div> (openBody không được đóng)
-                 -> paySection bị nuốt vào trong openSection
-             (b) paySection THỪA 1 thẻ </div> (bù cho lỗi a)
-             (c) setDebtSection buộc openSection theo mục 'report' thay vì
-                 'pay' -> bấm Phiếu chi thì openSection ẩn, kéo theo cả
-                 paySection nằm bên trong nó cũng ẩn -> TRẮNG MÀN HÌNH
-           BÀI HỌC: đếm div toàn file KHÔNG ĐỦ. Phải đếm theo TỪNG KHỐI
-           (từng div id=...) mới phát hiện được lỗi bù trừ kiểu này.
-           (md5 48c8334df604e5ffa5b4dd9120ecc55c)
-  V1.12.0  THU NHỎ BILL PHIẾU CHI ĐỂ TIẾT KIỆM GIẤY.
-           Chiều cao phiếu 171mm -> 99mm, TIẾT KIỆM 42% giấy in nhiệt.
-           Chữ nhỏ lại ~25%, line-height 1.35->1.2, padding ô bảng 1.3mm->0.6mm,
-           khoảng trắng dưới "Ký nhận" 9mm->5mm, padding trang 4mm->1.5mm.
-           RIÊNG số tiền dòng TỔNG CỘNG giữ TO 5.0mm (class .b-tong td.b-amt),
-           nhãn "TỔNG CỘNG :" để 3.6mm cho khỏi xuống dòng làm cao ô.
-           Chỉ đụng CSS .bill80-page, KHÔNG động logic tính tiền.
-           (md5 baad58da8a13ecf7f38207bc79acf6ae)
-  V1.12.1  VÁ 1,45 TRIỆU LƯỢT ĐỌC FIRESTORE KHI TRẢ LƯƠNG (13/08/2026).
-           Nguyên nhân: MỌI saveAll() đều kết thúc bằng cloudSync() ->
-           syncNow() quét CẢ 7 KHO, so từng bản ghi với lastSynced, trong đó
-           kho weighings có 35.889 phiếu. Bộ lắng nghe cũng bắn lại kho vừa đổi.
-           Trả lương ~200 người = 200 vòng như vậy -> vượt hạn mức miễn phí
-           50K/ngày tới 29 lần, tốn 58.418đ.
-           Vá: saveAll(khongDongBo). Truyền true ở 7 hàm ĐÃ gọi ghiNgay/xoaNgay
-           (bản ghi đã lên server rồi, vòng đồng bộ đó THỪA HOÀN TOÀN):
-             toggleOvertimeDay · addWeighing · saveEditWeigh ·
-             deleteSingleWeigh · deleteWeighGroup ·
-             confirmPaymentAndPrintBill · deletePayment
-           29 chỗ còn lại (danh mục, cài đặt, người dùng) GIỮ NGUYÊN saveAll()
-           vì chúng KHÔNG đi qua ghiNgay, cần vòng đồng bộ để lên server.
-           KHÔNG mất dữ liệu: ghiNgay đã gửi từng bản ghi lên server ngay.
-           (md5 59d21dbbda56bccd91a9ac70bafc0e97)
-  V1.12.2  FILE EXCEL GỘP CẢ SỔ MÁY — vá lỗ hổng "cứu dữ liệu mà không lấy ra được".
-           Vấn đề: nút Xuất Excel chỉ xuất từ `weighings` (dữ liệu server), nên
-           khi có sự cố thì file ra vẫn THIẾU đúng những phiếu chưa lên — vô
-           dụng đúng lúc cần nhất. Sổ máy giữ được phiếu đó nhưng KHÔNG CÓ
-           ĐƯỜNG NÀO LẤY RA:
-             - Máy chủ vào được Cài đặt nhưng sổ TRỐNG (máy đó không cân)
-             - Máy cân có sổ ĐẦY nhưng công nhân KHÔNG vào được Cài đặt
-           Vá: dungBangChiTiet() gộp 2 nguồn, thêm cột "Ghi chú" đánh dấu
-           CHƯA LÊN SERVER cho phiếu chỉ có trong sổ máy. Xuất xong hiện thông
-           báo nếu có phiếu chưa lên.
-           BỎ nút "Đối chiếu" ở tab Cân tôm (gỡ luôn hàm doiChieuNhanhTabCan)
-           — công nhân bấm ra "khớp/thiếu" cũng không biết làm gì tiếp. App vẫn
-           TỰ đối chiếu ngầm 5 phút/lần và tự hiện cảnh báo. Nút Đối chiếu đầy
-           đủ trong Cài đặt vẫn giữ cho người quản lý.
-           LƯU Ý QUAN TRỌNG: Sổ máy là RIÊNG TỪNG MÁY. File Excel xuất ra gồm
-           toàn bộ phiếu của CẢ XƯỞNG (từ server) + phần máy đó cân mà chưa lên.
-           Máy nào kẹt phiếu thì phải xuất trên CHÍNH MÁY ĐÓ mới đủ.
-           (md5 d4128ae51ef7476490c63db193cd08a4)
-
-  --- V1.12.3 đến V1.12.8: ĐÃ GỠ BỎ, KHÔNG DÙNG ---
-  Dòng V1.12.3-1.12.8 làm tính năng "tải phiếu theo quyền tài khoản" (máy cân
-  chỉ tải 1 ngày cho nhẹ). Đã GỠ BỎ HOÀN TOÀN vì lý do sau — ĐỌC KỸ TRƯỚC KHI
-  ĐỊNH LÀM LẠI:
-    Cắt dữ liệu tải về ảnh hưởng tới 11 HÀM cần TOÀN BỘ lịch sử, mà chỉ chặn
-    được 1 (sao lưu). Nguy hiểm nhất:
-      dungBangTraCuu        -> CÔNG NỢ SAI, trả lương thiếu tiền công nhân
-      employeeDailyEarnings -> màn hình chi tiền thiếu ngày
-      performPeriodClose    -> chốt kỳ sai
-      quetNhanVienChuaDung  -> tưởng nhân viên chưa dùng rồi XOÁ NHẦM
-      exportArchiveExcel, totalMealBonusAllTime, tienCongTheoNgay,
-      renderLichSuCan, locLichSuCan, doSucChua, wipeAllData
-    Chưa gây hậu quả chỉ vì quyền trùng khớp may mắn (ai vào được các tab đó
-    thì cũng được tải đầy đủ) — KHÔNG có chốt chặn thật.
-    Kèm 6 lần vá liên tiếp trong một buổi sáng, lần nào cũng sinh lỗi mới:
-      V1.12.3 tính năng không chạy (listener gắn trước lúc đăng nhập)
-      V1.12.4 vá xong thì màn chờ đứng 25 giây
-      V1.12.5 chốt sao lưu báo lỗi sai trên máy đủ quyền
-      V1.12.7 vá màn chờ
-      V1.12.8 vá chốt sao lưu, VẪN ra file thiếu (5.150/39.000 phiếu)
-    NGUYÊN NHÂN GỐC: vá theo triệu chứng, kiểm tra CỜ TRẠNG THÁI
-    (daNhanGoiServer, soNgayCanTai, mocDangTai) thay vì đo DỮ LIỆU THỰC TẾ.
-  >>> Việc tối ưu tải chỉ nên làm SAU khi có BẢN TỔNG HỢP NGÀY, lúc đó công nợ
-      không còn đọc từ phiếu gốc nữa thì cắt tải mới an toàn thật sự.
-
-  V1.13.0  Dựng lại từ V1.12.2 (bản ổn định), thêm 2 việc nhỏ chỉ đụng giao diện:
-           - Cột "Mã hàng" trong Excel lấy TÊN (p.name) thay vì MÃ (p.code):
-             "ACHU-LO1" -> "A Châu Lo1". Thiếu tên thì tự lấy mã.
-           - Khối cuối tab Cân tôm CHIA ĐÔI: "📄 Xuất Excel" và "💾 Sao lưu".
-           ĐÃ ĐỐI CHIẾU TỪNG DÒNG với V1.12.2: chỉ khác 29 dòng, TẤT CẢ là
-           giao diện. Mọi hàm động tới dữ liệu và tiền GIỐNG HỆT:
-             tronNghin · tienCongNgay · dayEarnedRaw · mealBonusForDay ·
-             dungBangTraCuu · congTheoNgay · buildDebtBalanceData ·
-             buildDebtReportRows · tienCongTheoNgay · ghiNgay · xoaNgay ·
-             saveAll · syncNow · addWeighing · confirmPaymentAndPrintBill ·
-             deleteWeighing · deleteSingleWeigh · deleteWeighGroup ·
-             fullBackupExport · fullBackupImport
-           Listener KHÔNG có .where() -> tải đầy đủ như cũ, mọi hàm đều đủ dữ liệu.
-
-================================================================================
-  HẾT PHẦN BÀN GIAO
 ================================================================================
 -->
 <!DOCTYPE html>
@@ -445,7 +163,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Cân Tôm">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Cân Tôm - Tính Tiền Công Nhật</title>
+<title>Cân Tôm — Bản cân</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/JsBarcode/3.11.5/JsBarcode.all.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -455,7 +173,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
   :root{
-    --ink:#152238; --paper:#F1F4F8; --card:#FFFFFF; --blue:#1D5FAE; --blue-dk:#123E77;
+    --ink:#152238; --paper:#F1F4F8; --card:#FFFFFF; --blue:#1E7A52; --blue-dk:#0F4A31;
     --amber:#DB9B2C; --rust:#C0392B; --moss:#2F7D5A; --line:#DDE3EC; --muted:#64748B;
   }
   *{box-sizing:border-box;}
@@ -473,11 +191,11 @@
   .brand-row{display:flex;align-items:center;gap:10px;padding:7px 12px 5px;border-bottom:1px solid rgba(255,255,255,.16);}
   .brand{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;}
   .brand-title{font-size:15.5px;font-weight:700;color:#fff;line-height:1.15;white-space:nowrap;}
-  .brand-status{font-size:10px;color:#C6DCF6;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .brand-status{font-size:10px;color:#BFE3CD;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .brand-user{flex:0 0 auto;display:flex;align-items:center;gap:7px;}
-  .brand-user > span{color:#D3E4F8;font-size:11.5px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
+  .brand-user > span{color:#C9E8D6;font-size:11.5px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
   .brand-user button{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;font-size:10.5px;padding:3px 9px;border-radius:6px;cursor:pointer;}
-  .brand-user .ver{font-size:9.5px;color:#9FC2E8;}
+  .brand-user .ver{font-size:9.5px;color:#A6D9BC;}
   /* ===== HÀNG THAO TÁC TRÊN CÙNG ===== */
   /* Cảnh báo server từ chối ghi */
   .ver-badge{color:#FFD98A;font-weight:700;font-size:10.5px;}
@@ -504,23 +222,23 @@
   .daystat .cell{padding:5px 13px;text-align:center;display:flex;flex-direction:column;justify-content:center;min-width:64px;}
   .daystat .cell + .cell{border-left:1px solid rgba(255,255,255,.22);}
   .daystat .v{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:700;color:#fff;line-height:1.1;}
-  .daystat .l{font-size:8.5px;letter-spacing:.7px;text-transform:uppercase;color:#B7D4F5;margin-top:2px;}
+  .daystat .l{font-size:8.5px;letter-spacing:.7px;text-transform:uppercase;color:#B7E8CD;margin-top:2px;}
   .action-row .f-date{flex:0 0 148px;}
   .action-row .f-kg{flex:0 0 118px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:700;padding:6px 12px;}
   .btn-form{flex:0 0 auto;background:#fff;border:none;border-radius:10px;padding:5px 13px;font-size:12.5px;font-weight:700;
     color:var(--blue);cursor:pointer;font-family:inherit;line-height:1.25;white-space:nowrap;}
-  .btn-nhap{flex:0 0 auto;background:linear-gradient(150deg,#2E7BD1,#123E77);border:1px solid rgba(255,255,255,.35);
+  .btn-nhap{flex:0 0 auto;background:linear-gradient(150deg,#2E9E6B,#0F4A31);border:1px solid rgba(255,255,255,.35);
     border-radius:10px;padding:0 24px;color:#fff;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.4px;}
   .btn-nhap:active{transform:scale(.98);}
   #activeProdBar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:0 12px 7px;background:var(--blue);
-    color:#C6DCF6;font-size:12.5px;}
+    color:#BFE3CD;font-size:12.5px;}
   #activeProdBar b{color:#fff;font-weight:700;}
 
   /* ===== CỘT CHI TIẾT BÊN PHẢI ===== */
   .detail-col{flex:0 0 390px;min-width:0;position:sticky;top:calc(var(--topH,150px) + 10px);
     max-height:calc(100vh - var(--topH,150px) - 20px);overflow-y:auto;}
   .dcard{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
-  .dhead{background:#EAF1FB;padding:7px 12px;border-bottom:1px solid var(--line);}
+  .dhead{background:#E9F5EE;padding:7px 12px;border-bottom:1px solid var(--line);}
   .dhead .n{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--blue-dk);line-height:1.2;}
   .dhead .c{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:2px;}
   .dhead.one{padding:9px 12px;}
@@ -532,13 +250,13 @@
   table.dtb th.r,table.dtb td.r{text-align:right;}
   table.dtb td{padding:8px 9px;border-bottom:1px solid var(--line);}
   table.dtb tr.item{cursor:pointer;}
-  table.dtb tr.item:active td{background:#EAF1FB;}
+  table.dtb tr.item:active td{background:#E9F5EE;}
   table.dtb td.sz{font-weight:700;}
   table.dtb td.kg{font-family:'IBM Plex Mono',monospace;font-weight:700;}
   table.dtb td.mn{font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--blue);font-size:12.5px;}
   table.dtb tr.sub td{background:#FBFCFE;font-size:11.5px;color:var(--muted);padding:5px 9px 5px 20px;}
-  table.dtb tr.tot td{background:#EAF1FB;font-weight:700;border-bottom:none;}
-  .dfoot{padding:9px 12px;background:#EAF1FB;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;}
+  table.dtb tr.tot td{background:#E9F5EE;font-weight:700;border-bottom:none;}
+  .dfoot{padding:9px 12px;background:#E9F5EE;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;}
   .dfoot .lbl{font-size:11.5px;color:var(--muted);}
   .dfoot .val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--blue);}
 
@@ -563,7 +281,7 @@
   .slip tr.sum td{font-weight:700;}
   .slip .s-words{font-size:12.5px;margin-top:8px;}
   .tab-btn{white-space:nowrap;}
-  .tab-btn{flex:1 0 auto;min-width:96px;display:flex;align-items:center;justify-content:center;gap:6px;padding:15px 10px;border:none;border-bottom:2px solid transparent;background:transparent;color:#D3E4F8;font-weight:600;font-size:15px;cursor:pointer;}
+  .tab-btn{flex:1 0 auto;min-width:96px;display:flex;align-items:center;justify-content:center;gap:6px;padding:15px 10px;border:none;border-bottom:2px solid transparent;background:transparent;color:#C9E8D6;font-weight:600;font-size:15px;cursor:pointer;}
   .tab-btn.active{color:#fff;border-bottom-color:#FFFFFF;}
   .app-header{padding:20px 18px 10px;}
   .app-title{font-size:22px;font-weight:700;color:var(--ink);}
@@ -589,7 +307,7 @@
   .row > *{flex:1;}
   .list-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
   .list-item:last-child{border-bottom:none;}
-  .badge{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:#EAF1FB;color:var(--blue);font-family:'IBM Plex Mono',monospace;}
+  .badge{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:#E9F5EE;color:var(--blue);font-family:'IBM Plex Mono',monospace;}
   .muted{color:var(--muted);}
   .amount{font-family:'IBM Plex Mono',monospace;font-weight:600;}
   .empty-state{text-align:center;padding:28px 16px;color:var(--muted);font-size:13.5px;}
@@ -608,7 +326,7 @@
   .weigh-amt-sm{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px;color:var(--blue);}
   .weigh-detail-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0 6px 16px;border-top:1px dashed var(--line);font-size:12.5px;}
   .icon-del{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;}
-  .totalbar{background:#EAF1FB;border:1px solid #C9DDF5;border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin:10px 0;}
+  .totalbar{background:#E9F5EE;border:1px solid #BFE3CD;border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin:10px 0;}
   .totalbar .lbl{font-weight:700;font-size:14px;}
   .totalbar .val{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:17px;color:var(--blue-dk);}
   .section-tab{display:flex;gap:6px;margin-bottom:12px;}
@@ -617,7 +335,7 @@
   /* ===== MÀN HÌNH ĐĂNG NHẬP ===== */
   #userPickerOverlay{
     position:fixed;inset:0;z-index:997;overflow-y:auto;
-    background:linear-gradient(160deg,#0E3667 0%,#1D5FAE 55%,#2E7BD1 100%);
+    background:linear-gradient(160deg,#0B3B27 0%,#1E7A52 55%,#2E9E6B 100%);
     display:flex;align-items:flex-start;justify-content:center;padding:28px 16px 40px;
   }
   .lg-shell{width:100%;max-width:380px;}
@@ -629,12 +347,12 @@
     box-shadow:0 8px 26px rgba(6,26,52,.34);
   }
   .lg-title{font-family:'Fraunces',Georgia,serif;font-size:29px;font-weight:700;line-height:1.15;margin-top:5px;}
-  .lg-sub{font-size:13px;color:#C6DCF6;margin-top:7px;}
+  .lg-sub{font-size:13px;color:#BFE3CD;margin-top:7px;}
   .lg-card{background:#fff;border-radius:20px;padding:18px 16px 20px;box-shadow:0 18px 44px rgba(5,22,46,.32);}
   .lg-label{font-size:11.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
   #appSplash{
     position:fixed;inset:0;z-index:998;
-    background:linear-gradient(160deg,#0E3667 0%,#1D5FAE 55%,#2E7BD1 100%);
+    background:linear-gradient(160deg,#0B3B27 0%,#1E7A52 55%,#2E9E6B 100%);
     display:flex;align-items:center;justify-content:center;padding:24px;
   }
   .lg-input{
@@ -653,12 +371,12 @@
   .lg-err{color:var(--rust);font-size:12.5px;text-align:center;min-height:18px;font-weight:600;margin-bottom:4px;}
   .lg-go{
     width:100%;padding:15px 0;border:none;border-radius:13px;cursor:pointer;
-    background:linear-gradient(150deg,#2E7BD1,#123E77);color:#fff;
+    background:linear-gradient(150deg,#2E9E6B,#0F4A31);color:#fff;
     font-size:16px;font-weight:700;font-family:'Inter',sans-serif;letter-spacing:.3px;
     box-shadow:0 6px 18px rgba(18,62,119,.3);
   }
   .lg-go:active{transform:scale(.985);}
-  .lg-go:focus-visible{outline:3px solid #7FB2EA;outline-offset:2px;}
+  .lg-go:focus-visible{outline:3px solid #7FD3A8;outline-offset:2px;}
   .lg-shake{animation:lgShake .34s;}
   @keyframes lgShake{
     0%,100%{transform:translateX(0);} 20%{transform:translateX(-8px);}
@@ -701,7 +419,7 @@
   .summary-line{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
   .summary-line.total{border-top:1px dashed var(--line);margin-top:6px;padding-top:8px;font-weight:700;}
   .emp-chip{padding:11px 12px;border-radius:10px;border:2px solid var(--line);background:#fff;cursor:pointer;margin-bottom:6px;}
-  .emp-chip.selected{border-color:var(--blue);background:#EAF1FB;}
+  .emp-chip.selected{border-color:var(--blue);background:#E9F5EE;}
   .emp-chip.highlighted{background:#FFF6E0;border-color:var(--amber);}
   .emp-chip .c-code{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);}
   .emp-chip .c-name{font-size:16px;font-weight:700;}
@@ -772,17 +490,17 @@
   .report-print-footer{display:flex;justify-content:space-between;margin-top:40px;font-size:12.5px;text-align:center;}
   .report-print-footer div{width:40%;}
   .id-card-page{display:flex;align-items:center;justify-content:center;padding:20px;}
-  .id-card{width:85.6mm;height:53.98mm;border-radius:3mm;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.15);font-family:'Inter',sans-serif;background:#fff;border:0.3mm solid #C9DDF5;display:flex;flex-direction:column;}
-  .id-card-top{background:linear-gradient(135deg,#1D5FAE,#123E77);color:#fff;padding:3mm 4mm 2mm;flex-shrink:0;}
+  .id-card{width:85.6mm;height:53.98mm;border-radius:3mm;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.15);font-family:'Inter',sans-serif;background:#fff;border:0.3mm solid #BFE3CD;display:flex;flex-direction:column;}
+  .id-card-top{background:linear-gradient(135deg,#1E7A52,#0F4A31);color:#fff;padding:3mm 4mm 2mm;flex-shrink:0;}
   .id-card-co{font-weight:700;font-size:3.1mm;line-height:1.25;}
   .id-card-sub{font-size:2mm;letter-spacing:0.4mm;opacity:.85;margin-top:0.6mm;}
   .id-card-body{display:flex;gap:3mm;padding:2.5mm 4mm;align-items:flex-start;flex:1;min-height:0;}
-  .id-card-photo{width:16mm;height:21mm;border-radius:1.5mm;overflow:hidden;border:0.4mm solid #C9DDF5;flex-shrink:0;background:#EAF1FB;}
+  .id-card-photo{width:16mm;height:21mm;border-radius:1.5mm;overflow:hidden;border:0.4mm solid #BFE3CD;flex-shrink:0;background:#E9F5EE;}
   .id-card-photo img{width:100%;height:100%;object-fit:cover;}
-  .id-card-photo-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:7mm;color:#9CB8DE;}
+  .id-card-photo-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:7mm;color:#9CCFB4;}
   .id-card-info{flex:1;padding-top:0.5mm;min-width:0;overflow:hidden;}
-  .id-card-name{font-weight:700;font-size:3.4mm;color:#123E77;line-height:1.2;}
-  .id-card-code{font-family:'IBM Plex Mono',monospace;font-size:2.5mm;color:#1D5FAE;font-weight:700;margin-top:1.2mm;}
+  .id-card-name{font-weight:700;font-size:3.4mm;color:#0F4A31;line-height:1.2;}
+  .id-card-code{font-family:'IBM Plex Mono',monospace;font-size:2.5mm;color:#1E7A52;font-weight:700;margin-top:1.2mm;}
   .id-card-line{font-size:2.2mm;color:#555;margin-top:0.8mm;line-height:1.3;}
   #idcard-barcode,#previewBarcode{display:block;width:100%;height:9mm;padding:0 4mm 2mm;flex-shrink:0;}
   /* ===== PHIEU CHI - kieu bill 80mm dat trong trang A4 (giong phan mem cu) ===== */
@@ -827,12 +545,12 @@
   table.pivot-table th{background:var(--blue);color:#fff;position:sticky;top:0;}
   table.pivot-table td:first-child, table.pivot-table th:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:2;}
   table.pivot-table th:first-child{background:var(--blue);z-index:3;}
-  table.pivot-table tr.total-row td{font-weight:700;background:#EAF1FB;}
+  table.pivot-table tr.total-row td{font-weight:700;background:#E9F5EE;}
   table.debt-report-table{border-collapse:collapse;width:100%;font-size:13px;}
   table.debt-report-table th, table.debt-report-table td{border:1px solid var(--line);padding:6px 8px;text-align:right;}
   table.debt-report-table th{background:var(--blue);color:#fff;}
   table.debt-report-table td:nth-child(2){text-align:left;}
-  table.debt-report-table tr.total-row td{font-weight:700;background:#EAF1FB;}
+  table.debt-report-table tr.total-row td{font-weight:700;background:#E9F5EE;}
 </style>
 </head>
 <body>
@@ -841,7 +559,7 @@
   <div class="brand-row">
     <div class="brand">
       <div class="brand-title">⚖️ Cân Tôm</div>
-      <div class="brand-status"><span class="ver-badge">V1.13.0</span> · <span id="cloudStatus"></span></div>
+      <div class="brand-status"><span class="ver-badge">CÂN V1.2</span> · <span id="cloudStatus"></span></div>
     </div>
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
@@ -852,10 +570,7 @@
   <div class="tabs-row">
     <button class="tab-btn active" id="tabBtnWeigh" onclick="switchTab('weigh')">⚖️ Cân tôm</button>
     <button class="tab-btn" id="tabBtnCatalog" onclick="switchTab('catalog')">📋 Danh mục</button>
-    <button class="tab-btn" id="tabBtnDebt" onclick="switchTab('debt')">💰 Công nợ</button>
-    <button class="tab-btn hidden" id="tabBtnSettle" onclick="switchTab('settle')">🧾 Chốt &amp; In</button>
     <button class="tab-btn" id="tabBtnReport" onclick="switchTab('report')">📊 Báo cáo</button>
-    <button class="tab-btn" id="tabBtnConfig" onclick="switchTab('config')">⚙️ Cài đặt</button>
   </div>
   <div class="err-bar" id="errBar">
     <b id="errBarTitle"></b>
@@ -891,7 +606,7 @@
     <span>Đang chọn:</span> <b id="activeProdLabel">— chưa chọn mã hàng —</b>
     <span style="margin-left:auto;">Thành tiền: <b id="wPreview">0 đ</b></span>
   </div>
-  <div id="weighDateNote" class="hidden" style="padding:0 12px 6px;background:var(--blue);color:#D3E4F8;">🔒 Chỉ cân được cho ngày hôm nay</div>
+  <div id="weighDateNote" class="hidden" style="padding:0 12px 6px;background:var(--blue);color:#C9E8D6;">🔒 Chỉ cân được cho ngày hôm nay</div>
 </div>
 
 <!-- ============ TAB: CÂN TÔM ============ -->
@@ -924,26 +639,13 @@
   <!-- V1.11.6 — KHỐI KIỂM TRA cho người cân (Cài đặt họ không vào được) -->
   <div class="wrap-full">
     <div style="border:1px solid var(--line);border-radius:9px;padding:12px 13px;background:#FAFCFF;margin-top:10px;">
-      <div style="font-size:13px;font-weight:700;color:var(--blue-dk);margin-bottom:10px;">💾 Lưu dữ liệu</div>
-      <div style="display:flex;gap:10px;">
-        <div style="flex:1;background:#fff;border:1px solid var(--line);border-radius:8px;padding:11px 10px;text-align:center;">
-          <div style="font-size:22px;line-height:1.1;">📄</div>
-          <div style="font-size:12.5px;font-weight:700;color:var(--blue-dk);margin:5px 0 2px;">Xuất Excel</div>
-          <div class="muted" style="font-size:10.5px;line-height:1.45;min-height:30px;">Phiếu cân trong ngày, xem bằng Excel</div>
-          <button class="btn btn-outline btn-block" style="margin-top:8px;padding:8px 4px;font-size:12px;" onclick="xuatFileChiTiet()">Xuất hôm nay</button>
-        </div>
-        <div style="flex:1;background:#fff;border:1px solid var(--line);border-radius:8px;padding:11px 10px;text-align:center;">
-          <div style="font-size:22px;line-height:1.1;">💾</div>
-          <div style="font-size:12.5px;font-weight:700;color:var(--blue-dk);margin:5px 0 2px;">Sao lưu</div>
-          <div class="muted" style="font-size:10.5px;line-height:1.45;min-height:30px;">Toàn bộ dữ liệu, nạp lại được vào app</div>
-          <button class="btn btn-block" style="margin-top:8px;padding:8px 4px;font-size:12px;background:#fff;color:var(--moss);border:1px solid var(--moss);" onclick="fullBackupExport()">Sao lưu ngay</button>
-        </div>
+            <div style="font-size:13px;font-weight:700;color:var(--blue-dk);margin-bottom:9px;">📄 Xuất file phiếu cân</div>
+      <button class="btn btn-outline btn-block" onclick="xuatFileChiTiet()">📄 Xuất file Excel hôm nay</button>
+      <div class="muted" style="font-size:11px;margin-top:8px;line-height:1.55;">
+        File gồm phiếu cân của ngày đang xem. Phiếu chưa lên server vẫn được ghi đủ
+        và đánh dấu ở cột Ghi chú.
       </div>
-      <div class="muted" style="font-size:10.5px;margin-top:9px;line-height:1.55;">
-        Xuất Excel để xem và đối chiếu. Sao lưu để phục hồi khi có sự cố.
-        Phiếu chưa lên server đều được ghi vào cả hai file.
-      </div>
-      <div id="ktNhanhKetQua" style="font-size:12px;"></div>
+<div id="ktNhanhKetQua" style="font-size:12px;"></div>
     </div>
   </div>
 
@@ -1057,130 +759,10 @@
 </div>
 
 <!-- ============ TAB: CHỐT & IN ============ -->
-<!-- ============ TAB: CÔNG NỢ ============ -->
-<div id="debtTab" class="hidden">
-  <div class="wrap-full app-header">
-    <div class="app-title">💰 Công nợ</div>
-    <div class="app-sub">Phải trả cho công nhân</div>
-  </div>
-  <div class="wrap-full">
-    <div class="section-tab">
-      <button id="debtBtnPay" onclick="setDebtSection('pay')">Phiếu chi</button>
-      <button class="active" id="debtBtnReport" onclick="setDebtSection('report')">Tổng hợp</button>
-      <button id="debtBtnDetail" onclick="setDebtSection('detail')">Chi tiết theo kỳ</button>
-      <button id="debtBtnBalance" onclick="setDebtSection('balance')">Số dư công nợ</button>
-    </div>
-
-    <!-- SỐ DƯ ĐẦU KỲ -->
-    <div id="openSection">
-      <button class="btn btn-outline btn-block" onclick="moGonSoDuDauKy()" style="margin-bottom:12px;text-align:left;">
-        <span id="openToggleIcon">▸</span> Số dư đầu kỳ <span class="muted" style="font-weight:400;font-size:12px;">— ít dùng, bấm để mở</span>
-      </button>
-      <div id="openBody" class="hidden">
-      <div class="card">
-        <div class="card-title">Thêm số dư đầu kỳ</div>
-        <div class="field">
-          <label>Nhân viên</label>
-          <select id="openEmployee"></select>
-        </div>
-        <div class="field">
-          <label>Số tiền (đ) — số dương = còn nợ NV, số âm = NV còn nợ lại công ty</label>
-          <input type="number" id="openAmount" placeholder="VD: 500000 hoặc -500000" inputmode="numeric">
-        </div>
-        <div class="field">
-          <label>Ghi chú</label>
-          <input type="text" id="openNote" placeholder="VD: Chuyển từ sổ cũ">
-        </div>
-        <button class="btn btn-primary btn-block" onclick="addOpening()">＋ Thêm số dư đầu kỳ</button>
-      </div>
-      <div class="card">
-        <div class="card-title">Danh sách số dư đầu kỳ</div>
-        <div id="openListWrap"></div>
-      </div>
-      </div>
-    </div>
-
-    <!-- PHIẾU CHI -->
-    <div id="paySection" class="hidden">
-
-      <div class="card" style="border-color:#C9DDF5;">
-        <div class="card-title">📷 Quét mã vạch nhân viên</div>
-        <input type="text" id="payBarcodeInput" placeholder="Đưa con trỏ vào đây rồi quét thẻ…" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();handlePayBarcodeScan();}">
-        <div id="payBarcodeStatus" class="muted" style="font-size:12px;margin-top:6px;"></div>
-        <div class="muted" style="font-size:11.5px;margin-top:8px;">Quét thẻ → cửa sổ chọn ngày chi tự hiện lên → quét trống (hoặc Enter) lần nữa để CHI + IN BILL 80.</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Bảng kê phiếu chi</div>
-        <div id="payListWrap"></div>
-      </div>
-    </div>
-
-    <!-- TỔNG HỢP CÔNG NỢ -->
-    <div id="reportSection" class="hidden">
-      <div class="card-title">Tổng hợp công nợ phải trả theo nhân viên</div>
-      <div class="card">
-        <div class="row">
-          <div class="field"><label>Từ ngày</label><input type="date" id="reportFrom" onchange="renderDebtReport()"></div>
-          <div class="field"><label>Đến ngày</label><input type="date" id="reportTo" onchange="renderDebtReport()"></div>
-        </div>
-        <button class="btn btn-outline btn-block" onclick="clearDebtReportFilter()">Xem toàn bộ (bỏ lọc ngày)</button>
-      </div>
-      <div style="overflow-x:auto;">
-        <div id="debtReportWrap"></div>
-      </div>
-      <button class="btn btn-primary btn-block" style="margin-top:8px;" onclick="exportDebtReportExcel()">📊 Xuất Excel</button>
-    </div>
-
-    <!-- CHI TIẾT CÔNG NỢ THEO KỲ -->
-    <div id="detailSection" class="hidden">
-      <div class="card">
-        <div class="row">
-          <div class="field"><label>Từ ngày</label><input type="date" id="detailFrom" onchange="renderDebtDetail()"></div>
-          <div class="field"><label>Đến ngày</label><input type="date" id="detailTo" onchange="renderDebtDetail()"></div>
-        </div>
-        <div class="field">
-          <label>Nhân viên</label>
-          <input type="text" id="detailEmpSearch" placeholder="🔍 Gõ mã hoặc tên để lọc danh sách bên dưới…" oninput="populateDetailEmployeeSelect()" style="margin-bottom:7px;">
-          <select id="detailEmployee" onchange="renderDebtDetail()"><option value="">-- Tất cả nhân viên --</option></select>
-        </div>
-      </div>
-      <div style="overflow-x:auto;">
-        <div id="debtDetailWrap"></div>
-      </div>
-      <button class="btn btn-primary btn-block" style="margin-top:8px;" onclick="exportDebtDetailExcel()">📊 Xuất Excel</button>
-    </div>
-
-    <!-- SỐ DƯ CÔNG NỢ -->
-    <div id="balanceSection" class="hidden">
-      <div class="card">
-        <div class="row">
-          <div class="field"><label>Từ ngày</label><input type="date" id="balFrom" onchange="renderDebtBalance()"></div>
-          <div class="field"><label>Đến ngày</label><input type="date" id="balTo" onchange="renderDebtBalance()"></div>
-        </div>
-      </div>
-      <div style="overflow-x:auto;">
-        <div id="debtBalanceWrap"></div>
-      </div>
-      <button class="btn btn-primary btn-block" style="margin-top:8px;" onclick="exportDebtBalanceExcel()">📊 Xuất Excel</button>
-    </div>
-  </div>
-  <div style="height:40px;"></div>
-</div>
 
 
-<div id="settleTab" class="hidden">
-  <div class="wrap app-header">
-    <div class="app-title">🧾 Chốt ngày &amp; In phiếu</div>
-    <div class="field" style="margin-top:8px;">
-      <input type="date" id="settleDate" onchange="renderSettlement()">
-    </div>
-  </div>
-  <div class="wrap">
-    <div id="settleListWrap"></div>
-    <button class="btn btn-outline btn-block" style="margin-top:8px;" onclick="printAllReceipts()">🖨 In tất cả phiếu ngày này</button>
-  </div>
-  <div style="height:40px;"></div>
-</div>
+
+
 
 <!-- ============ TAB: BÁO CÁO ============ -->
 <div id="reportTab" class="hidden">
@@ -1196,7 +778,7 @@
     <div id="bcMuc1">
       <div class="card-title">📋 Bảng tổng hợp chi tiết cân theo ngày</div>
       <div class="card">
-        <div class="field"><label>Chọn ngày</label><input type="date" id="pivotDate" onchange="renderPivotTable(document.getElementById('pivotDate').value)"></div>
+        <div class="field"><label>Chọn ngày</label><input type="date" id="pivotDate" onchange="doiNgayPivot()"></div>
       </div>
       <div style="overflow-x:auto;">
         <div id="pivotTableWrap"></div>
@@ -1214,8 +796,8 @@
       <div class="card-title">🏭 Báo cáo tổng hợp thành phẩm chế biến</div>
       <div class="card">
         <div class="row">
-          <div class="field"><label>Từ ngày</label><input type="date" id="prodReportFrom" onchange="renderProductReport()"></div>
-          <div class="field"><label>Đến ngày</label><input type="date" id="prodReportTo" onchange="renderProductReport()"></div>
+          <div class="field"><label>Từ ngày</label><input type="date" id="prodReportFrom" onchange="doiNgayBaoCao()"></div>
+          <div class="field"><label>Đến ngày</label><input type="date" id="prodReportTo" onchange="doiNgayBaoCao()"></div>
         </div>
       </div>
       <div style="overflow-x:auto;">
@@ -1230,309 +812,7 @@
   <div style="height:40px;"></div>
 </div>
 
-<!-- ============ TAB: CÀI ĐẶT ============ -->
-<div id="configTab" class="hidden">
-  <div class="wrap-full app-header">
-    <div class="app-title">⚙️ Cài đặt</div>
-  </div>
-  <div class="wrap-full">
-    <div class="section-tab">
-      <button class="active" id="cfgBtnCompany" onclick="setConfigSection('company')">Công ty</button>
-      <button id="cfgBtnOptions" onclick="setConfigSection('options')">Tuỳ chọn</button>
-      <button id="cfgBtnSecurity" onclick="setConfigSection('security')">Bảo mật</button>
-      <button id="cfgBtnData" onclick="setConfigSection('data')">Dữ liệu</button>
-      <button id="cfgBtnUsers" onclick="setConfigSection('users')">Người dùng</button>
-      <button id="cfgBtnLock" onclick="setConfigSection('lock')">Khoá nhập</button>
-      <button id="cfgBtnLog" onclick="setConfigSection('log')">Lịch sử</button>
-    </div>
 
-    <!-- THÔNG TIN CÔNG TY -->
-    <div id="cfgCompanySection">
-      <div class="card">
-        <div class="card-title">🏢 Thông tin công ty</div>
-        <div class="field"><label>Tên công ty</label><input type="text" id="cfgCompanyName" placeholder="VD: Công ty TNHH Chế biến Thuỷ sản..."></div>
-        <div class="field"><label>Địa chỉ</label><input type="text" id="cfgCompanyAddress" placeholder="Địa chỉ xưởng/công ty"></div>
-        <div class="field"><label>Số điện thoại</label><input type="text" id="cfgCompanyPhone" placeholder="SĐT liên hệ"></div>
-        <button class="btn btn-primary btn-block" onclick="saveCompanyInfo()">💾 Lưu thông tin công ty</button>
-        <div class="muted" style="font-size:11.5px;margin-top:8px;">Thông tin này sẽ hiện trên đầu phiếu chi khi in.</div>
-      </div>
-    </div>
-
-    <!-- TUỲ CHỌN -->
-    <div id="cfgOptionsSection" class="hidden">
-      <div class="card">
-        <div class="card-title">🔧 Tuỳ chọn</div>
-        <div class="field">
-          <label>Số ngày nhắc sao lưu định kỳ</label>
-          <input type="number" id="cfgBackupDays" value="3" min="1">
-        </div>
-        <div class="field">
-          <label>Số chữ số thập phân khi hiện số kg</label>
-          <select id="cfgKgDecimals">
-            <option value="1">1 số (VD: 4.5)</option>
-            <option value="2">2 số (VD: 4.50)</option>
-          </select>
-        </div>
-        <button class="btn btn-primary btn-block" onclick="saveOptions()">💾 Lưu tuỳ chọn</button>
-      </div>
-    </div>
-
-    <!-- BẢO MẬT -->
-    <div id="cfgSecuritySection" class="hidden">
-      <div class="card">
-        <div class="card-title">🔒 Đổi mật khẩu (khoá màn hình)</div>
-        <div id="pinStatusText" class="muted" style="margin-bottom:10px;"></div>
-        <div class="field"><label>Mã PIN mới (4 số)</label><input type="text" id="cfgNewPin" maxlength="4" inputmode="numeric" placeholder="VD: 1234"></div>
-        <div class="row">
-          <button class="btn btn-primary" onclick="setAppPin()">💾 Đặt / Đổi mã PIN</button>
-          <button class="btn btn-outline" onclick="removeAppPin()">🔓 Tắt khoá PIN</button>
-        </div>
-        <div class="muted" style="font-size:11.5px;margin-top:8px;">Khi bật, mỗi lần mở app sẽ yêu cầu nhập đúng mã PIN này mới vào được.</div>
-      </div>
-      <div class="card">
-        <div class="card-title">🛡 Mã bảo vệ xoá Danh mục</div>
-        <div id="deletePinStatusText" class="muted" style="margin-bottom:10px;"></div>
-        <div class="field"><label>Mã PIN xoá (4 số)</label><input type="text" id="cfgDeletePin" maxlength="4" inputmode="numeric" placeholder="VD: 9999"></div>
-        <div class="row">
-          <button class="btn btn-primary" onclick="setDeletePin()">💾 Đặt / Đổi mã bảo vệ</button>
-          <button class="btn btn-outline" onclick="removeDeletePin()">🔓 Tắt mã bảo vệ</button>
-        </div>
-        <div class="muted" style="font-size:11.5px;margin-top:8px;">Khi bật, mọi hành động <b>xoá</b> Nhân viên hoặc Mã hàng (kể cả xoá hàng loạt) trong tab Danh mục sẽ yêu cầu nhập đúng mã này trước — giúp tránh người khác lỡ tay xoá làm sai dữ liệu, lệch báo cáo. Chỉ áp dụng cho hành động xoá, không ảnh hưởng thêm/sửa hay các thao tác khác.</div>
-      </div>
-    </div>
-
-    <!-- DỮ LIỆU -->
-    <div id="cfgDataSection" class="hidden">
-            <div class="card">
-        <div class="card-title">🧹 Dọn nhân viên chưa dùng</div>
-        <div class="muted" style="font-size:12.5px;line-height:1.7;margin-bottom:10px;">
-          Tìm các nhân viên <b>chưa có tên</b> và <b>chưa từng phát sinh dữ liệu</b>, để xoá bớt cho hệ thống nhẹ.
-          Bấm nút chỉ để tìm và xem, chưa xoá gì.
-        </div>
-        <div style="background:#F7F9FC;border-radius:9px;padding:11px 13px;font-size:12.5px;line-height:1.9;margin-bottom:11px;">
-          Sẽ xoá nếu thoả <b>cả bốn</b> điều kiện:<br>
-          ① Tên để trống, là "-", hoặc chỉ có dấu gạch<br>
-          ② Chưa từng có phiếu cân nào<br>
-          ③ Chưa từng có phiếu chi nào<br>
-          ④ Chưa từng có số dư đầu kỳ hay tiền cơm
-        </div>
-        <div style="background:#FDF1EF;border:1px solid #F0C9C2;border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.6;color:#8E2018;margin-bottom:11px;">
-          <b>Sao lưu trước khi chạy.</b> Và nên đóng app trên các máy khác, chỉ để một máy làm việc này.
-        </div>
-        <button class="btn btn-primary btn-block" onclick="quetNhanVienChuaDung()">🔍 Quét tìm nhân viên chưa dùng</button>
-        <div id="donNvWrap" style="margin-top:12px;"></div>
-      </div>
-
-      <div class="card" style="border-color:#C9DDF5;">
-        <div class="card-title" style="color:var(--blue-dk);">📊 Sức chứa dữ liệu</div>
-        <div class="muted" style="font-size:12.5px;line-height:1.7;margin-bottom:10px;">
-          Đo lượng dữ liệu app phải tải về mỗi lần mở. Chỉ đếm từ dữ liệu đã có sẵn trong máy —
-          không gọi server, không tốn lượt đọc Firebase.
-        </div>
-        <div id="sucChuaWrap" style="background:#F7F9FC;border-radius:9px;padding:11px 13px;font-size:12.5px;">Bấm để đo.</div>
-        <button class="btn btn-outline btn-block" style="margin-top:9px;" onclick="doSucChua()">📊 Đo lại</button>
-      </div>
-
-      <div class="card" style="border-color:#C9DDF5;">
-        <div class="card-title" style="color:var(--blue-dk);">📄 File chi tiết phiếu cân</div>
-        <div class="muted" style="font-size:12.5px;line-height:1.7;margin-bottom:10px;">
-          Ghi lại phiếu cân trong ngày ra file Excel: Mã cân · Thời gian · Mã NV · Nhân viên · Mã hàng · KG · Người cân.
-        </div>
-        <div class="field"><label>Ngày cần xuất</label><input type="date" id="xuatFileNgay"></div>
-        <button class="btn btn-primary btn-block" onclick="xuatFileChiTiet(document.getElementById('xuatFileNgay').value)">📄 Xuất file Excel</button>
-        <hr style="border:none;border-top:1px solid var(--line);margin:13px 0;">
-        <div class="card-title" style="font-size:13px;">🔄 Tự lưu vào thư mục</div>
-        <div class="muted" style="font-size:12.5px;line-height:1.7;margin-bottom:9px;">
-          Chọn thư mục <b>một lần duy nhất</b>, sau đó app tự ghi đè file mỗi 2 phút, không cần bấm gì thêm.
-          Chỉ chạy trên Chrome/Edge máy tính.
-        </div>
-        <div id="tuLuuTrangThai" style="font-size:12.5px;margin-bottom:9px;">—</div>
-        <button class="btn btn-outline btn-block" onclick="chonThuMucLuu()">📁 Chọn thư mục tự lưu</button>
-      </div>
-
-      <div class="card" style="border-color:#C9DDF5;">
-        <div class="card-title" style="color:var(--blue-dk);">🔍 Đối chiếu sổ máy với server</div>
-        <div class="muted" style="font-size:12.5px;line-height:1.7;margin-bottom:10px;">
-          Sổ máy tự ghi mỗi phiếu vào kho riêng, server không đụng tới được. App tự đối chiếu ngầm mỗi 5 phút;
-          nút này để kiểm bất cứ lúc nào.
-        </div>
-        <div class="field"><label>Đối chiếu ngày</label><input type="date" id="doiChieuNgay"></div>
-        <button class="btn btn-primary btn-block" onclick="doiChieuTay()">🔍 Đối chiếu ngay</button>
-        <div id="doiChieuKetQua" style="margin-top:11px;"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">💾 Sao lưu dữ liệu</div>
-        <div class="muted" style="font-size:12.5px;margin-bottom:10px;">Tải toàn bộ dữ liệu (nhân viên, mã hàng, phiếu cân, công nợ...) về máy thành 1 file.</div>
-        <button class="btn btn-primary btn-block" onclick="fullBackupExport()">⬇️ Xuất file sao lưu đầy đủ</button>
-      </div>
-      <div class="card">
-        <div class="card-title">📥 Phục hồi dữ liệu</div>
-        <div class="muted" style="font-size:12.5px;margin-bottom:10px;">Nhập lại từ file sao lưu đã xuất trước đó. Sẽ THAY THẾ toàn bộ dữ liệu hiện tại.</div>
-        <input type="file" id="fullRestoreFile" accept="application/json" class="hidden" onchange="fullBackupImport(event)">
-        <button class="btn btn-outline btn-block" onclick="document.getElementById('fullRestoreFile').click()">⬆️ Chọn file phục hồi</button>
-      </div>
-      <div class="card" style="border-color:#C9DDF5;">
-        <div class="card-title" style="color:var(--blue-dk);">📦 Đóng kỳ cũ (giảm tải dữ liệu)</div>
-        <div class="muted" style="font-size:12.5px;margin-bottom:10px;">
-          Gói toàn bộ phiếu cân + phiếu chi <b>đến ngày chọn</b> lại thành 1 con số "Số dư đầu kỳ" duy nhất cho mỗi nhân viên, giúp dữ liệu đang hoạt động nhẹ lại, tránh đầy kho lưu trữ cloud. Dữ liệu chi tiết cũ sẽ được <b>xuất ra file Excel lưu trữ vĩnh viễn trước khi gói lại</b> — không mất số liệu, chỉ gọn dữ liệu đang chạy.
-        </div>
-        <div class="field"><label>Đóng đến hết ngày</label><input type="date" id="archiveCutoffDate"></div>
-        <button class="btn btn-primary btn-block" id="archiveBtn" onclick="performPeriodClose()">📦 Xuất lưu trữ & Đóng kỳ</button>
-      </div>
-      <div class="card" style="border-color:#F3C9C4;">
-        <div class="card-title" style="color:var(--rust);">🗑 Xoá dữ liệu</div>
-        <div class="muted" style="font-size:12.5px;margin-bottom:10px;">Xoá vĩnh viễn toàn bộ dữ liệu trên máy này (nhân viên, mã hàng, phiếu cân, công nợ). Nên xuất file sao lưu trước khi xoá.</div>
-        <button class="btn btn-danger btn-block" id="wipeDataBtn" onclick="wipeAllData()">🗑 Xoá toàn bộ dữ liệu</button>
-      </div>
-    </div>
-
-    <!-- NGƯỜI DÙNG -->
-    <div id="cfgUsersSection" class="hidden">
-      <div class="card">
-        <div class="card-title">👥 Thêm người dùng</div>
-        <div class="muted" style="font-size:12px;margin-bottom:10px;">Mỗi người dùng có tên riêng + mã PIN riêng, chỉ thấy đúng các tab được tick bên dưới. Khi có ít nhất 1 người dùng, mỗi lần mở app sẽ yêu cầu chọn tên + nhập PIN. <b>Nên tạo 1 tài khoản của chính bạn với đầy đủ quyền trước tiên.</b></div>
-        <div class="field"><label>Tên hiển thị (ngắn gọn)</label><input type="text" id="newUserName" placeholder="VD: Chủ, Kế toán, Cân A"></div>
-        <div class="field"><label>Họ tên đầy đủ</label><input type="text" id="newUserFullName" placeholder="VD: Nguyễn Văn A"></div>
-        <div class="field"><label>Tên đăng nhập</label><input type="text" id="newUserUsername" autocapitalize="none" autocomplete="off" placeholder="VD: cana (không dấu, không khoảng trắng)"></div>
-        <div class="field"><label>Mật khẩu</label><input type="password" id="newUserPassword" autocomplete="new-password" placeholder="Ít nhất 4 ký tự"></div>
-        <div class="field">
-          <label>Được xem các tab</label>
-          <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
-            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="new-user-perm" value="weigh" checked> ⚖️ Cân tôm</label>
-            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="new-user-perm" value="catalog"> 📋 Danh mục</label>
-            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="new-user-perm" value="debt"> 💰 Công nợ</label>
-            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="new-user-perm" value="settle"> 🧾 Chốt & In</label>
-            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="new-user-perm" value="report"> 📊 Báo cáo</label>
-            <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="new-user-perm" value="config"> ⚙️ Cài đặt</label>
-          </div>
-        </div>
-        <div class="field">
-          <label>Được làm các việc</label>
-          <div id="newUserActionsWrap" style="display:flex;flex-direction:column;gap:6px;margin-top:4px;"></div>
-        </div>
-        <button class="btn btn-primary btn-block" onclick="addStaffUser()">＋ Thêm người dùng</button>
-      </div>
-      <div class="card">
-        <div class="card-title">Danh sách người dùng</div>
-        <div id="userListWrap"></div>
-      </div>
-      <div class="card" style="background:#F5F7FA;">
-        <div class="muted" style="font-size:11.5px;">Lưu ý: mã PIN này chỉ giới hạn <b>hiển thị tab</b> trên giao diện, dùng để phân việc rõ ràng giữa mọi người — không phải lớp bảo mật chống hack chuyên sâu. Với dữ liệu thật sự nhạy cảm, kết hợp thêm mã PIN khoá màn hình và mã bảo vệ xoá ở mục Bảo mật.</div>
-      </div>
-    </div>
-
-    <!-- KHOÁ NHẬP -->
-    <div id="cfgLockSection" class="hidden">
-      <div class="card">
-        <div class="card-title">⏰ Khoá theo khung giờ làm việc</div>
-        <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <input type="checkbox" id="lockHoursChk" onchange="saveLockOptions()"> Chỉ cho nhập trong giờ làm việc
-        </label>
-        <div class="row">
-          <div class="field"><label>Từ giờ</label><input type="time" id="lockWorkStart" onchange="saveLockOptions()"></div>
-          <div class="field"><label>Đến giờ</label><input type="time" id="lockWorkEnd" onchange="saveLockOptions()"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">📱 Khoá theo máy đã duyệt</div>
-        <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <input type="checkbox" id="lockDeviceChk" onchange="saveLockOptions()"> Chỉ máy đã duyệt mới nhập được
-        </label>
-        <div class="muted" style="font-size:12px;margin-bottom:10px;">
-          Máy đang dùng: <b id="thisDeviceLabel"></b> — mã <b id="thisDeviceCode" class="font-mono"></b>
-        </div>
-        <button class="btn btn-outline btn-block" onclick="approveThisDevice()">✅ Duyệt máy đang dùng</button>
-        <div class="field" style="margin-top:12px;">
-          <label>Duyệt máy khác bằng mã</label>
-          <div class="row">
-            <input type="text" id="addDeviceCode" placeholder="VD: M4K2XZ">
-            <button class="btn btn-outline" onclick="approveDeviceByCode()">Duyệt</button>
-          </div>
-        </div>
-        <div id="deviceListWrap" style="margin-top:8px;"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">📍 Khoá theo vị trí GPS</div>
-        <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <input type="checkbox" id="lockGpsChk" onchange="saveLockOptions()"> Chỉ nhập được khi ở gần xưởng
-        </label>
-        <div id="gpsCurrentInfo" class="muted" style="font-size:12px;margin-bottom:10px;"></div>
-        <button class="btn btn-outline btn-block" onclick="setGpsHere()">📍 Lấy vị trí xưởng tại đây</button>
-        <div class="field" style="margin-top:10px;">
-          <label>Bán kính cho phép (mét)</label>
-          <input type="number" id="gpsRadiusInput" inputmode="numeric" onchange="saveLockOptions()">
-        </div>
-        <div class="field">
-          <label>Khi máy không lấy được GPS</label>
-          <select id="gpsFailModeSel" onchange="saveLockOptions()">
-            <option value="warn">Vẫn cho nhập, nhưng đánh dấu cờ đỏ</option>
-            <option value="block">Chặn hẳn, không cho nhập</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="card" style="background:#FFF8E6;">
-        <div class="muted" style="font-size:11.5px;">Tài khoản có quyền <b>"Bỏ qua khoá giờ / máy / GPS"</b> luôn nhập được, không bị 3 khoá trên chặn. Nên bật quyền này cho tài khoản của chính bạn <b>trước khi</b> bật khoá, tránh tự khoá mình ra ngoài.</div>
-      </div>
-    </div>
-
-    <!-- LỊCH SỬ TRUY XUẤT -->
-    <div id="cfgLogSection" class="hidden">
-      <div class="seg-log">
-        <button id="logTabHt" class="on" onclick="doiTabLichSu('ht')">🖥 Thao tác hệ thống</button>
-        <button id="logTabCan" onclick="doiTabLichSu('can')">⚖️ Lịch sử cân</button>
-      </div>
-
-      <div class="card" id="logCardCan" style="display:none;">
-        <div class="card-title">⚖️ Lịch sử cân</div>
-        <div class="row">
-          <div class="field"><label>Từ ngày</label><input type="date" id="lscFrom" onchange="renderLichSuCan()"></div>
-          <div class="field"><label>Đến ngày</label><input type="date" id="lscTo" onchange="renderLichSuCan()"></div>
-        </div>
-        <div class="field">
-          <label>Người cân</label>
-          <select id="lscUser" onchange="renderLichSuCan()"><option value="">Tất cả</option></select>
-        </div>
-        <input type="text" id="lscSearch" placeholder="🔍 Tìm theo tên hoặc mã nhân viên…" oninput="renderLichSuCan()" style="margin-bottom:10px;">
-        <div class="row" style="margin-bottom:10px;">
-          <button class="btn btn-outline" id="lscBtnNgo" onclick="locPhieuDangNgo()" style="color:#9B2F22;border-color:#F0C9C2;background:#FDF1EF;">⚠ Chỉ hiện phiếu đáng ngờ</button>
-          <button class="btn btn-outline" onclick="exportLichSuCanExcel()">📊 Xuất Excel</button>
-        </div>
-        <div id="lscWrap"></div>
-        <div class="muted" id="lscHint" style="font-size:11.5px;margin-top:8px;line-height:1.6;"></div>
-      </div>
-
-      <div class="card" id="logCardHt">
-        <div class="card-title">📜 Lịch sử truy xuất</div>
-        <div class="row">
-          <div class="field"><label>Từ ngày</label><input type="date" id="logFrom" onchange="renderActivityLog()"></div>
-          <div class="field"><label>Đến ngày</label><input type="date" id="logTo" onchange="renderActivityLog()"></div>
-        </div>
-        <div class="field">
-          <label>Người dùng</label>
-          <select id="logUserFilter" onchange="renderActivityLog()"><option value="">Tất cả</option></select>
-        </div>
-        <input type="text" id="logSearch" placeholder="🔍 Tìm trong nội dung…" oninput="renderActivityLog()" style="margin-bottom:10px;">
-        <div id="activityLogWrap"></div>
-        <div class="row" style="margin-top:10px;">
-          <button class="btn btn-outline" onclick="exportActivityLogExcel()">📊 Xuất Excel</button>
-          <button class="btn btn-outline" id="clearLogBtn" onclick="clearActivityLog()" style="color:var(--rust);">🗑 Xoá lịch sử</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:20px;background:#F5F7FA;">
-      <div class="card-title">ℹ️ Chưa hỗ trợ trong bản này</div>
-      <div class="muted" style="font-size:12.5px;line-height:1.6;">
-        <b>Nhóm quyền</b>, <b>Phân quyền - người dùng</b> và <b>Cửa hàng - kho</b> là tính năng dành cho hệ thống có nhiều tài khoản đăng nhập / nhiều chi nhánh. App hiện tại thiết kế cho 1 người dùng, 1 nơi làm việc nên chưa cần các mục này. Nếu công ty phát triển thêm nhiều xưởng/nhiều người thao tác cùng lúc, báo mình để nâng cấp lên hệ thống nhiều tài khoản.
-      </div>
-    </div>
-  </div>
-  <div style="height:40px;"></div>
-</div>
 
 <div id="printArea" style="display:none;"></div>
 
@@ -1677,47 +957,49 @@ function measureTopBar(){
 window.addEventListener('resize', measureTopBar);
 window.addEventListener('orientationchange', ()=>setTimeout(measureTopBar,150));
 
+/* BẢN CÂN — chỉ còn 3 tab: Cân tôm · Danh mục · Báo cáo.
+   Đã XOÁ HẲN tab Công nợ, Chốt & In, Cài đặt khỏi HTML. Dùng hàm trợ giúp
+   an(id) để không lỗi khi phần tử không còn tồn tại. */
+function an(id, dieuKien){
+  const el = document.getElementById(id);
+  if(el) el.classList.toggle('hidden', dieuKien);
+}
+function chon(id, dieuKien){
+  const el = document.getElementById(id);
+  if(el) el.classList.toggle('active', dieuKien);
+}
 function switchTab(tab){
+  // Bản cân không có 3 tab này — chuyển về Cân tôm cho an toàn
+  if(tab==='debt' || tab==='settle' || tab==='config') tab = 'weigh';
+
   const sr = document.getElementById('weighSearchRow');
   if(sr) sr.style.display = (tab==='weigh') ? 'flex' : 'none';
   if(tab!=='weigh'){ const dn=document.getElementById('weighDateNote'); if(dn) dn.classList.add('hidden'); }
   setTimeout(measureTopBar, 0);
-  document.getElementById('weighTab').classList.toggle('hidden', tab!=='weigh');
-  document.getElementById('catalogTab').classList.toggle('hidden', tab!=='catalog');
-  document.getElementById('debtTab').classList.toggle('hidden', tab!=='debt');
-  document.getElementById('settleTab').classList.toggle('hidden', tab!=='settle');
-  document.getElementById('reportTab').classList.toggle('hidden', tab!=='report');
-  document.getElementById('configTab').classList.toggle('hidden', tab!=='config');
-  document.getElementById('tabBtnWeigh').classList.toggle('active', tab==='weigh');
-  document.getElementById('tabBtnCatalog').classList.toggle('active', tab==='catalog');
-  document.getElementById('tabBtnDebt').classList.toggle('active', tab==='debt');
-  document.getElementById('tabBtnSettle').classList.toggle('active', tab==='settle');
-  document.getElementById('tabBtnReport').classList.toggle('active', tab==='report');
-  document.getElementById('tabBtnConfig').classList.toggle('active', tab==='config');
+  an('weighTab',   tab!=='weigh');
+  an('catalogTab', tab!=='catalog');
+  an('reportTab',  tab!=='report');
+  chon('tabBtnWeigh',   tab==='weigh');
+  chon('tabBtnCatalog', tab==='catalog');
+  chon('tabBtnReport',  tab==='report');
+  tabDangMo = tab;
   if(tab==='weigh'){ renderEmployeePicker(); renderProductGrid(); renderWeighTab(); }
   if(tab==='catalog'){ renderCatalog(); }
-  if(tab==='debt'){
-    populateDebtSelects();
-    renderDebtTab();
-    setDebtSection('report');
-  }
-  if(tab==='settle'){
-    if(!document.getElementById('settleDate').value) document.getElementById('settleDate').value = todayKey();
-    renderSettlement();
-  }
   if(tab==='report'){
     if(!document.getElementById('pivotDate').value) document.getElementById('pivotDate').value = todayKey();
     if(!document.getElementById('prodReportFrom').value){
       document.getElementById('prodReportFrom').value = todayKey();
       document.getElementById('prodReportTo').value = todayKey();
     }
+    ganLaiListenerNeuCan();
     renderPivotTable(document.getElementById('pivotDate').value);
     renderProductReport();
   }
-  if(tab==='config'){ loadConfigForm(); }
 }
+let tabDangMo = 'weigh';
 // ===== KHOÁ NHẬP =====
 function renderLockSection(){
+  if(!document.getElementById('lockHoursChk')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   document.getElementById('lockHoursChk').checked  = !!appOptions.lockHours;
   document.getElementById('lockWorkStart').value   = appOptions.workStart || '05:00';
   document.getElementById('lockWorkEnd').value     = appOptions.workEnd   || '19:00';
@@ -1791,6 +1073,7 @@ function removeDevice(id){
   renderDeviceList();
 }
 function renderDeviceList(){
+  if(!document.getElementById('deviceListWrap')) return;   // BẢN CÂN: phần này đã xoá
   const w = document.getElementById('deviceListWrap');
   if(!w) return;
   if(devices.length===0){ w.innerHTML = `<div class="empty-state" style="padding:8px;">Chưa duyệt máy nào</div>`; return; }
@@ -1809,6 +1092,7 @@ function renderDeviceList(){
 
 // ===== LỊCH SỬ TRUY XUẤT =====
 function filteredActivityLog(){
+  if(!document.getElementById('logUserFilter')) return [];   // BẢN CÂN: phần này đã xoá khỏi HTML
   const from = document.getElementById('logFrom')?.value || '';
   const to   = document.getElementById('logTo')?.value || '';
   const uid_ = document.getElementById('logUserFilter')?.value || '';
@@ -1861,6 +1145,7 @@ function vaoNgoPhieu(w){
   return ly;
 }
 function locLichSuCan(){
+  if(!document.getElementById('lscFrom')) return [];   // BẢN CÂN: phần này đã xoá khỏi HTML
   const f = (document.getElementById('lscFrom')?.value)||'';
   const t = (document.getElementById('lscTo')?.value)||'';
   const u = (document.getElementById('lscUser')?.value)||'';
@@ -1879,6 +1164,7 @@ function locLichSuCan(){
   }).sort((a,b)=>b.createdAt-a.createdAt);
 }
 function renderLichSuCan(){
+  if(!document.getElementById('lscWrap')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   const sel = document.getElementById('lscUser');
   if(sel){
     const cur = sel.value;
@@ -1942,6 +1228,7 @@ function exportLichSuCanExcel(){
 }
 
 function renderActivityLog(){
+  if(!document.getElementById('activityLogWrap')) return;   // BẢN CÂN: phần này đã xoá
   const sel = document.getElementById('logUserFilter');
   if(sel){
     const cur = sel.value;
@@ -1999,6 +1286,7 @@ function clearActivityLog(){
 }
 
 function setConfigSection(s){
+  if(!document.getElementById('cfgDataSection')) return;   // BẢN CÂN: phần này đã xoá
   document.getElementById('cfgCompanySection').classList.toggle('hidden', s!=='company');
   document.getElementById('cfgOptionsSection').classList.toggle('hidden', s!=='options');
   document.getElementById('cfgSecuritySection').classList.toggle('hidden', s!=='security');
@@ -2024,6 +1312,7 @@ function setConfigSection(s){
   if(s==='log') renderActivityLog();
 }
 function loadConfigForm(){
+  if(!document.getElementById('cfgBackupDays')) return;   // BẢN CÂN: phần này đã xoá
   document.getElementById('cfgCompanyName').value = companyInfo.name || '';
   document.getElementById('cfgCompanyAddress').value = companyInfo.address || '';
   document.getElementById('cfgCompanyPhone').value = companyInfo.phone || '';
@@ -2052,6 +1341,7 @@ function saveOptions(){
 
 // ===== BẢO MẬT: KHOÁ PIN =====
 function updatePinStatusText(){
+  if(!document.getElementById('pinStatusText')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   const pin = localStorage.getItem(PIN_KEY);
   document.getElementById('pinStatusText').textContent = pin ? "🔒 Đang bật khoá PIN" : "🔓 Chưa bật khoá PIN";
 }
@@ -2071,6 +1361,7 @@ function removeAppPin(){
 
 // ===== MÃ PIN BẢO VỆ XOÁ DANH MỤC =====
 function updateDeletePinStatusText(){
+  if(!document.getElementById('deletePinStatusText')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   const pin = localStorage.getItem(DELETE_PIN_KEY);
   document.getElementById('deletePinStatusText').textContent = pin ? "🛡 Đang bật bảo vệ xoá" : "⚪ Chưa bật bảo vệ xoá";
 }
@@ -2308,6 +1599,10 @@ async function chayDonNhanVien(){
 }
 
 function fullBackupExport(){
+  // BẢN CÂN — chặn tuyệt đối. Chỉ có 1 ngày dữ liệu, sao lưu sẽ thiếu.
+  alert('Bản cân chỉ tải phiếu của ngày đang xem nên KHÔNG sao lưu được đầy đủ.\n\n'
+      + 'Hãy sao lưu ở bản quản lý (link /quanly/).');
+  return;
   // V1.11.6 — CHẶN khi dữ liệu chưa tải xong.
   // Trước đây bấm lúc app mới mở ra file 878 KB thay vì 14,7 MB — thiếu gần
   // hết phiếu cân, mà nhìn tên file không biết được.
@@ -2489,8 +1784,8 @@ function requirePerm(action){
 
 // Tab 'settle' (Chốt & In) tạm ẩn — code vẫn giữ nguyên, thêm lại vào mảng này là hiện lại.
 // Tab đó chỉ đọc và hiển thị, không ghi dữ liệu, nên ẩn đi không mất gì.
-const ALL_TABS = ['weigh','catalog','debt','report','config'];
-const TAB_BTN_ID = { weigh:'tabBtnWeigh', catalog:'tabBtnCatalog', debt:'tabBtnDebt', settle:'tabBtnSettle', report:'tabBtnReport', config:'tabBtnConfig' };
+const ALL_TABS = ['weigh','catalog','report'];   // BẢN CÂN: bỏ debt, config
+const TAB_BTN_ID = { weigh:'tabBtnWeigh', catalog:'tabBtnCatalog', report:'tabBtnReport' };
 
 function nextUserCode(){
   const nums = staffUsers.map(u=>parseInt(u.code,10)).filter(n=>!isNaN(n));
@@ -2572,6 +1867,7 @@ function deleteStaffUser(id){
   renderUserList();
 }
 function renderUserList(){
+  if(!document.getElementById('userListWrap')) return;   // BẢN CÂN: phần này đã xoá
   const wrap = document.getElementById('userListWrap');
   if(!wrap) return;
   if(staffUsers.length===0){ wrap.innerHTML = `<div class="empty-state">Chưa có người dùng nào — app đang mở tự do cho mọi người.</div>`; return; }
@@ -2652,7 +1948,7 @@ function showSplash(){
             Vào cân được ngay, nhưng dữ liệu chưa đủ.<br>
             <b>Chưa nên bấm Sao lưu lúc này — file sẽ thiếu.</b>
           </div>
-          <button onclick="boQuaManCho()" style="margin-top:10px;width:100%;background:#fff;color:#123E77;
+          <button onclick="boQuaManCho()" style="margin-top:10px;width:100%;background:#fff;color:#0F4A31;
                   border:none;border-radius:8px;padding:11px;font-size:13.5px;font-weight:700;">Vào cân ngay</button>
         </div>
       </div>
@@ -2666,7 +1962,9 @@ function showSplash(){
 
 // Biểu tượng cân điện tử (mặt cân + thân + màn hình số) — dùng chung cho màn chờ và đăng nhập
 let splashLucBatDau = 0, splashDongHo = null;
-const SPLASH_QUA_HAN = 25000;   // 25 giây thì cho vào cân dù chưa tải xong
+/* BẢN CÂN V1.1 — rút từ 25s xuống 8s. Chỉ tải 1 NGÀY phiếu (~2.700), về rất
+   nhanh, không cần chờ lâu như khi tải 40.000. */
+const SPLASH_QUA_HAN = 8000;
 
 function veManCho(){
   const msg = document.getElementById('splashMsg');
@@ -2695,8 +1993,10 @@ function boQuaManCho(){
 }
 let daBoQuaManCho = false;
 let daNhanGoiServer = false;   // đã nhận ít nhất một gói dữ liệu THẬT từ server
+let choMoCong = null;          // hẹn giờ mở cổng khi gói đến từ bộ nhớ đệm
 function hideSplash(){
   if(splashDongHo){ clearInterval(splashDongHo); splashDongHo = null; }
+  if(choMoCong){ clearTimeout(choMoCong); choMoCong = null; }
   const d = document.getElementById('appSplash');
   if(d) d.remove();
 }
@@ -2895,6 +2195,7 @@ function wipeAllData(){
   alert("Đã xoá toàn bộ dữ liệu.");
 }
 function setDebtSection(s){
+  if(!document.getElementById('openSection')) return;   // BẢN CÂN: phần này đã xoá
   // V1.11.9 — VÁ: "Số dư đầu kỳ" trước đây buộc theo mục 'report' nên bấm
   // Phiếu chi thì nó biến mất. Nó vốn thuộc mục Phiếu chi.
   document.getElementById('openSection').classList.toggle('hidden', s!=='pay');
@@ -3535,7 +2836,9 @@ function onWeighDateChange(){
     document.getElementById('weighDate').value = todayKey();
     alert("Tài khoản của bạn chỉ được cân cho ngày hôm nay.");
     return;
-  } renderWeighTab(); }
+  }
+  ganLaiListenerNeuCan();   // BẢN CÂN: đổi ngày thì tải ngày đó
+  renderWeighTab(); }
 
 function getFilteredEmployees(){
   const q = (document.getElementById('empSearch').value||'').trim().toLowerCase();
@@ -4284,6 +3587,7 @@ function handlePayBarcodeScan(){
 }
 let payModalEmployeeId = null;
 function showPayableDaysModal(employeeId){
+  if(!document.getElementById('payBarcodeInput')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   payModalEmployeeId = employeeId;
   const emp = employees.find(e=>e.id===employeeId);
   if(!emp) return;
@@ -4322,6 +3626,7 @@ function showPayableDaysModal(employeeId){
   document.getElementById('payBarcodeInput').focus();
 }
 function closePayableDaysModal(){
+  if(!document.getElementById('payBarcodeInput')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   payModalEmployeeId = null;
   const overlay = document.getElementById('payModalOverlay');
   if(overlay) overlay.remove();
@@ -4390,6 +3695,7 @@ function recalcPayableAmount(){
 // ===== CHI TIỀN NHANH + IN BILL 80mm =====
 let billPrintLockUntil = 0;
 function confirmPaymentAndPrintBill(){
+  if(!document.getElementById('payBarcodeStatus')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   // Chan Enter/bam trung trong 2 giay - bo qua im lang, khong bao loi
   if(Date.now() < billPrintLockUntil) return;
   const employeeId = payModalEmployeeId;
@@ -4532,6 +3838,7 @@ function printBill80(emp, type, amount, checkedDays, laInLai){
 
 let dauVetDsNV = '';
 function populateDebtSelects(){
+  if(!document.getElementById('detailEmployee')) return;   // BẢN CÂN: phần này đã xoá
   // 3.865 dòng chọn — chỉ dựng lại khi danh sách nhân viên thực sự đổi
   const dauVet = employees.length + '|' + (employees[0]?employees[0].id:'') + '|' + (employees[employees.length-1]?employees[employees.length-1].id:'');
   if(dauVet === dauVetDsNV && document.getElementById('openEmployee').options.length > 1){
@@ -4565,6 +3872,7 @@ function deleteOpening(id){
   renderDebtTab();
 }
 function renderOpeningList(){
+  if(!document.getElementById('openListWrap')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   const wrap = document.getElementById('openListWrap');
   if(openingBalances.length===0){ wrap.innerHTML = `<div class="empty-state">Chưa có số dư đầu kỳ nào</div>`; return; }
   const sorted = [...openingBalances].sort((a,b)=>b.createdAt-a.createdAt);
@@ -4595,6 +3903,7 @@ function deletePayment(id){
   renderDebtTab();
 }
 function renderPaymentList(){
+  if(!document.getElementById('payListWrap')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   const wrap = document.getElementById('payListWrap');
   if(payments.length===0){ wrap.innerHTML = `<div class="empty-state">Chưa có phiếu chi nào</div>`; return; }
   const sorted = [...payments].sort((a,b)=>b.createdAt-a.createdAt);
@@ -4631,6 +3940,7 @@ function payableBalance(employeeId){
   return totalOpeningBalance(employeeId) + totalEarnedAllTime(employeeId) - totalPaid(employeeId);
 }
 function renderDebtTab(){
+  if(!document.getElementById('payListWrap')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   renderOpeningList();
   renderPaymentList();
 }
@@ -4645,6 +3955,7 @@ function clearDebtReportFilter(){
   renderDebtReport();
 }
 function buildDebtReportRows(){
+  if(!document.getElementById('reportFrom')) return [];   // BẢN CÂN: phần này đã xoá khỏi HTML
   const fromKey = document.getElementById('reportFrom')?.value;
   const toKey = document.getElementById('reportTo')?.value;
   const B = dungBangTraCuu();
@@ -4662,6 +3973,7 @@ function buildDebtReportRows(){
 let debtReportShowAll = false;
 function toggleDebtReportShowAll(){ debtReportShowAll = !debtReportShowAll; renderDebtReport(); }
 function renderDebtReport(){
+  if(!document.getElementById('debtReportWrap')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   const wrap = document.getElementById('debtReportWrap');
   if(employees.length===0){ wrap.innerHTML = `<div class="empty-state">Chưa có nhân viên nào</div>`; return; }
   const allRows = buildDebtReportRows()
@@ -4740,6 +4052,7 @@ function boDau(str){
 }
 
 function populateDetailEmployeeSelect(){
+  if(!document.getElementById('detailEmployee')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   const sel = document.getElementById('detailEmployee');
   if(!sel) return;
   const current = sel.value;
@@ -4767,6 +4080,7 @@ function dateKeysBetween(fromKey, toKey){
   return out;
 }
 function buildDebtDetailData(){
+  if(!document.getElementById('detailFrom')) return {rows:[],tong:0};   // BẢN CÂN: phần này đã xoá khỏi HTML
   const fromKey = document.getElementById('detailFrom').value || todayKey();
   const toKey = document.getElementById('detailTo').value || todayKey();
   const empFilter = document.getElementById('detailEmployee').value;
@@ -4795,6 +4109,7 @@ function buildDebtDetailData(){
   return { fromKey, toKey, periodOpening, dayRows, totalTang, totalGiam, periodClosing };
 }
 function renderDebtDetail(){
+  if(!document.getElementById('debtDetailWrap')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   const wrap = document.getElementById('debtDetailWrap');
   const data = buildDebtDetailData();
   if(data.dayRows.length===0){
@@ -4850,6 +4165,7 @@ function balanceAsOf(employeeId, toKey){
   return opening + earned - paid;
 }
 function buildDebtBalanceData(){
+  if(!document.getElementById('balFrom')) return {rows:[],tong:0};   // BẢN CÂN: phần này đã xoá khỏi HTML
   const fromKey = document.getElementById('balFrom').value || todayKey();
   const toKey = document.getElementById('balTo').value || todayKey();
   const B = dungBangTraCuu();
@@ -4862,6 +4178,7 @@ function buildDebtBalanceData(){
   return { fromKey, toKey, rows };
 }
 function renderDebtBalance(){
+  if(!document.getElementById('debtBalanceWrap')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   const wrap = document.getElementById('debtBalanceWrap');
   const { rows } = buildDebtBalanceData();
   if(rows.length===0){ wrap.innerHTML = `<div class="empty-state">Không có số dư công nợ nào trong kỳ này</div>`; return; }
@@ -4903,6 +4220,7 @@ function exportDebtBalanceExcel(){
 
 // ===== SETTLEMENT (Chốt ngày) =====
 function renderSettlement(){
+  if(!document.getElementById('settleDate')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   const dateKey = document.getElementById('settleDate').value || todayKey();
   const dayWeighings = weighings.filter(w=>w.dateKey===dateKey);
   const empIds = [...new Set(dayWeighings.map(w=>w.employeeId))];
@@ -5184,6 +4502,28 @@ function buildProductReportData(){
   const totalAmount = rows.reduce((s,r)=>s+r.amount,0);
   return { fromKey, toKey, rows, totalQty, totalAmount };
 }
+/* BẢN CÂN — đổi ngày ở tab Báo cáo: nới mốc tải TRƯỚC rồi mới vẽ.
+   Không nới thì báo cáo THIẾU dữ liệu mà KHÔNG BÁO LỖI — nguy hiểm hơn chậm. */
+function doiNgayPivot(){
+  ganLaiListenerNeuCan();
+  renderPivotTable(document.getElementById('pivotDate').value);
+}
+function doiNgayBaoCao(){
+  if(!canhBaoKhoangDai()) return;
+  ganLaiListenerNeuCan();
+  renderProductReport();
+}
+// Chọn trên 7 ngày thì hỏi trước, vì tải có thể lâu
+function canhBaoKhoangDai(){
+  const f=document.getElementById('prodReportFrom'), t=document.getElementById('prodReportTo');
+  if(!f || !t || !f.value || !t.value) return true;
+  const soNgay = Math.round((new Date(t.value+'T00:00:00') - new Date(f.value+'T00:00:00'))/86400000) + 1;
+  if(soNgay <= 7) return true;
+  return confirm('Bạn chọn ' + soNgay + ' ngày — khoảng '
+    + (soNgay*2700).toLocaleString('en-US') + ' phiếu.\n'
+    + 'Tải có thể mất 15-50 giây tuỳ mạng.\n\nTiếp tục?');
+}
+
 function renderProductReport(){
   const wrap = document.getElementById('productReportWrap');
   const { rows, totalQty, totalAmount } = buildProductReportData();
@@ -5510,13 +4850,50 @@ function luuKhoLenMay(name, docs){
   catch(e){ console.warn('Không lưu được kho "'+name+'" trên máy:', e && e.name); }
 }
 
+/* ==========================================================================
+   BẢN CÂN — CHỈ TẢI PHIẾU CỦA NGÀY ĐANG XEM
+   --------------------------------------------------------------------------
+   An toàn tuyệt đối vì bản này KHÔNG CÓ tab Công nợ — không còn hàm nào cần
+   toàn bộ lịch sử. Đây là khác biệt với V1.12.3-1.12.8 (thất bại vì vẫn để
+   lại tab Công nợ trong file, chỉ giới hạn dữ liệu).
+   Hai báo cáo đều tự lọc theo ngày ngay trong hàm:
+     buildPivotData(dateKey)  -> lọc w.dateKey !== dateKey
+     buildProductReportData() -> lọc dateKey < from || > to
+   Nên tải theo ngày là ĐÚNG BẢN CHẤT, không phải cắt xén.
+   ========================================================================== */
+let mocDangTai = undefined;   // mốc dateKey của listener weighings hiện tại
+
+// Mốc rộng nhất trong các ngày đang xem (tab Cân tôm + 2 ô ngày ở Báo cáo)
+function mocTaiPhieu(){
+  const lay = id => { const el = document.getElementById(id); return (el && el.value) || ''; };
+  let moc = lay('weighDate') || todayKey();
+  ['pivotDate','prodReportFrom'].forEach(id=>{
+    const v = lay(id);
+    if(v && v < moc) moc = v;
+  });
+  return moc;
+}
+
+// Gắn lại listener khi mốc đổi. KHÔNG gắn lại nếu mốc không đổi — tránh tốn
+// lượt đọc vô ích.
+function ganLaiListenerNeuCan(){
+  if(!fsReady || !fsDb) return;
+  if(mocTaiPhieu() === mocDangTai) return;
+  attachRealtimeListeners();
+}
+
 function attachRealtimeListeners(){
-  // Dọn listener cũ (nếu gọi lại)
+  // Dọn listener cũ. BẮT BUỘC gọi hàm huỷ — không thì listener cũ vẫn sống,
+  // vẫn nhận dữ liệu và VẪN TÍNH TIỀN ĐỌC.
   firestoreListeners.forEach(unsub=>unsub());
   firestoreListeners = [];
+  mocDangTai = mocTaiPhieu();
 
   Object.keys(COLLECTIONS).forEach(name=>{
-    const unsub = fsDb.collection(name).onSnapshot(qs=>{
+    let ref = fsDb.collection(name);
+    // Chỉ giới hạn kho phiếu cân. Nhân viên (2.522) và mã hàng (281) rất nhẹ.
+    if(name === 'weighings') ref = ref.where('dateKey', '>=', mocDangTai);
+    const unsub = ref.onSnapshot(qs=>{
       // Server là bản chuẩn — thay thẳng. Firestore đã tự gộp sẵn
       // các bản ghi máy này vừa ghi mà chưa kịp lên server.
       // Server là bản chuẩn — thay thẳng.
@@ -5531,6 +4908,21 @@ function attachRealtimeListeners(){
           daNhanGoiServer = true;
           setTimeout(finalizeUserGate, 300);   // để render kịp rồi mới mở cổng
         }
+      }
+      /* BẢN CÂN V1.1 — VÁ MÀN CHỜ ĐỨNG.
+         Listener dùng .where('dateKey','>=',...) là QUERY MỚI. Firestore
+         thường bắn gói TỪ BỘ NHỚ ĐỆM trước (fromCache=true) rồi mới bắn gói
+         server. Gói server tới chậm hoặc không tới thì cờ daNhanGoiServer
+         KHÔNG BAO GIỜ bật -> màn chờ đứng cho tới hết đồng hồ dự phòng.
+         Nay: có gói phiếu cân về rồi (dù từ bộ nhớ đệm) thì hẹn 1,5 giây rồi
+         mở cổng — đủ để gói server tới nếu đang trên đường. */
+      if(name === 'weighings' && !daNhanGoiServer && !choMoCong){
+        choMoCong = setTimeout(()=>{
+          choMoCong = null;
+          if(daNhanGoiServer) return;
+          daNhanGoiServer = true;
+          finalizeUserGate();
+        }, 1500);
       }
       qs.docs.forEach(d=>{
         if(d.metadata && d.metadata.hasPendingWrites) idsChoXacNhan.add(d.id);
@@ -5771,6 +5163,7 @@ function mbGon(bytes){
 }
 
 function doSucChua(){
+  if(!document.getElementById('sucChuaWrap')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   const wrap = document.getElementById('sucChuaWrap');
   if(!wrap) return;
 
@@ -6107,6 +5500,7 @@ async function tuLuuFile(){
 
 let lanTuLuuCuoi = 0;
 function veTrangThaiTuLuu(){
+  if(!document.getElementById('tuLuuTrangThai')) return;   // BẢN CÂN: phần này đã xoá khỏi HTML
   const el = document.getElementById('tuLuuTrangThai');
   if(!el) return;
   if(!hoTroTuLuu()){
@@ -6407,8 +5801,7 @@ seedExtraEmployeesOnce();
 document.getElementById('weighDate').value = todayKey();
 populateSelects();
 renderWeighTab();
-document.getElementById('settleDate').value = todayKey();
-populateDebtSelects();
+// BẢN CÂN: bỏ settleDate và populateDebtSelects — tab Chốt & In và Công nợ đã xoá
 // Tự nối lại và gửi tiếp: 20 giây một lần, và ngay khi máy có mạng trở lại
 setInterval(()=>{
   if(!fsReady){ cloudInit(); return; }
@@ -6435,7 +5828,7 @@ if(document.fonts && document.fonts.ready) document.fonts.ready.then(measureTopB
 switchTab('weigh');
 showSplash();      // khoá app ngay từ giây đầu, tránh vào được rồi mới đòi mật khẩu
 checkUserGate();   // nếu máy đã có sẵn tài khoản thì hiện đăng nhập ngay
-setTimeout(()=>{ if(!splashDone) finalizeUserGate(); }, SPLASH_QUA_HAN + 6000);  // không bao giờ kẹt màn chờ
+setTimeout(()=>{ if(!splashDone) finalizeUserGate(); }, SPLASH_QUA_HAN + 4000);  // không bao giờ kẹt màn chờ
 soMayNap();          // V1.11.1 — nạp sổ máy trước khi cân
 // V1.11.5 — kho phiếu cũ trong localStorage chiếm tới 5 MB và không còn tác dụng
 // khi bộ nhớ đệm Firebase đã bật. Dọn sớm để nhường chỗ cho Sổ máy.
@@ -6452,27 +5845,10 @@ checkPinLock();
 checkBackupReminder();
 
 function checkBackupReminder(){
-  // V1.11.6 — chờ tải xong mới xét. Không thì nhắc lúc app mới mở, ra file thiếu.
-  if(!daNhanGoiServer){ setTimeout(checkBackupReminder, 3000); return; }
-  const last = Number(localStorage.getItem("cantom_last_backup_at") || 0);
-  const now = Date.now();
-  const daysSince = last ? Math.floor((now - last) / (24*60*60*1000)) : null;
-  const remindDays = appOptions.backupDays || 3;
-  if(employees.length===0 && weighings.length===0) return;
-  if(!daNhanGoiServer) return;   // V1.11.6 — chưa tải xong thì đừng nhắc, file sẽ thiếu
-  if(daysSince === null || daysSince >= remindDays){
-    setTimeout(()=>{
-      const msg = daysSince === null
-        ? "Bạn chưa từng sao lưu dữ liệu ra file. Xuất file sao lưu ngay bây giờ?"
-        : `Đã ${daysSince} ngày chưa sao lưu dữ liệu ra file. Xuất file ngay bây giờ?`;
-      if(confirm(msg)){
-        fullBackupExport();
-        localStorage.setItem("cantom_last_backup_at", now);
-      }else{
-        localStorage.setItem("cantom_last_backup_at", now);
-      }
-    }, 1800);
-  }
+  /* BẢN CÂN — KHÔNG nhắc và KHÔNG cho sao lưu.
+     Bản này chỉ tải phiếu của 1 ngày, nên file sao lưu sẽ THIẾU toàn bộ dữ
+     liệu cũ. Sao lưu phải làm ở bản quản lý (/quanly/) nơi tải đầy đủ. */
+  return;
 }
 </script>
 </body>
