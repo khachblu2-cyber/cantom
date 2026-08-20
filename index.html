@@ -1,7 +1,7 @@
 <!--
 ================================================================================
   BÀN GIAO — APP CÂN TÔM · BẢN CÂN (chỉ để cân)
-  Phiên bản: CÂN V1.2    Ngày: 17/08/2026
+  Phiên bản: CÂN V1.3    Ngày: 21/08/2026
   Link: khachblu2-cyber.github.io/cantom/
 --------------------------------------------------------------------------------
   ĐÂY LÀ BẢN RÚT GỌN, cắt ra từ bản đầy đủ V1.13.0
@@ -148,6 +148,31 @@
             Đã đổi cả #userPickerOverlay (màn đăng nhập) và #appSplash (màn chờ).
             ĐÃ ĐỐI CHIẾU: 62 dòng khác — 60 dòng là mã màu, 2 dòng là số phiên
             bản. 277 hàm còn đủ 277, KHÔNG hàm dữ liệu nào đổi.
+            (md5 dd876be7c9f584c2330c674f9057395d)
+  CÂN V1.3  SẮP THỨ TỰ MÃ HÀNG BẰNG MŨI TÊN.
+            Vấn đề: lưới mã hàng lấy theo đúng thứ tự trong mảng products, tức
+            thứ tự TẠO. Mã mới luôn xuống cuối, không đứng cạnh cùng nhóm.
+            Thêm trường `thuTu` cho mã hàng. sapTheoThuTu() sắp theo trường đó;
+            mã CHƯA CÓ thuTu giữ nguyên vị trí cũ (1e9 + chỉ số trong mảng)
+            nên cập nhật lên KHÔNG đảo lộn gì.
+            Áp dụng cho CẢ hai chỗ: lưới tab Cân tôm (renderProductGrid) và
+            danh sách tab Danh mục (renderCatalog) — hai bên luôn giống nhau.
+            Cách dùng: tích ĐÚNG 1 mã -> thanh ▲▼ cạnh ô tìm sáng lên, hiện
+            tên và vị trí (vd "AHOA-LO3 01 · vị trí 5/284").
+              ▲▼          di chuyển 1 bậc
+              ô "vị trí"  gõ số rồi Enter -> nhảy thẳng, khỏi bấm hàng trăm lần
+              phím ↑ ↓    làm y như ▲▼ (chỉ khi ở tab Danh mục, đã tích 1 mã,
+                          và con trỏ KHÔNG ở trong ô nhập). Có preventDefault
+                          để không cuộn trang.
+              Esc         bỏ chọn
+            Mũi tên MỜ ĐI khi: chưa tích, tích NHIỀU mã (lúc đó dùng để xoá
+            hàng loạt), hoặc ĐANG TÌM KIẾM (danh sách chỉ hiện vài mã nên bấm
+            ▲ dễ nhầm với "lên một bậc trong kết quả tìm").
+            luuThuTu() gọi ghiNgay('products', p) cho từng mã rồi saveAll(TRUE)
+            — đã ghi rồi nên không cần quét lại 7 kho.
+            ĐÃ CHẠY THỬ trong jsdom: 25/25 phép thử đúng, gồm biên (bấm ▲ khi
+            đã ở đầu), vị trí sai (99/5), tích nhiều mã, đang tìm kiếm, và
+            lưới Cân tôm khớp với danh mục.
 
 ================================================================================
 -->
@@ -559,7 +584,7 @@
   <div class="brand-row">
     <div class="brand">
       <div class="brand-title">⚖️ Cân Tôm</div>
-      <div class="brand-status"><span class="ver-badge">CÂN V1.2</span> · <span id="cloudStatus"></span></div>
+      <div class="brand-status"><span class="ver-badge">CÂN V1.3</span> · <span id="cloudStatus"></span></div>
     </div>
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
@@ -737,7 +762,15 @@
       </div>
       <div class="card">
         <div class="card-title">Danh sách mã hàng</div>
-        <input type="text" id="prodListSearch" placeholder="🔍 Tìm mã / tên mã hàng…" oninput="renderCatalog()" style="margin-bottom:10px;">
+        <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="prodListSearch" placeholder="🔍 Tìm mã / tên mã hàng…" oninput="renderCatalog()" style="flex:1;min-width:140px;margin:0;">
+          <div id="thanhSapXep" data-perm="catalogEdit" style="display:flex;gap:5px;align-items:center;background:#F0F3F7;border:1px solid var(--line);border-radius:8px;padding:5px 8px;opacity:.5;">
+            <button class="icon-del" style="font-size:17px;padding:2px 7px;" onclick="diChuyenMa(-1)" title="Lên một bậc">▲</button>
+            <button class="icon-del" style="font-size:17px;padding:2px 7px;" onclick="diChuyenMa(1)" title="Xuống một bậc">▼</button>
+            <input type="number" id="oViTri" placeholder="vị trí" onkeydown="if(event.key==='Enter')nhayToiViTri()" style="width:62px;padding:3px 6px;font-size:12px;margin:0;" title="Gõ số vị trí rồi Enter">
+            <span id="nhanSapXep" style="font-size:11.5px;color:var(--muted);white-space:nowrap;">Tích 1 mã để sắp</span>
+          </div>
+        </div>
         <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:8px;cursor:pointer;">
           <input type="checkbox" id="prodSelectAll" onchange="toggleSelectAllProd(this.checked)" style="width:16px;height:16px;">
           Chọn tất cả
@@ -2688,8 +2721,9 @@ function renderCatalog(){
   if(empSelectAllEl) empSelectAllEl.checked = empList.length>0 && empList.every(e=>selectedEmpIdsForBulk.has(e.id));
 
   const prodQ = (document.getElementById('prodListSearch')?.value||'').trim().toLowerCase();
-  const prodList = products.filter(p=> !prodQ || p.code.toLowerCase().includes(prodQ) || p.name.toLowerCase().includes(prodQ))
+  const prodList = sapTheoThuTu(products).filter(p=> !prodQ || p.code.toLowerCase().includes(prodQ) || p.name.toLowerCase().includes(prodQ))
     .sort((a,b)=> (parseInt(a.code,10)||0) - (parseInt(b.code,10)||0));
+  setTimeout(veThanhSapXep, 0);
   const prodWrap = document.getElementById('prodListWrap');
   prodWrap.innerHTML = prodList.length ? prodList.map(p=>{
     if(editingProductId===p.id){
@@ -2710,9 +2744,9 @@ function renderCatalog(){
     const isChecked = selectedProdIdsForBulk.has(p.id);
     const isActive = p.active !== false;
     return `
-    <div class="list-item" style="flex-wrap:wrap;">
+    <div class="list-item" style="flex-wrap:wrap;${isChecked?'background:#E9F5EE;':''}">
       <div style="display:flex;align-items:center;gap:8px;">
-        ${cDel ? `<input type="checkbox" ${isChecked?'checked':''} onchange="toggleBulkProd('${p.id}')" style="width:16px;height:16px;flex-shrink:0;" title="Chọn để xoá hàng loạt">` : ''}
+        ${cDel ? `<input type="checkbox" ${isChecked?'checked':''} onchange="toggleBulkProd('${p.id}')" style="width:16px;height:16px;flex-shrink:0;" title="Chọn để sắp thứ tự hoặc xoá hàng loạt">` : ''}
         <button ${cEdit?'':'disabled'} onclick="changeProductColor('${p.id}')" title="Đổi màu" style="width:22px;height:22px;border-radius:6px;border:1px solid var(--line);background:${p.color||'#8FD3A6'};cursor:${cEdit?'pointer':'default'};flex-shrink:0;"></button>
         <div><span class="badge">${escapeHtml(p.code)}</span> <strong>${escapeHtml(p.name)}</strong><div class="muted" style="font-size:12px;">${formatMoney(p.unitPrice)}/kg</div></div>
       </div>
@@ -2777,16 +2811,120 @@ function bulkDeleteEmployees(){
 }
 
 function toggleSelectAllProd(checked){
+  setTimeout(veThanhSapXep, 0);
   const prodQ = (document.getElementById('prodListSearch')?.value||'').trim().toLowerCase();
   const visible = products.filter(p=> !prodQ || p.code.toLowerCase().includes(prodQ) || p.name.toLowerCase().includes(prodQ));
   if(checked){ visible.forEach(p=>selectedProdIdsForBulk.add(p.id)); }
   else{ visible.forEach(p=>selectedProdIdsForBulk.delete(p.id)); }
   renderCatalog();
 }
+/* ============================================================================
+   CÂN V1.3 — DI CHUYỂN MÃ HÀNG BẰNG MŨI TÊN
+   Tích ĐÚNG 1 mã -> mũi tên bật. Tích nhiều mã -> mờ đi (lúc đó dùng để xoá
+   hàng loạt). Đang tìm kiếm -> cũng mờ, vì danh sách chỉ hiện vài mã nên bấm
+   ▲ dễ nhầm với "lên một bậc trong kết quả tìm".
+   ============================================================================ */
+function maDangChon(){
+  if(selectedProdIdsForBulk.size !== 1) return null;
+  const q = (document.getElementById('prodListSearch')?.value||'').trim();
+  if(q) return null;                                  // đang tìm kiếm -> không cho sắp
+  const id = [...selectedProdIdsForBulk][0];
+  return products.find(p=>p.id===id) || null;
+}
+
+function veThanhSapXep(){
+  const thanh = document.getElementById('thanhSapXep');
+  const nhan  = document.getElementById('nhanSapXep');
+  if(!thanh || !nhan) return;
+  const p = maDangChon();
+  if(!p){
+    thanh.style.opacity = '.5';
+    thanh.style.background = '#F0F3F7';
+    thanh.style.borderColor = 'var(--line)';
+    nhan.style.color = 'var(--muted)';
+    nhan.style.fontWeight = '400';
+    const q = (document.getElementById('prodListSearch')?.value||'').trim();
+    nhan.textContent = selectedProdIdsForBulk.size > 1 ? 'Đang chọn nhiều mã'
+                     : (q ? 'Xoá ô tìm để sắp' : 'Tích 1 mã để sắp');
+    return;
+  }
+  const ds = sapTheoThuTu(products);
+  const vt = ds.findIndex(x=>x.id===p.id) + 1;
+  thanh.style.opacity = '1';
+  thanh.style.background = '#E9F5EE';
+  thanh.style.borderColor = '#BFE3CD';
+  nhan.style.color = 'var(--moss)';
+  nhan.style.fontWeight = '600';
+  nhan.textContent = p.name + ' · vị trí ' + vt + '/' + ds.length;
+}
+
+/* Di chuyển 1 bậc. buoc = -1 lên, +1 xuống. */
+function diChuyenMa(buoc){
+  if(!requirePerm('catalogEdit')) return;
+  const p = maDangChon();
+  if(!p) return;
+  danhSoLaiThuTu();                                   // bảo đảm số liền mạch trước khi đổi
+  const ds = sapTheoThuTu(products);
+  const i = ds.findIndex(x=>x.id===p.id);
+  const j = i + buoc;
+  if(j < 0 || j >= ds.length) return;                 // đã ở đầu/cuối
+  const t = ds[i].thuTu; ds[i].thuTu = ds[j].thuTu; ds[j].thuTu = t;
+  luuThuTu();
+}
+
+/* Nhảy thẳng tới một vị trí — khỏi bấm mũi tên hàng trăm lần. */
+function nhayToiViTri(){
+  if(!requirePerm('catalogEdit')) return;
+  const p = maDangChon();
+  const o = document.getElementById('oViTri');
+  if(!p || !o) return;
+  const n = parseInt(o.value, 10);
+  danhSoLaiThuTu();
+  const ds = sapTheoThuTu(products);
+  if(!n || n < 1 || n > ds.length){
+    alert('Vị trí phải từ 1 đến ' + ds.length);
+    return;
+  }
+  const i = ds.findIndex(x=>x.id===p.id);
+  const j = n - 1;
+  if(i === j) return;
+  ds.splice(j, 0, ds.splice(i, 1)[0]);                // rút ra rồi chèn vào chỗ mới
+  ds.forEach((x,k)=>{ x.thuTu = k; });
+  o.value = '';
+  luuThuTu();
+}
+
+function luuThuTu(){
+  products.forEach(p=>{ if(p.thuTu !== undefined) ghiNgay('products', p); });
+  saveAll(true);                                      // đã gọi ghiNgay rồi
+  renderCatalog();
+  renderProductGrid();
+  veThanhSapXep();          // cập nhật nhãn vị trí NGAY, không chờ setTimeout
+}
+
+/* Phím ↑ ↓ trên bàn phím — chỉ khi đã tích đúng 1 mã và đang ở tab Danh mục.
+   Esc để bỏ chọn. Chặn cuộn trang khi đang dùng. */
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'Escape') return;
+  const ct = document.getElementById('catalogTab');
+  if(!ct || ct.classList.contains('hidden')) return;   // không ở tab Danh mục
+  const t = e.target && e.target.tagName;
+  if(t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;   // đang gõ
+  if(e.key === 'Escape'){
+    if(selectedProdIdsForBulk.size){ selectedProdIdsForBulk.clear(); renderCatalog(); updateProdBulkBar(); }
+    return;
+  }
+  if(!maDangChon()) return;
+  e.preventDefault();                                  // chặn cuộn trang
+  diChuyenMa(e.key === 'ArrowUp' ? -1 : 1);
+});
+
 function toggleBulkProd(id){
   if(selectedProdIdsForBulk.has(id)) selectedProdIdsForBulk.delete(id);
   else selectedProdIdsForBulk.add(id);
   updateProdBulkBar();
+  veThanhSapXep();
+  renderCatalog();
 }
 function updateProdBulkBar(){
   const bar = document.getElementById('prodBulkBar');
@@ -3045,9 +3183,29 @@ function toggleProductGridCollapse(){
   document.getElementById('productGrid').style.display = productGridCollapsed ? 'none' : '';
   document.getElementById('prodGridToggleBtn').textContent = productGridCollapsed ? '▼' : '▲';
 }
+/* ============================================================================
+   CÂN V1.3 — SẮP THỨ TỰ MÃ HÀNG
+   Trước đây lưới mã hàng lấy theo đúng thứ tự trong mảng products, tức thứ tự
+   TẠO. Mã mới luôn xuống cuối, không đứng cạnh cùng nhóm.
+   Nay dùng trường `thuTu`. Mã CHƯA CÓ thuTu giữ nguyên vị trí cũ (theo chỉ số
+   trong mảng) nên KHÔNG đảo lộn gì khi mới cập nhật.
+   ============================================================================ */
+function sapTheoThuTu(ds){
+  return ds.slice().sort((a,b)=>{
+    const ta = (a.thuTu === undefined || a.thuTu === null) ? 1e9 + products.indexOf(a) : Number(a.thuTu);
+    const tb = (b.thuTu === undefined || b.thuTu === null) ? 1e9 + products.indexOf(b) : Number(b.thuTu);
+    return ta - tb;
+  });
+}
+// Đánh số lại thuTu cho TOÀN BỘ mã hàng theo thứ tự đang hiển thị,
+// để số luôn liền mạch 0,1,2,...
+function danhSoLaiThuTu(){
+  sapTheoThuTu(products).forEach((p,i)=>{ p.thuTu = i; });
+}
+
 function renderProductGrid(){
   const wrap = document.getElementById('productGrid');
-  const activeProducts = products.filter(p=> p.active !== false);
+  const activeProducts = sapTheoThuTu(products).filter(p=> p.active !== false);
   if(activeProducts.length===0){ wrap.innerHTML = `<div class="empty-state">Chưa có mã hàng nào đang bật hiện thị — vào tab Danh mục để bật "👁 Hiện ở Cân tôm"</div>`; return; }
   const q = (document.getElementById('prodGridSearch')?.value||'').trim().toLowerCase();
   const list = activeProducts.filter(p=> !q || p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q));
