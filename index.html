@@ -584,7 +584,7 @@
   <div class="brand-row">
     <div class="brand">
       <div class="brand-title">⚖️ Cân Tôm</div>
-      <div class="brand-status"><span class="ver-badge">CÂN V1.3</span> · <span id="cloudStatus"></span></div>
+      <div class="brand-status"><span class="ver-badge">CÂN V1.4</span> · <span id="cloudStatus"></span></div>
     </div>
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
@@ -4524,6 +4524,7 @@ function buildPivotData(dateKey){
     const mealBonus = (g.baseAmount > 0 && ngayTangCa.has(empId + '|' + dateKey))
       ? Math.round(g.baseAmount * 0.1) : 0;
     return { empId, empCode: emp?emp.code:'', empName: emp?emp.name:'(đã xoá)',
+             empCccd: emp?(emp.cccd||''):'',
              cellsByProduct: g.theoMa, totalKg: g.totalKg, baseAmount: g.baseAmount,
              mealBonus, grandTotal: tronNghin(g.baseAmount + mealBonus) };
   });
@@ -4557,21 +4558,87 @@ function renderPivotTable(dateKey){
     </table>
   `;
 }
+/* ---------------------------------------------------------------------------
+   CÂN V1.4 — XUẤT EXCEL BẢNG TỔNG HỢP CÂN
+   Bốn thứ đổi so với V1.3:
+     1. Thêm cột CCCD, lấy từ hồ sơ nhân viên (trước đây phải chèn tay)
+     2. Sắp mã nhân viên từ NHỎ ĐẾN LỚN (trước đây theo thứ tự cân, lộn xộn)
+     3. Định dạng số: KG hết lộ 205.50000000000003, tiền có dấu phẩy nghìn
+     4. Đóng băng dòng tiêu đề, có bộ lọc, cột đặt sẵn độ rộng
+
+   LƯU Ý KỸ THUẬT: SheetJS bản cộng đồng KHÔNG tô nền, KHÔNG in đậm, KHÔNG kẻ
+   viền. Chỉ làm được định dạng số (z), độ rộng cột (!cols), đóng băng
+   (!freeze) và bộ lọc (!autofilter). File sẽ sạch và đúng số nhưng trắng trơn.
+   Muốn có màu phải đổi sang thư viện ExcelJS.
+
+   GHI SỐ THẬT, KHÔNG GHI CHUỖI: ghi số rồi đặt định dạng hiển thị. Nếu ghi
+   chuỗi "205.5" thì Excel không cộng, không lọc, không vẽ biểu đồ được.
+   --------------------------------------------------------------------------- */
 function exportPivotExcel(){
   if(!requirePerm('exportExcel')) return;
   const dateKey = document.getElementById('pivotDate').value || todayKey();
   const { orderedProdIds, rows } = buildPivotData(dateKey);
   if(rows.length===0){ alert("Không có dữ liệu để xuất"); return; }
-  const prodNames = orderedProdIds.map(pid=>{ const p = products.find(x=>x.id===pid); return p?p.name:''; });
-  const header = ["Mã NV", "Nhân viên", ...prodNames, "Tổng kg", "Tổng tiền", "Tiền cơm", "Tổng cộng"];
-  const aoa = [header];
-  rows.forEach(r=>{
-    const line = [r.empCode, r.empName, ...orderedProdIds.map(pid=> r.cellsByProduct[pid] || 0), r.totalKg, r.baseAmount, r.mealBonus, r.grandTotal];
-    aoa.push(line);
+
+  // Sắp mã nhân viên nhỏ -> lớn. Dùng so sánh SỐ để 00075 đứng trước 00412,
+  // không dùng so chuỗi vì chuỗi cho "01891" đứng trước "00414" nếu lệch số 0.
+  const dsSap = rows.slice().sort((a,b)=>{
+    const sa = parseInt(a.empCode, 10), sb = parseInt(b.empCode, 10);
+    if(!isNaN(sa) && !isNaN(sb) && sa !== sb) return sa - sb;
+    return String(a.empCode).localeCompare(String(b.empCode), 'vi');
   });
-  const totalRow = ["", "TỔNG CỘNG", ...orderedProdIds.map(pid=> rows.reduce((s,r)=>s+(r.cellsByProduct[pid]||0),0)), rows.reduce((s,r)=>s+r.totalKg,0), rows.reduce((s,r)=>s+r.baseAmount,0), rows.reduce((s,r)=>s+r.mealBonus,0), rows.reduce((s,r)=>s+r.grandTotal,0)];
-  aoa.push(totalRow);
+
+  const prodNames = orderedProdIds.map(pid=>{ const p = products.find(x=>x.id===pid); return p?p.name:''; });
+  const header = ["Mã NV", "Nhân viên", "CCCD", ...prodNames,
+                  "Tổng kg", "Tổng tiền", "Tiền cơm", "Tổng cộng"];
+  const aoa = [header];
+  dsSap.forEach(r=>{
+    aoa.push([ r.empCode, r.empName, r.empCccd || '',
+               ...orderedProdIds.map(pid=> r.cellsByProduct[pid] || 0),
+               r.totalKg, r.baseAmount, r.mealBonus, r.grandTotal ]);
+  });
+  aoa.push([ "", "TỔNG CỘNG", "",
+             ...orderedProdIds.map(pid=> rows.reduce((s,r)=>s+(r.cellsByProduct[pid]||0),0)),
+             rows.reduce((s,r)=>s+r.totalKg,0),
+             rows.reduce((s,r)=>s+r.baseAmount,0),
+             rows.reduce((s,r)=>s+r.mealBonus,0),
+             rows.reduce((s,r)=>s+r.grandTotal,0) ]);
+
   const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const soCot   = header.length;
+  const soDong  = aoa.length;
+  const cotKgDau = 3;                 // sau Mã NV, Nhân viên, CCCD
+  const cotKgCuoi = 3 + orderedProdIds.length;   // gồm cả cột "Tổng kg"
+  const soLeKg  = Number(appOptions.kgDecimals) || 1;
+  const dinhDangKg   = soLeKg > 0 ? ('#,##0.' + '0'.repeat(soLeKg)) : '#,##0';
+  const dinhDangTien = '#,##0';
+
+  // Đặt định dạng cho TỪNG Ô số. Bỏ qua dòng 1 (tiêu đề).
+  for(let d = 1; d < soDong; d++){
+    for(let c = cotKgDau; c < soCot; c++){
+      const dc = XLSX.utils.encode_cell({ r:d, c:c });
+      const o = ws[dc];
+      if(!o || o.t !== 'n') continue;
+      o.z = (c <= cotKgCuoi) ? dinhDangKg : dinhDangTien;
+    }
+  }
+
+  // Độ rộng cột — đặt sẵn để khỏi phải kéo tay
+  ws['!cols'] = [
+    { wch: 8 },                                  // Mã NV
+    { wch: 22 },                                 // Nhân viên
+    { wch: 14 },                                 // CCCD
+    ...orderedProdIds.map((pid,i)=>({ wch: Math.min(16, Math.max(10, (prodNames[i]||'').length + 2)) })),
+    { wch: 11 }, { wch: 13 }, { wch: 11 }, { wch: 13 }
+  ];
+  /* ĐÃ THỬ VÀ BỎ: ws['!freeze'] — SheetJS bản cộng đồng NHẬN thuộc tính này
+     nhưng KHÔNG ghi vào file xlsx. Mở file thật ra thì freeze_panes = None.
+     Bài thử đầu tiên của tôi kiểm object trong bộ nhớ nên báo "đạt" nhầm;
+     phải mở file thật bằng openpyxl mới phát hiện. Muốn đóng băng phải đổi
+     sang ExcelJS. */
+  ws['!autofilter'] = { ref: XLSX.utils.encode_range(
+      { s:{r:0,c:0}, e:{ r: soDong - 2, c: soCot - 1 } }) };   // trừ dòng TỔNG CỘNG
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Tong hop can");
   XLSX.writeFile(wb, `bang-tong-hop-can-${dateKey}.xlsx`);
