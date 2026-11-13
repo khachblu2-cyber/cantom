@@ -1,7 +1,7 @@
 <!--
 ================================================================================
   BÀN GIAO — APP CÂN TÔM · BẢN CÂN (chỉ để cân)
-  Phiên bản: CÂN V1.3    Ngày: 21/08/2026
+  Phiên bản: CÂN V1.5.2  Ngày: 13/11/2026
   Link: khachblu2-cyber.github.io/cantom/
 --------------------------------------------------------------------------------
   ĐÂY LÀ BẢN RÚT GỌN, cắt ra từ bản đầy đủ V1.13.0
@@ -112,6 +112,40 @@
   Làm ngược thì máy công nợ mất chỗ vào.
 
 ■ 12. LỊCH SỬ PHIÊN BẢN BẢN CÂN
+  CÂN V1.5.2  CỨU PHIẾU SỐ KG RÁC — 13/11/2026.
+
+            SỰ CỐ THẬT: 13/11/2026 lúc 06:45, phiếu của 00324 Đặng Thị Loan bị
+            KẸT PHÍM, kg thành 555.555.555.555.555.600.000.000.000.000.000
+            (27 chữ số), thành tiền 833 tỷ tỷ. Không xoá được trên BẤT KỲ máy
+            nào — vì chính con số đó phá giao diện:
+
+              .dcard{ overflow:hidden }   <- khung phiếu XÉN phần tràn ra
+              table.dtb{ width:100% }     <- nhưng nội dung đẩy bảng rộng ra
+
+            Dòng chi tiết xếp theo thứ tự: giờ · kg · tiền · người · ✏️ · 🗑.
+            Hai số rác dài ~450px đẩy hai nút ra sau mép khung, bị XÉN MẤT HẲN
+            chứ không phải nằm ngoài màn hình để vuốt tới. Thu nhỏ, xoay ngang,
+            đổi sang máy tính đều vô ích. Dữ liệu hỏng mà công cụ sửa hỏng theo.
+
+            BA LỚP VÁ:
+
+            (a) CHẶN TỪ ĐẦU — addWeighing() từ chối kg > MAX_KG_MOT_PHIEU
+                (500 kg). Một rổ thực tế 5-30 kg, cả ngày một người 50-80 kg.
+                Thêm maxlength cho ô nhập. Chặn ở addWeighing() chứ không chỉ
+                ở ô nhập, vì còn đường phím Enter.
+
+            (b) BẢNG KHÔNG GIÃN NỮA — table.dtb thành table-layout:fixed, các ô
+                cắt bằng text-overflow:ellipsis. Nội dung bậy cỡ nào bảng cũng
+                đúng bề ngang khung, không tràn ra để bị xén.
+
+            (c) NÚT LUÔN THẤY — dòng chi tiết đổi sang flex: phần chữ co lại và
+                cắt bằng "…", cụm nút ghim bên phải (flex-shrink:0).
+                ĐÂY LÀ LỚP QUAN TRỌNG NHẤT. (a) chỉ chặn được kiểu hỏng đã biết;
+                (c) bảo đảm dù sau này hỏng kiểu gì thì nút xoá vẫn bấm được.
+
+            KHÔNG ĐỤNG: công thức tiền, cách lưu, đồng bộ Firebase, quyền, đọc
+            cân RS232, chặn nhập trùng, khoá giờ/máy/GPS.
+
   CÂN V1.0  Cắt ra từ V1.13.0. Xoá tab Công nợ / Chốt & In / Cài đặt, nút Sao
             lưu. Listener weighings dùng .where('dateKey','>=', ngày đang xem).
             Thêm 22 chốt an toàn cho hàm dùng DOM đã xoá.
@@ -269,17 +303,31 @@
   .dhead.one{padding:9px 12px;}
   .dhead.one .n{font-size:16px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--ink);}
   .dhead.one .c{font-size:11px;}
-  table.dtb{width:100%;border-collapse:collapse;font-size:13px;}
+  /* CÂN V1.5.2 — table-layout:fixed để một con số rác KHÔNG kéo bảng rộng ra
+     ngoài khung .dcard (khung có overflow:hidden nên phần tràn bị xén mất,
+     kéo theo cả nút xoá). Bề ngang cột lấy từ hàng tiêu đề, nội dung dài thì
+     cắt bằng "…" chứ không đẩy bảng. */
+  table.dtb{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
   table.dtb th{background:#F7F9FC;color:var(--muted);font-size:10px;letter-spacing:.4px;text-transform:uppercase;
     padding:6px 9px;text-align:left;border-bottom:1px solid var(--line);}
   table.dtb th.r,table.dtb td.r{text-align:right;}
-  table.dtb td{padding:8px 9px;border-bottom:1px solid var(--line);}
+  table.dtb td{padding:8px 9px;border-bottom:1px solid var(--line);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  table.dtb th:nth-child(2),table.dtb td.kg{width:27%;}
+  table.dtb th:nth-child(3),table.dtb td.mn{width:33%;}
   table.dtb tr.item{cursor:pointer;}
   table.dtb tr.item:active td{background:#E9F5EE;}
   table.dtb td.sz{font-weight:700;}
   table.dtb td.kg{font-family:'IBM Plex Mono',monospace;font-weight:700;}
   table.dtb td.mn{font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--blue);font-size:12.5px;}
   table.dtb tr.sub td{background:#FBFCFE;font-size:11.5px;color:var(--muted);padding:5px 9px 5px 20px;}
+  /* CÂN V1.5.2 — dòng chi tiết: chữ co lại và cắt bằng "…", cụm nút GHIM bên
+     phải. Trước đây nút nằm sau chuỗi chữ nên số kg rác đẩy nó ra khỏi khung
+     và bị xén mất — hỏng dữ liệu xong không còn đường sửa. */
+  table.dtb tr.sub td .sub-row{display:flex;align-items:center;gap:6px;}
+  table.dtb tr.sub td .sub-txt{flex:1 1 auto;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  table.dtb tr.sub td .sub-act{flex:0 0 auto;display:flex;align-items:center;gap:2px;}
   table.dtb tr.tot td{background:#E9F5EE;font-weight:700;border-bottom:none;}
   .dfoot{padding:9px 12px;background:#E9F5EE;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;}
   .dfoot .lbl{font-size:11.5px;color:var(--muted);}
@@ -576,6 +624,13 @@
   table.debt-report-table th{background:var(--blue);color:#fff;}
   table.debt-report-table td:nth-child(2){text-align:left;}
   table.debt-report-table tr.total-row td{font-weight:700;background:#E9F5EE;}
+  /* CÂN V1.5 — dòng trạng thái cân điện tử */
+  .can-tt{padding:7px 12px;font-size:13.5px;line-height:1.45;border-top:1px solid rgba(0,0,0,.06)}
+  .can-tt-do{background:#FDECEA;color:#8C1D18}
+  .can-tt-vang{background:#FFF8E8;color:#6b5520}
+  .can-tt-xanh{background:#E8F5EC;color:#1B5E31}
+  .can-nut-noi{text-decoration:underline;cursor:pointer;font-weight:600}
+  #wKgBig[readonly]{cursor:default}
 </style>
 </head>
 <body>
@@ -584,7 +639,7 @@
   <div class="brand-row">
     <div class="brand">
       <div class="brand-title">⚖️ Cân Tôm</div>
-      <div class="brand-status"><span class="ver-badge">CÂN V1.4</span> · <span id="cloudStatus"></span></div>
+      <div class="brand-status"><span class="ver-badge">CÂN V1.5.2</span> · <span id="cloudStatus"></span></div>
     </div>
     <div id="currentUserBar" class="hidden brand-user">
       <span>👤 <span id="currentUserNameLabel"></span></span>
@@ -624,9 +679,11 @@
     </div>
     <input type="date" id="weighDate" class="f-date" onchange="onWeighDateChange()">
     <button class="btn-form" onclick="openDaySlip()" title="Xem phiếu chi tiết trong ngày">📄 Chi tiết<br>trong ngày</button>
-    <input type="number" id="wKgBig" class="f-kg" placeholder="0.0" step="0.1" inputmode="decimal" oninput="updateWeighPricePreview()" onkeydown="if(event.key==='Enter'){event.preventDefault();addWeighing();}">
+    <!-- CÂN V1.5.2 — max/maxlength chặn gõ số dài. Chặn thật nằm ở addWeighing(). -->
+    <input type="number" id="wKgBig" class="f-kg" placeholder="0.0" step="0.1" max="500" maxlength="6" inputmode="decimal" oninput="updateWeighPricePreview()" onkeydown="if(event.key==='Enter'){event.preventDefault();addWeighing();}">
     <button class="btn-nhap" id="btnNhap" onclick="addWeighing()">NHẬP</button>
   </div>
+  <div id="canTrangThai" class="can-tt" style="display:none"></div>
   <div id="activeProdBar">
     <span>Đang chọn:</span> <b id="activeProdLabel">— chưa chọn mã hàng —</b>
     <span style="margin-left:auto;">Thành tiền: <b id="wPreview">0 đ</b></span>
@@ -819,7 +876,9 @@
       <div class="row" style="margin-top:8px;">
         <button class="btn btn-primary" onclick="exportPivotExcel()">📊 Xuất Excel</button>
         <button class="btn btn-outline" onclick="printPivotA4()">🖨 In A4</button>
+        <button class="btn btn-outline" onclick="veBaoCaoNhapTay()">⌨️ Phiếu nhập tay</button>
       </div>
+      <div id="bcNhapTayWrap" style="margin-top:10px;"></div>
       <div class="muted" style="font-size:11.5px;margin-top:10px;line-height:1.6;">
         Cột <b>Tổng cộng</b> đã làm tròn về hàng nghìn: từ 500đ trở lên làm tròn lên 1.000đ, dưới 500đ bỏ về 0đ.
       </div>
@@ -1790,7 +1849,329 @@ function logActivity(action, detail){
 }
 
 // ===== QUYỀN THAO TÁC =====
-const ALL_ACTIONS = ['changeDate','catalogEdit','catalogDelete','weighDelete','pay','closePeriod','exportExcel','manageUsers','bypassLock'];
+/* ===========================================================================
+   CÂN V1.5 — ĐỌC SỐ KG TỪ CÂN ĐIỆN TỬ QUA CỔNG RS232
+   ---------------------------------------------------------------------------
+   VÌ SAO: đã xảy ra gian lận — cân 13 kí nhưng gõ vào app 20 kí.
+
+   ĐỊNH DẠNG CÂN (đo thật ngày 07/09, cân 30kg của anh Tinh):
+       "ST    0.19 kg   "   -> ST = Stable, số ĐỨNG YÊN, tin được
+       "US    0.24 kg   "   -> US = Unstable, đang dao động, KHÔNG lấy
+       "ST-   0.10 kg   "   -> dấu trừ, cân đang âm, phải bấm ZERO
+   Cân gửi ~3 gói mỗi giây, không cần bấm nút.
+
+   VÌ SAO PHẢI CHỜ ỔN ĐỊNH: đo thật lúc đặt vật lên cân thấy
+       US 0.05 -> US 0.24 -> US 0.21 -> ST 0.20 -> ST 0.19
+   Lấy nhầm lúc dao động là sai 0,05 kg mỗi phiếu.
+
+   KHÔNG KHOÁ CỨNG TOÀN BỘ — anh Tinh chọn phân theo QUYỀN NGƯỜI DÙNG
+   (nhapKgTay). Lý do: hiện chỉ máy Windows nối được cân qua cáp USB; Chrome
+   trên Android chỉ nối được qua Bluetooth, chưa mua bộ chuyển. Khoá cứng là
+   hai máy Android tê liệt.
+   Quyền lưu trong staffUsers -> ĐÃ đồng bộ sẵn 3 máy, cấp ở /quanly/ là xong.
+   =========================================================================== */
+let canCong = null;            // cổng serial đang mở
+let canDoc = null;             // reader
+let canDangDoc = false;
+let canSoHienTai = null;       // số kg mới nhất đọc được
+let canOnDinh = false;         // cân báo ST
+let canOnDinhTu = 0;           // mốc thời gian bắt đầu ổn định
+let canSoOnDinh = null;        // số đang giữ ổn định
+let canLucNhanCuoi = 0;        // lần cuối nhận được gói, để biết mất kết nối
+let canSoDaNhap = null;        // số vừa nhập xong — chờ nhấc vật ra mới cho nhập tiếp
+
+const CAN_CHO_ON_DINH_MS = 500;   // giữ ST đủ 0,5 giây mới cho bấm NHẬP
+const CAN_QUA_HAN_MS     = 3000;  // quá 3 giây không nhận gói -> coi như mất kết nối
+const CAN_NGUONG_VE_KHONG = 0.05; // dưới mức này coi như đã nhấc vật ra khỏi cân
+
+/* Trình duyệt có đọc được cổng serial không.
+   Chrome/Edge trên Windows: có. Chrome Android: chỉ qua Bluetooth.
+   Safari và mọi trình duyệt trên iPhone/iPad: KHÔNG. */
+function canHoTro(){ return typeof navigator !== 'undefined' && 'serial' in navigator; }
+
+/* Đang nối cân và còn nhận được dữ liệu */
+function canDangNoi(){
+  return !!canCong && canDangDoc && (Date.now() - canLucNhanCuoi) < CAN_QUA_HAN_MS;
+}
+
+/* Người này có được gõ tay số kg không */
+function duocGoTay(){ return can('nhapKgTay'); }
+
+/* BỎ SỐ CUỐI, KHÔNG LÀM TRÒN — anh Tinh chọn giữ đúng thói quen đang có:
+   công nhân nhìn cân thấy 9.47 thì ghi 9.4.
+   Math.floor trên số âm cho kết quả sai hướng, nhưng số âm đã bị chặn không
+   cho lưu nên không thành vấn đề. */
+function catSoLe(v){
+  const d = Number(appOptions.kgDecimals) || 1;
+  const he = Math.pow(10, d);
+  return Math.floor(Number(v) * he) / he;
+}
+
+/* Đọc một gói cân. Trả { on, so } hoặc null nếu không hiểu được. */
+function canPhanTich(goi){
+  const s = String(goi).replace(/[\x00-\x1F]/g, ' ').trim();
+  if(!s) return null;
+  // Hai chữ đầu là trạng thái: ST hoặc US
+  const tt = s.slice(0, 2).toUpperCase();
+  if(tt !== 'ST' && tt !== 'US') return null;
+  // Số: có thể có dấu trừ ngay sau ST/US ("ST-   0.10 kg")
+  const m = s.match(/[-+]?\s*\d+(?:[.,]\d+)?/);
+  if(!m) return null;
+  let so = parseFloat(m[0].replace(/\s/g, '').replace(',', '.'));
+  if(!isFinite(so)) return null;
+  // Dấu trừ đứng liền sau ST/US, tách khỏi số
+  if(/^(ST|US)\s*-/i.test(s) && so > 0) so = -so;
+  return { on: tt === 'ST', so };
+}
+
+async function canNoi(){
+  if(!canHoTro()){
+    alert("Trình duyệt này không đọc được cổng cân.\n\n"
+        + "Phải dùng Chrome hoặc Edge trên Windows.\n"
+        + "Trên Android phải nối cân qua Bluetooth.\n"
+        + "Trên iPhone/iPad thì không dùng được.");
+    return;
+  }
+  try{
+    canCong = await navigator.serial.requestPort();
+    await canCong.open({ baudRate: Number(appOptions.canBaud) || 9600,
+                         dataBits: 8, parity: 'none', stopBits: 1 });
+    canDangDoc = true;
+    canLucNhanCuoi = Date.now();
+    ghiNhatKy('Nối cân điện tử');
+    canDocLienTuc();
+    veTrangThaiCan();
+  }catch(e){
+    canCong = null;
+    alert("Không nối được cân: " + ((e && e.message) || e));
+    veTrangThaiCan();
+  }
+}
+
+async function canNgat(){
+  canDangDoc = false;
+  try{ if(canDoc){ await canDoc.cancel(); canDoc.releaseLock(); } }catch(e){}
+  try{ if(canCong) await canCong.close(); }catch(e){}
+  canCong = null; canDoc = null;
+  canSoHienTai = null; canOnDinh = false; canSoOnDinh = null; canSoDaNhap = null;
+  ghiNhatKy('Ngắt cân điện tử');
+  veTrangThaiCan();
+}
+
+async function canDocLienTuc(){
+  const bo = new TextDecoder();
+  let dem = '';
+  try{
+    canDoc = canCong.readable.getReader();
+    while(canDangDoc){
+      const { value, done } = await canDoc.read();
+      if(done) break;
+      if(!value) continue;
+      dem += bo.decode(value, { stream: true });
+      let cat;
+      // Cắt gói theo xuống dòng; cân nào không xuống dòng thì cắt khi đủ dài
+      while((cat = dem.search(/[\r\n]/)) >= 0 || dem.length > 40){
+        let goi;
+        if(cat >= 0){ goi = dem.slice(0, cat); dem = dem.slice(cat + 1); }
+        else { goi = dem; dem = ''; }
+        if(goi.trim()) canNhanGoi(goi);
+      }
+    }
+  }catch(e){
+    console.warn('Lỗi đọc cân:', e && e.message);
+  }finally{
+    try{ if(canDoc) canDoc.releaseLock(); }catch(e){}
+  }
+}
+
+function canNhanGoi(goi){
+  const kq = canPhanTich(goi);
+  if(!kq) return;
+  canLucNhanCuoi = Date.now();
+  canSoHienTai = kq.so;
+  canOnDinh = kq.on;
+
+  /* Nhấc vật ra khỏi cân (số về gần 0) -> xoá dấu "đã nhập",
+     cho phép cân mẻ tiếp theo. Đây là cách duy nhất mở khoá,
+     nên không thể bấm hai lần cho cùng một mẻ. */
+  if(Math.abs(kq.so) < CAN_NGUONG_VE_KHONG) canSoDaNhap = null;
+
+  if(kq.on){
+    // Giữ nguyên số bao lâu rồi? Số đổi thì đếm lại từ đầu.
+    if(canSoOnDinh === null || Math.abs(canSoOnDinh - kq.so) > 1e-9){
+      canSoOnDinh = kq.so;
+      canOnDinhTu = Date.now();
+    }
+  }else{
+    canSoOnDinh = null;
+    canOnDinhTu = 0;
+  }
+  veTrangThaiCan();
+}
+
+/* Đã đủ điều kiện cho bấm NHẬP chưa */
+function canSanSang(){
+  if(!canDangNoi()) return false;
+  if(!canOnDinh || canSoOnDinh === null) return false;
+  if(canSoOnDinh <= 0) return false;                       // số 0 hoặc âm: không cho
+  /* CHẶN NHẬP TRÙNG — lỗi anh Tinh bắt được 07/09.
+     Cơ chế chống trùng cũ chỉ chặn 0,6 giây. Nhưng cân xong tôm VẪN CÒN trên
+     cân, số giữ nguyên, nên bấm lại sau 1 giây là tạo phiếu trùng —
+     ảnh chụp cho thấy 5kg hai lần, 4.8kg hai lần trong cùng một phút.
+     Nay: mỗi lần đặt vật lên cân chỉ nhập được MỘT lần. Muốn nhập tiếp phải
+     NHẤC VẬT RA (số về dưới 0,05 kg) rồi đặt mẻ mới. */
+  if(canSoDaNhap !== null) return false;
+  return (Date.now() - canOnDinhTu) >= CAN_CHO_ON_DINH_MS;
+}
+
+/* Vẽ lại ô kg, nút NHẬP và dòng trạng thái */
+function veTrangThaiCan(){
+  const oKg  = document.getElementById('wKgBig');
+  const nut  = document.getElementById('btnNhap');
+  const bang = document.getElementById('canTrangThai');
+  if(!oKg || !nut) return;
+
+  const goTay = duocGoTay();
+
+  // Người có quyền gõ tay: giữ nguyên như cũ, không đụng gì
+  if(goTay && !canDangNoi()){
+    oKg.readOnly = false;
+    oKg.style.background = '';
+    nut.disabled = false;
+    if(bang){
+      bang.style.display = canHoTro() ? '' : 'none';
+      bang.className = 'can-tt can-tt-vang';
+      bang.innerHTML = '⌨️ <b>Đang gõ tay số KG</b> — phiếu sẽ được đánh dấu TAY. '
+        + '<span class="can-nut-noi" onclick="canNoi()">🔌 Nối cân điện tử</span>';
+    }
+    return;
+  }
+
+  // Không có quyền gõ tay và chưa nối cân -> khoá cứng
+  if(!canDangNoi()){
+    oKg.readOnly = true;
+    oKg.value = '';
+    oKg.style.background = '#F0F0EE';
+    nut.disabled = true;
+    if(bang){
+      bang.style.display = '';
+      bang.className = 'can-tt can-tt-do';
+      bang.innerHTML = canHoTro()
+        ? '⚠️ <b>CHƯA NỐI CÂN</b> — không cân được. '
+          + '<span class="can-nut-noi" onclick="canNoi()">🔌 Nối cân</span>'
+        : '⚠️ <b>Máy này không đọc được cổng cân</b> và tài khoản của bạn không có '
+          + 'quyền gõ tay. Đăng nhập tài khoản khác hoặc dùng máy có nối cân.';
+    }
+    return;
+  }
+
+  // Đã nối cân
+  oKg.readOnly = true;
+  oKg.style.background = '';
+  const sanSang = canSanSang();
+  const so = (canSoHienTai === null) ? '' : catSoLe(canSoHienTai);
+  oKg.value = (so === '' || so <= 0) ? '' : so;
+  nut.disabled = !sanSang;
+  try{ updateWeighPricePreview(); }catch(e){}
+
+  if(bang){
+    bang.style.display = '';
+    if(canSoHienTai !== null && canSoHienTai < 0){
+      bang.className = 'can-tt can-tt-do';
+      bang.innerHTML = '⚠️ <b>Cân đang âm (' + canSoHienTai + ' kg)</b> — '
+        + 'bấm nút ZERO trên cân trước khi cân tiếp.';
+    }else if(canSoDaNhap !== null){
+      bang.className = 'can-tt can-tt-vang';
+      bang.innerHTML = '✅ <b>Đã nhập mẻ này rồi</b> — nhấc hàng ra khỏi cân '
+        + 'rồi đặt mẻ tiếp theo.';
+    }else if(sanSang){
+      bang.className = 'can-tt can-tt-xanh';
+      bang.innerHTML = '✓ <b>Số đã đứng yên</b> — bấm NHẬP để lưu phiếu';
+    }else if(canOnDinh){
+      bang.className = 'can-tt can-tt-vang';
+      bang.innerHTML = '⏳ <b>Đang chờ số đứng yên…</b>';
+    }else{
+      bang.className = 'can-tt can-tt-vang';
+      bang.innerHTML = '⏳ <b>Đang cân…</b> chờ số đứng yên';
+    }
+  }
+}
+
+/* Cân im lặng quá lâu = mất kết nối. Kiểm mỗi giây. */
+setInterval(()=>{ if(canCong) veTrangThaiCan(); }, 1000);
+
+function ghiNhatKy(viec){
+  try{ if(typeof logActivity === 'function') logActivity(viec); }catch(e){}
+}
+
+/* ---------------------------------------------------------------------------
+   CÂN V1.5 — BÁO CÁO PHIẾU NHẬP TAY
+   Đây mới là thứ chặn được gian lận, không phải khoá cứng.
+   Khoá cứng thì hôm cân hỏng là cả xưởng dừng; còn nêu tên thì người gõ tay
+   biết sẽ bị soi ngay hôm sau.
+
+   Phiếu cũ (trước V1.5) không có trường nguonKg -> coi là 'không rõ', KHÔNG
+   coi là gõ tay, để khỏi vu oan cho dữ liệu cũ.
+   --------------------------------------------------------------------------- */
+function veBaoCaoNhapTay(){
+  const wrap = document.getElementById('bcNhapTayWrap');
+  if(!wrap) return;
+  const dateKey = document.getElementById('pivotDate').value || todayKey();
+  const cacPhieu = weighings.filter(w=>w.dateKey === dateKey);
+  const tay = cacPhieu.filter(w=>w.nguonKg === 'tay');
+  const tuCan = cacPhieu.filter(w=>w.nguonKg === 'can').length;
+  const khongRo = cacPhieu.length - tay.length - tuCan;
+
+  if(cacPhieu.length === 0){
+    wrap.innerHTML = '<div class="empty-state">Ngày này chưa có phiếu cân nào</div>';
+    return;
+  }
+  if(tay.length === 0){
+    wrap.innerHTML = '<div style="background:#E8F5EC;border:1px solid #A8D5B8;color:#1B5E31;'
+      + 'padding:11px;border-radius:8px;font-size:14px;line-height:1.5">'
+      + '✓ <b>Không có phiếu nào nhập tay</b> trong ngày ' + dateKey + '<br>'
+      + '<span style="font-size:12.5px;opacity:.85">Tổng ' + cacPhieu.length.toLocaleString('en-US')
+      + ' phiếu · từ cân điện tử: ' + tuCan.toLocaleString('en-US')
+      + (khongRo ? ' · phiếu cũ chưa ghi nguồn: ' + khongRo.toLocaleString('en-US') : '')
+      + '</span></div>';
+    return;
+  }
+
+  const dong = tay.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).map(w=>{
+    const emp = employees.find(e=>e.id===w.employeeId);
+    const gio = w.createdAt ? new Date(w.createdAt).toLocaleTimeString('vi-VN',
+                  { hour:'2-digit', minute:'2-digit' }) : '';
+    return '<tr>'
+      + '<td>' + gio + '</td>'
+      + '<td>' + (w.byUserName || '(không rõ)') + '</td>'
+      + '<td>' + (emp ? (emp.code + ' · ' + emp.name) : '(đã xoá)') + '</td>'
+      + '<td style="text-align:right;font-family:monospace">' + fmtKg(w.weightKg) + '</td>'
+      + '<td style="text-align:right;font-family:monospace">' + formatNumber(w.amount) + '</td>'
+      + '</tr>';
+  }).join('');
+
+  const tongKg = tay.reduce((s,w)=>s+(Number(w.weightKg)||0),0);
+  const tongTien = tay.reduce((s,w)=>s+(Number(w.amount)||0),0);
+
+  wrap.innerHTML =
+      '<div style="background:#FDECEA;border:1px solid #F2B8B5;color:#8C1D18;padding:11px;'
+    + 'border-radius:8px;font-size:14px;line-height:1.5;margin-bottom:9px">'
+    + '⚠️ <b>Ngày ' + dateKey + ' có ' + tay.length.toLocaleString('en-US')
+    + ' phiếu nhập tay</b> trong tổng ' + cacPhieu.length.toLocaleString('en-US') + ' phiếu'
+    + (khongRo ? '<br><span style="font-size:12.5px;opacity:.85">('
+        + khongRo.toLocaleString('en-US') + ' phiếu cũ chưa ghi nguồn, không tính)</span>' : '')
+    + '</div>'
+    + '<div style="overflow-x:auto"><table class="debt-report-table">'
+    + '<thead><tr><th style="text-align:left">Giờ</th><th style="text-align:left">Người cân</th>'
+    + '<th style="text-align:left">Nhân viên</th><th>KG</th><th>Thành tiền</th></tr></thead>'
+    + '<tbody>' + dong
+    + '<tr class="total-row"><td colspan="3">TỔNG ' + tay.length + ' PHIẾU NHẬP TAY</td>'
+    + '<td style="text-align:right">' + fmtKg(tongKg) + '</td>'
+    + '<td style="text-align:right">' + formatNumber(tongTien) + '</td></tr>'
+    + '</tbody></table></div>';
+}
+
+const ALL_ACTIONS = ['changeDate','catalogEdit','catalogDelete','weighDelete','pay','closePeriod','exportExcel','manageUsers','bypassLock','nhapKgTay'];
 function actionLabel(k){
   return {
     changeDate:'📅 Cân cho ngày khác (không phải hôm nay)',
@@ -1801,7 +2182,8 @@ function actionLabel(k){
     closePeriod:'📦 Đóng kỳ / xoá dữ liệu',
     exportExcel:'📊 Xuất Excel',
     manageUsers:'👥 Quản lý người dùng',
-    bypassLock:'🔓 Bỏ qua khoá giờ / máy / GPS'
+    bypassLock:'🔓 Bỏ qua khoá giờ / máy / GPS',
+    nhapKgTay:'⌨️ Được gõ tay số KG (không dùng cân điện tử)'
   }[k] || k;
 }
 function can(action){
@@ -2183,6 +2565,7 @@ function applyWeighDateLock(){
 function applyCurrentUserPermissions(){
   const bar = document.getElementById('currentUserBar');
   applyWeighDateLock();
+  try{ veTrangThaiCan(); }catch(e){}   // V1.5 — quyền đổi thì ô kg khoá/mở theo
   if(!currentUser){
     // Không có ai đăng nhập (chưa thiết lập user nào) -> hiện hết
     ALL_TABS.forEach(t=>{ const el = document.getElementById(TAB_BTN_ID[t]); if(el) el.classList.remove('hidden'); });
@@ -3302,12 +3685,44 @@ function checkWeighAllowed(){
 // Chrome trên MacBook có thể phát sinh hai sự kiện cho một thao tác,
 // cả khi bấm nút lẫn khi nhấn Enter. Safari không bị.
 let lanCanCuoi = { dauVet:'', luc:0 };
+/* CÂN V1.5.2 — trần số kg cho MỘT phiếu. Muốn nới thì sửa đúng số này. */
+const MAX_KG_MOT_PHIEU = 500;
 function addWeighing(){
   const dateKey = document.getElementById('weighDate').value || todayKey();
   const kg = Number(document.getElementById('wKgBig').value);
   if(!selectedEmployeeId){ alert("Chọn nhân viên trước"); return; }
   if(!selectedProductId){ alert("Chọn mã hàng / size trước"); return; }
   if(!kg || kg<=0){ alert("Nhập số kg hợp lệ"); return; }
+  /* CÂN V1.5.2 — CHẶN SỐ KG RÁC. Ngày 13/11/2026 một phím bị kẹt, kg thành
+     27 chữ số, phiếu đó phá luôn giao diện nên không xoá được ở đâu cả.
+     Một rổ thực tế 5-30 kg, cả ngày một người 50-80 kg, nên 500 kg là ngưỡng
+     rộng rãi mà vẫn bắt được mọi trường hợp gõ nhầm/kẹt phím.
+     Chặn ở ĐÂY chứ không chỉ ở ô nhập, vì còn đường phím Enter. */
+  if(kg > MAX_KG_MOT_PHIEU){
+    alert("Số KG bất thường: " + fmtKg(kg) + " kg.\n\n"
+        + "Một phiếu không quá " + MAX_KG_MOT_PHIEU + " kg.\n"
+        + "Kiểm tra lại cân hoặc bàn phím có bị kẹt phím không.");
+    document.getElementById('wKgBig').focus();
+    document.getElementById('wKgBig').select();
+    return;
+  }
+  /* CÂN V1.5 — hai cửa chặn.
+     Cửa 1: không nối cân VÀ không có quyền gõ tay -> không cho lưu.
+     Cửa 2: đang nối cân nhưng số chưa đứng yên đủ 0,5 giây -> không cho lưu.
+     Chặn ở ĐÂY chứ không chỉ ở nút, vì còn phím Enter và có thể gọi từ chỗ khác. */
+  if(!canDangNoi() && !duocGoTay()){
+    alert("Chưa nối cân điện tử.\n\nTài khoản của bạn không có quyền gõ tay số KG.\n"
+        + "Bấm \"Nối cân\" hoặc đăng nhập tài khoản có quyền.");
+    return;
+  }
+  if(canDangNoi() && !canSanSang()){
+    if(canSoDaNhap !== null){
+      alert("Mẻ này đã nhập rồi.\n\nNhấc hàng ra khỏi cân rồi đặt mẻ tiếp theo.");
+    }else{
+      alert("Số trên cân chưa đứng yên.\n\nChờ số ổn định rồi bấm NHẬP.");
+    }
+    return;
+  }
   const gate = checkWeighAllowed();
   if(!gate.ok){ alert(gate.msg); return; }
   // Cùng nhân viên + cùng mã hàng + cùng số kg trong vòng 0,6 giây -> bỏ qua lần sau.
@@ -3321,6 +3736,8 @@ function addWeighing(){
     return;
   }
   lanCanCuoi = { dauVet: dauVetCan, luc: Date.now() };
+  // V1.5 — ghi dấu mẻ vừa nhập. Chỉ mở lại khi nhấc vật ra khỏi cân.
+  if(canDangNoi()) canSoDaNhap = canSoOnDinh;
 
   const p = products.find(x=>x.id===selectedProductId);
   const amount = kg * p.unitPrice;
@@ -3331,6 +3748,7 @@ function addWeighing(){
     employeeCode: emp ? emp.code : '',
     byUserId: currentUser ? currentUser.id : '',
     byUserName: currentUser ? currentUser.name : '',
+    nguonKg: canDangNoi() ? 'can' : 'tay',   // V1.5 — số kg lấy từ cân điện tử hay gõ tay
     deviceId: thisDeviceId(),
     flags: (gate.flags && gate.flags.length) ? gate.flags.join(', ') : ''
   };
@@ -3402,23 +3820,30 @@ function renderWeighTab(){
             .sort((a,b)=>b.createdAt-a.createdAt)
             .map(w=>{
               const t = new Date(w.createdAt).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
+              /* CÂN V1.5.2 — chữ và nút tách thành hai khối flex. Chữ co lại
+                 và cắt bằng "…"; cụm nút ghim bên phải nên LUÔN bấm được, dù
+                 số kg có rác cỡ nào. */
               if(editingWeighId===w.id){
-                return `<tr class="sub"><td colspan="3">
-                  ${t} ·
-                  <input type="number" id="editKgInput-${w.id}" value="${w.weightKg}" step="0.1" style="width:74px;padding:3px 6px;font-size:12.5px;">
-                  <span>kg</span>
-                  <button class="icon-del" style="padding:1px;" onclick="event.stopPropagation();saveEditWeigh('${w.id}')">✅</button>
-                  <button class="icon-del" style="padding:1px;" onclick="event.stopPropagation();cancelEditWeigh()">✕</button>
-                </td></tr>`;
+                return `<tr class="sub"><td colspan="3"><div class="sub-row">
+                  <span class="sub-txt">${t} ·
+                    <input type="number" id="editKgInput-${w.id}" value="${w.weightKg}" step="0.1" maxlength="6" style="width:74px;padding:3px 6px;font-size:12.5px;">
+                    kg</span>
+                  <span class="sub-act">
+                    <button class="icon-del" style="padding:1px;" onclick="event.stopPropagation();saveEditWeigh('${w.id}')">✅</button>
+                    <button class="icon-del" style="padding:1px;" onclick="event.stopPropagation();cancelEditWeigh()">✕</button>
+                  </span>
+                </div></td></tr>`;
               }
               const pend = pendingDeleteKey === ('single:'+w.id);
-              return `<tr class="sub"><td colspan="3">
-                ${t} · ${fmtKg(w.weightKg)} kg — ${formatMoney(w.amount)}${w.byUserName?` · 👤 ${escapeHtml(w.byUserName)}`:''}${w.flags?` · <span style="color:var(--rust);font-weight:700;">⚑ ${escapeHtml(w.flags)}</span>`:''}
-                <button class="icon-del" style="padding:1px;" onclick="event.stopPropagation();editSingleWeigh('${w.id}')">✏️</button>
-                ${pend
-                  ? `<button class="icon-del" style="padding:1px;color:var(--rust);font-weight:700;" onclick="event.stopPropagation();deleteSingleWeigh('${w.id}')">Xoá?✓</button>`
-                  : `<button class="icon-del" style="padding:1px;" onclick="event.stopPropagation();deleteSingleWeigh('${w.id}')">🗑</button>`}
-              </td></tr>`;
+              return `<tr class="sub"><td colspan="3"><div class="sub-row">
+                <span class="sub-txt">${t} · ${fmtKg(w.weightKg)} kg — ${formatMoney(w.amount)}${w.byUserName?` · 👤 ${escapeHtml(w.byUserName)}`:''}${w.flags?` · <span style="color:var(--rust);font-weight:700;">⚑ ${escapeHtml(w.flags)}</span>`:''}</span>
+                <span class="sub-act">
+                  <button class="icon-del" style="padding:1px;" onclick="event.stopPropagation();editSingleWeigh('${w.id}')">✏️</button>
+                  ${pend
+                    ? `<button class="icon-del" style="padding:1px;color:var(--rust);font-weight:700;" onclick="event.stopPropagation();deleteSingleWeigh('${w.id}')">Xoá?✓</button>`
+                    : `<button class="icon-del" style="padding:1px;" onclick="event.stopPropagation();deleteSingleWeigh('${w.id}')">🗑</button>`}
+                </span>
+              </div></td></tr>`;
             }).join('') : '';
           return `
             <tr class="item ${trangThaiNhom(r.ids)}" onclick="toggleGroupExpand('${key}')">
